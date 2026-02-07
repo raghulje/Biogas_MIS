@@ -1,8 +1,27 @@
 import axios from 'axios';
 
+const apiBase = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/?$/, '');
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api/admin',
+    baseURL: apiBase + '/admin',
 });
+
+// Used for GET /mis/form-config (single form-config endpoint)
+const baseApi = axios.create({ baseURL: apiBase });
+baseApi.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+});
+baseApi.interceptors.response.use(
+    (res) => res,
+    (err) => {
+        if (err.response?.status === 401) {
+            localStorage.removeItem('token');
+            if (!window.location.pathname.includes('/login')) window.location.href = '/login';
+        }
+        return Promise.reject(err);
+    }
+);
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
@@ -12,7 +31,26 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+api.interceptors.response.use(
+    (res) => res,
+    (err) => {
+        if (err.response?.status === 401) {
+            localStorage.removeItem('token');
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(err);
+    }
+);
+
 export const adminService = {
+    // Single form-config API (roles, permissions, smtp_config, scheduler_config)
+    getFormConfig: async () => {
+        const response = await baseApi.get('/mis/form-config');
+        return response.data;
+    },
+
     // Users
     getUsers: async () => {
         const response = await api.get('/users');
@@ -46,6 +84,11 @@ export const adminService = {
         const response = await api.get('/audit-logs', { params });
         return response.data;
     },
+    // Login sessions (login time, logout time, session duration)
+    getSessions: async (params?: { limit?: number }) => {
+        const response = await api.get('/sessions', { params });
+        return response.data;
+    },
 
     // Email Templates
     getTemplates: async () => {
@@ -73,5 +116,55 @@ export const adminService = {
     createScheduler: async (scheduler: any) => {
         const response = await api.post('/schedulers', scheduler);
         return response.data;
-    }
+    },
+
+    // SMTP Configuration
+    getSMTPConfig: async () => {
+        const response = await api.get('/smtp-config');
+        return response.data;
+    },
+    createSMTPConfig: async (config: any) => {
+        const response = await api.post('/smtp-config', config);
+        return response.data;
+    },
+    updateSMTPConfig: async (id: number, config: any) => {
+        const response = await api.put(`/smtp-config/${id}`, config);
+        return response.data;
+    },
+    testSMTPConfig: async (payload: { to: string; host?: string; port?: number; secure?: boolean; auth_user?: string; auth_pass?: string; from_email?: string; from_name?: string }) => {
+        const response = await api.post('/smtp-config/test', payload);
+        return response.data;
+    },
+
+    // MIS Entry email recipients (submit notification + no-entry reminder)
+    getMISEmailConfig: async () => {
+        const response = await api.get('/mis-email-config');
+        return response.data;
+    },
+    saveMISEmailConfig: async (data: { submit_notify_emails: string[]; entry_not_created_emails: string[] }) => {
+        const response = await api.put('/mis-email-config', data);
+        return response.data;
+    },
+
+    // Final MIS Report email (recipients, subject, body, schedule)
+    getFinalMISReportConfig: async () => {
+        const response = await api.get('/final-mis-report-config');
+        return response.data;
+    },
+    saveFinalMISReportConfig: async (data: {
+        to_emails: string[];
+        subject: string;
+        body: string;
+        schedule_type: string;
+        schedule_time: string;
+        cron_expression?: string;
+        is_active: boolean;
+    }) => {
+        const response = await api.put('/final-mis-report-config', data);
+        return response.data;
+    },
+    sendTestFinalMISReport: async (startDate: string, endDate: string) => {
+        const response = await api.post('/final-mis-report-config/send-test', { startDate, endDate });
+        return response.data;
+    },
 };

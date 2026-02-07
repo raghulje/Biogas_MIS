@@ -1,46 +1,44 @@
 
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   TextField,
   Grid,
+  Box,
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { useFormContext } from 'react-hook-form';
 
 interface Props {
-  selectedEntry?: any; // Making optional as we use form context
+  selectedEntry?: any;
   isReadOnly: boolean;
 }
 
 export default function RawMaterialsSection({ isReadOnly }: Props) {
   const { register } = useFormContext();
 
+  const sectionStyle = {
+    mb: 2,
+    borderRadius: '12px !important',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#fff',
+  };
+
+  const headerStyle = {
+    backgroundColor: '#f5f5f5',
+    borderBottom: '1px solid #e0e0e0',
+    minHeight: '56px',
+    display: 'flex',
+    alignItems: 'center',
+    px: 2,
+  };
+
   return (
-    <Accordion
-      defaultExpanded
-      sx={{
-        mb: 2,
-        borderRadius: '12px !important',
-        '&:before': { display: 'none' },
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        border: '1px solid #e0e0e0',
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-        sx={{
-          backgroundColor: '#f5f5f5',
-          borderBottom: '1px solid #e0e0e0',
-          minHeight: '56px',
-        }}
-      >
+    <Box sx={sectionStyle}>
+      <Box sx={headerStyle}>
         <Typography sx={{ fontWeight: 600, color: '#333' }}>Summary of Raw Materials</Typography>
-      </AccordionSummary>
-      <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+      </Box>
+      <Box sx={{ p: 3 }}>
         <Grid container spacing={2.5}>
           <Grid item xs={12} sm={6} md={4}>
             <TextField
@@ -153,7 +151,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
             />
           </Grid>
         </Grid>
-      </AccordionDetails>
-    </Accordion>
+      </Box>
+    </Box>
   );
 }

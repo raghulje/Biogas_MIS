@@ -12,7 +12,11 @@ module.exports = (sequelize) => {
         revenue_2: DataTypes.FLOAT,
         loose_fom_sold: DataTypes.FLOAT,
         revenue_3: DataTypes.FLOAT
-    }, { tableName: 'mis_fertilizer_data', underscored: true });
+    }, {
+        tableName: 'mis_fertilizer_data',
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
+    });
 
     MISFertilizerData.associate = (models) => {
         MISFertilizerData.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });

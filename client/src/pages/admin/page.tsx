@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -65,6 +65,7 @@ interface User {
 
 interface ActivityLog {
   id: number;
+  userId?: number;
   user: string;
   lastLogin: string;
   action: string;
@@ -72,6 +73,15 @@ interface ActivityLog {
   newValue: string;
   timestamp: string;
   actionType: 'create' | 'update' | 'delete' | 'login' | 'view';
+}
+
+interface SessionRow {
+  userId: number;
+  userName: string;
+  lastLogin: string;
+  loginTime: string;
+  logoutTime: string;
+  sessionDurationMinutes: number;
 }
 
 interface EmailTemplate {
@@ -105,10 +115,429 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// MIS Entry Email recipients (submit + no-entry reminder)
+function MISEntryEmailPanel({
+  formConfig,
+  message,
+  setMessage,
+}: {
+  formConfig: any;
+  message: { type: string; text: string } | null;
+  setMessage: (m: { type: string; text: string } | null) => void;
+}) {
+  const [submitNotifyEmails, setSubmitNotifyEmails] = useState<string[]>([]);
+  const [entryNotCreatedEmails, setEntryNotCreatedEmails] = useState<string[]>([]);
+  const [newSubmitEmail, setNewSubmitEmail] = useState('');
+  const [newNoEntryEmail, setNewNoEntryEmail] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const config = formConfig?.mis_email_config;
+    if (config) {
+      setSubmitNotifyEmails(Array.isArray(config.submit_notify_emails) ? config.submit_notify_emails : []);
+      setEntryNotCreatedEmails(Array.isArray(config.entry_not_created_emails) ? config.entry_not_created_emails : []);
+    }
+  }, [formConfig?.mis_email_config]);
+
+  // When panel is shown, fetch latest in case formConfig was loaded before config existed
+  const loadConfig = () => {
+    adminService.getMISEmailConfig().then((data: any) => {
+      if (data) {
+        setSubmitNotifyEmails(Array.isArray(data.submit_notify_emails) ? data.submit_notify_emails : []);
+        setEntryNotCreatedEmails(Array.isArray(data.entry_not_created_emails) ? data.entry_not_created_emails : []);
+      }
+    }).catch(() => {});
+  };
+  useEffect(() => { loadConfig(); }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      await adminService.saveMISEmailConfig({
+        submit_notify_emails: submitNotifyEmails,
+        entry_not_created_emails: entryNotCreatedEmails,
+      });
+      setMessage({ type: 'success', text: 'MIS Entry email settings saved.' });
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e?.response?.data?.message || 'Failed to save.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addEmail = (which: 'submit' | 'noEntry', email: string) => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed) return;
+    if (which === 'submit') {
+      if (!submitNotifyEmails.includes(trimmed)) setSubmitNotifyEmails([...submitNotifyEmails, trimmed]);
+      setNewSubmitEmail('');
+    } else {
+      if (!entryNotCreatedEmails.includes(trimmed)) setEntryNotCreatedEmails([...entryNotCreatedEmails, trimmed]);
+      setNewNoEntryEmail('');
+    }
+  };
+
+  const removeEmail = (which: 'submit' | 'noEntry', email: string) => {
+    if (which === 'submit') setSubmitNotifyEmails(submitNotifyEmails.filter(e => e !== email));
+    else setEntryNotCreatedEmails(entryNotCreatedEmails.filter(e => e !== email));
+  };
+
+  return (
+    <Box>
+      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', mb: 2 }}>
+        MIS Entry – Email Recipients
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Configure who receives emails when an MIS entry is submitted, and who is notified when no entry is created for the day (checked at the scheduled time in Scheduler Configuration).
+      </Typography>
+      {message && (
+        <Alert severity={message.type as any} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
+          {message.text}
+        </Alert>
+      )}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              When an MIS entry is submitted – send to:
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="email@example.com"
+                value={newSubmitEmail}
+                onChange={(e) => setNewSubmitEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addEmail('submit', newSubmitEmail)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+              <Button variant="contained" onClick={() => addEmail('submit', newSubmitEmail)} sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                Add
+              </Button>
+            </Box>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {submitNotifyEmails.map((email) => (
+                <li key={email} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Typography variant="body2">{email}</Typography>
+                  <IconButton size="small" onClick={() => removeEmail('submit', email)} sx={{ color: '#ee6a31', p: 0.25 }}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </li>
+              ))}
+              {submitNotifyEmails.length === 0 && (
+                <Typography variant="body2" color="text.secondary">No emails. Add above or leave empty to use Manager/Admin users.</Typography>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              If no entry created for the day (at scheduled time) – send to:
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="email@example.com"
+                value={newNoEntryEmail}
+                onChange={(e) => setNewNoEntryEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addEmail('noEntry', newNoEntryEmail)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+              <Button variant="contained" onClick={() => addEmail('noEntry', newNoEntryEmail)} sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                Add
+              </Button>
+            </Box>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {entryNotCreatedEmails.map((email) => (
+                <li key={email} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Typography variant="body2">{email}</Typography>
+                  <IconButton size="small" onClick={() => removeEmail('noEntry', email)} sx={{ color: '#ee6a31', p: 0.25 }}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </li>
+              ))}
+              {entryNotCreatedEmails.length === 0 && (
+                <Typography variant="body2" color="text.secondary">No emails. Add above or leave empty to use Operator users.</Typography>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+      </Grid>
+      <Button
+        variant="contained"
+        startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <SaveIcon />}
+        onClick={handleSave}
+        disabled={saving}
+        className="btn-gradient-success"
+        sx={{ mt: 3, borderRadius: '12px', textTransform: 'none', color: '#fff' }}
+      >
+        Save MIS Entry Email Settings
+      </Button>
+    </Box>
+  );
+}
+
+// Final MIS Report email: recipients, subject, body, schedule (daily/weekly/monthly/quarterly/custom + time/cron)
+function FinalMISReportEmailPanel({
+  message,
+  setMessage,
+}: {
+  message: { type: string; text: string } | null;
+  setMessage: (m: { type: string; text: string } | null) => void;
+}) {
+  const [toEmails, setToEmails] = useState<string[]>([]);
+  const [newEmail, setNewEmail] = useState('');
+  const [subject, setSubject] = useState('Final MIS Report');
+  const [body, setBody] = useState('');
+  const [scheduleType, setScheduleType] = useState<string>('monthly');
+  const [scheduleTime, setScheduleTime] = useState('09:00');
+  const [cronExpression, setCronExpression] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
+  const [testStartDate, setTestStartDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [testEndDate, setTestEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  const loadConfig = useCallback(() => {
+    adminService.getFinalMISReportConfig().then((data: any) => {
+      if (data) {
+        setToEmails(Array.isArray(data.to_emails) ? data.to_emails : []);
+        setSubject(data.subject || 'Final MIS Report');
+        setBody(data.body || '');
+        setScheduleType(data.schedule_type || 'monthly');
+        setScheduleTime(data.schedule_time || '09:00');
+        setCronExpression(data.cron_expression || '');
+        setIsActive(data.is_active !== false);
+      }
+    }).catch(() => {});
+  }, []);
+  useEffect(() => { loadConfig(); }, [loadConfig]);
+
+  const addEmail = () => {
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed) return;
+    if (!toEmails.includes(trimmed)) setToEmails([...toEmails, trimmed]);
+    setNewEmail('');
+  };
+
+  const removeEmail = (email: string) => setToEmails(toEmails.filter(e => e !== email));
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      await adminService.saveFinalMISReportConfig({
+        to_emails: toEmails,
+        subject,
+        body,
+        schedule_type: scheduleType,
+        schedule_time: scheduleTime,
+        cron_expression: scheduleType === 'custom' ? cronExpression : undefined,
+        is_active: isActive,
+      });
+      setMessage({ type: 'success', text: 'Final MIS Report email settings saved.' });
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e?.response?.data?.message || 'Failed to save.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSendTest = async () => {
+    if (toEmails.length === 0) {
+      setMessage({ type: 'error', text: 'Add at least one recipient before sending a test.' });
+      return;
+    }
+    setSendingTest(true);
+    setMessage(null);
+    try {
+      await adminService.sendTestFinalMISReport(testStartDate, testEndDate);
+      setMessage({ type: 'success', text: `Test report sent for ${testStartDate} to ${testEndDate}.` });
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e?.response?.data?.message || 'Failed to send test.' });
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
+  return (
+    <Box>
+      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', mb: 2 }}>
+        Final MIS Report – Email &amp; Schedule
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Send the Final MIS Report (same format and colors as the report page) to business heads by email. Configure recipients, subject, optional body, and when to send (daily, weekly, monthly, quarterly, or custom cron).
+      </Typography>
+      {message && (
+        <Alert severity={message.type as any} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
+          {message.text}
+        </Alert>
+      )}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              Recipients (report will be sent to these emails)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="email@example.com"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addEmail())}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+              <Button variant="contained" onClick={addEmail} sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                Add
+              </Button>
+            </Box>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {toEmails.map((email) => (
+                <li key={email} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Typography variant="body2">{email}</Typography>
+                  <IconButton size="small" onClick={() => removeEmail(email)} sx={{ color: '#ee6a31', p: 0.25 }}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </li>
+              ))}
+              {toEmails.length === 0 && (
+                <Typography variant="body2" color="text.secondary">No recipients. Add emails above.</Typography>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              Email content
+            </Typography>
+            <TextField
+              size="small"
+              fullWidth
+              label="Subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+            <TextField
+              size="small"
+              fullWidth
+              multiline
+              rows={3}
+              label="Body (optional HTML intro before the report table)"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="e.g. Dear Team, Please find the consolidated report below."
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+          </Card>
+        </Grid>
+        <Grid item xs={12}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              Schedule – when to send the report
+            </Typography>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  select
+                  size="small"
+                  fullWidth
+                  label="Frequency"
+                  value={scheduleType}
+                  onChange={(e) => setScheduleType(e.target.value)}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                >
+                  <MenuItem value="daily">Daily (previous day)</MenuItem>
+                  <MenuItem value="weekly">Weekly (previous week, Monday run)</MenuItem>
+                  <MenuItem value="monthly">Monthly (previous month, 1st run)</MenuItem>
+                  <MenuItem value="quarterly">Quarterly (previous quarter)</MenuItem>
+                  <MenuItem value="custom">Custom (cron expression)</MenuItem>
+                </TextField>
+              </Grid>
+              {scheduleType !== 'custom' && (
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    label="Time (24h)"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    placeholder="09:00"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
+                </Grid>
+              )}
+              {scheduleType === 'custom' && (
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    label="Cron expression"
+                    value={cronExpression}
+                    onChange={(e) => setCronExpression(e.target.value)}
+                    placeholder="0 9 * * 1"
+                    helperText="e.g. 0 9 * * 1 = Monday 9:00"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
+                </Grid>
+              )}
+              <Grid item xs={12} sm={2}>
+                <FormControlLabel
+                  control={<Checkbox checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
+                  label="Active"
+                />
+              </Grid>
+            </Grid>
+            <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
+              Report is sent at the configured time. The server checks every hour; for daily at 09:00, the report runs at 09:00 for the previous day.
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={12}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              Send test report now
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+              <TextField type="date" size="small" label="Start date" value={testStartDate} onChange={(e) => setTestStartDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+              <TextField type="date" size="small" label="End date" value={testEndDate} onChange={(e) => setTestEndDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+              <Button variant="outlined" onClick={handleSendTest} disabled={sendingTest || toEmails.length === 0} startIcon={sendingTest ? <CircularProgress size={18} /> : null} sx={{ borderRadius: '12px', textTransform: 'none' }}>
+                {sendingTest ? 'Sending…' : 'Send test report'}
+              </Button>
+            </Box>
+          </Card>
+        </Grid>
+      </Grid>
+      <Button
+        variant="contained"
+        startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <SaveIcon />}
+        onClick={handleSave}
+        disabled={saving}
+        className="btn-gradient-success"
+        sx={{ mt: 3, borderRadius: '12px', textTransform: 'none', color: '#fff' }}
+      >
+        Save Final MIS Report Email Settings
+      </Button>
+    </Box>
+  );
+}
+
 const defaultPermissions: Permission[] = [
   { page: 'Dashboard', read: true, create: false, update: false, delete: false },
   { page: 'MIS Entry', read: true, create: true, update: true, delete: false },
   { page: 'Consolidated MIS View', read: true, create: false, update: false, delete: false },
+  { page: 'User Management', read: false, create: false, update: false, delete: false },
+  { page: 'Roles & Permissions', read: false, create: false, update: false, delete: false },
   { page: 'Admin Panel', read: false, create: false, update: false, delete: false },
   { page: 'Audit Logs', read: true, create: false, update: false, delete: false },
   { page: 'Import Data', read: true, create: true, update: false, delete: false },
@@ -118,6 +547,8 @@ const adminPermissions: Permission[] = [
   { page: 'Dashboard', read: true, create: true, update: true, delete: true },
   { page: 'MIS Entry', read: true, create: true, update: true, delete: true },
   { page: 'Consolidated MIS View', read: true, create: true, update: true, delete: true },
+  { page: 'User Management', read: true, create: true, update: true, delete: true },
+  { page: 'Roles & Permissions', read: true, create: true, update: true, delete: true },
   { page: 'Admin Panel', read: true, create: true, update: true, delete: true },
   { page: 'Audit Logs', read: true, create: true, update: true, delete: true },
   { page: 'Import Data', read: true, create: true, update: true, delete: true },
@@ -323,36 +754,235 @@ export default function AdminPage() {
 
   const [users, setUsers] = useState<User[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [lastLoginsByUser, setLastLoginsByUser] = useState<Record<number, string>>({});
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [schedulerConfigs, setSchedulerConfigs] = useState<SchedulerConfig[]>([]);
 
+  // Role Permissions tab: which role is being edited and the permission matrix
+  const [selectedRoleIdForPerms, setSelectedRoleIdForPerms] = useState<number | null>(null);
+  const [rolePermissionsEdit, setRolePermissionsEdit] = useState<Permission[]>(defaultPermissions);
+
+  // Single form-config (roles, permissions, smtp_config, scheduler_config) - loaded once
+  const [formConfig, setFormConfig] = useState<{
+    roles: { id: number; name: string; permissions?: any[] }[];
+    permissions: { id: number; name: string; resource: string; action: string }[];
+    smtp_config: any;
+    scheduler_config: any[];
+    mis_email_config?: { submit_notify_emails: string[]; entry_not_created_emails: string[] };
+  } | null>(null);
+
+  // SMTP Configuration form state (primary source; synced from formConfig when tab or config loads)
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('587');
+  const [smtpSecure, setSmtpSecure] = useState(false);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
+  const [smtpFromEmail, setSmtpFromEmail] = useState('');
+  const [smtpFromName, setSmtpFromName] = useState('');
+  const [smtpId, setSmtpId] = useState<number | null>(null);
+  const [smtpTestTo, setSmtpTestTo] = useState('');
+  const [smtpTesting, setSmtpTesting] = useState(false);
+
+  // Backend resources map to one or more UI rows so Admin/Manager see all relevant boxes checked
   const mapBackendPermissionsToUI = (backendPerms: any[]) => {
     if (!backendPerms || !Array.isArray(backendPerms)) return defaultPermissions;
     const uiPerms = JSON.parse(JSON.stringify(defaultPermissions));
-    const resourceMapBack: Record<string, string> = {
-      mis_entry: 'MIS Entry',
-      user: 'User Management',
-      role: 'Roles & Permissions',
-      config: 'Admin Panel',
-      audit: 'Audit Logs'
+    const resourceToUIPages: Record<string, string[]> = {
+      mis_entry: ['MIS Entry', 'Consolidated MIS View', 'Import Data'],
+      user: ['User Management'],
+      role: ['Roles & Permissions'],
+      config: ['Dashboard', 'Admin Panel'],
+      audit: ['Audit Logs']
     };
     backendPerms.forEach((bp: { resource?: string; action?: string }) => {
-      const uiName = bp.resource ? resourceMapBack[bp.resource] : null;
-      if (!uiName) return;
-      const permIndex = uiPerms.findIndex((p: { page: string }) => p.page === uiName);
-      if (permIndex > -1) {
-        if (bp.action === 'read') uiPerms[permIndex].read = true;
-        if (bp.action === 'create') uiPerms[permIndex].create = true;
-        if (bp.action === 'update') uiPerms[permIndex].update = true;
-        if (bp.action === 'delete') uiPerms[permIndex].delete = true;
-      }
+      const uiPages = bp.resource ? resourceToUIPages[bp.resource] : null;
+      if (!uiPages?.length) return;
+      uiPages.forEach((uiName) => {
+        const permIndex = uiPerms.findIndex((p: { page: string }) => p.page === uiName);
+        if (permIndex > -1) {
+          if (bp.action === 'read') uiPerms[permIndex].read = true;
+          if (bp.action === 'create') uiPerms[permIndex].create = true;
+          if (bp.action === 'update') uiPerms[permIndex].update = true;
+          if (bp.action === 'delete') uiPerms[permIndex].delete = true;
+        }
+      });
     });
     return uiPerms;
   };
 
+  // Load form-config once (roles, permissions, smtp_config, scheduler_config) - single API
+  useEffect(() => {
+    const loadFormConfig = async () => {
+      try {
+        const data = await adminService.getFormConfig();
+        setFormConfig(data);
+        if (tabValue === 3) {
+          setSchedulerConfigs(Array.isArray(data?.scheduler_config) ? data.scheduler_config : []);
+        }
+        if (data?.roles?.length && selectedRoleIdForPerms == null) {
+          setSelectedRoleIdForPerms(data.roles[0].id);
+        }
+      } catch (e) {
+        console.error('Failed to load form config', e);
+        setFormConfig(null);
+      }
+    };
+    loadFormConfig();
+  }, []);
+
+  // When selected role for permissions changes, load that role's permissions from formConfig
+  useEffect(() => {
+    if (!formConfig?.roles || selectedRoleIdForPerms == null) return;
+    const role = formConfig.roles.find((r: any) => Number(r.id) === Number(selectedRoleIdForPerms));
+    if (role) {
+      setRolePermissionsEdit(
+        (role.permissions && Array.isArray(role.permissions))
+          ? mapBackendPermissionsToUI(role.permissions)
+          : defaultPermissions
+      );
+    }
+  }, [selectedRoleIdForPerms, formConfig]);
+
+  // Helper: apply saved SMTP config into form state (backend uses snake_case: auth_user, from_email)
+  const applySmtpConfigToForm = (c: any) => {
+    if (!c) {
+      setSmtpId(null);
+      setSmtpHost('');
+      setSmtpPort('587');
+      setSmtpSecure(false);
+      setSmtpUser('');
+      setSmtpPass('');
+      setSmtpFromEmail('');
+      setSmtpFromName('');
+      return;
+    }
+    setSmtpId(c.id ?? null);
+    setSmtpHost(c.host ?? '');
+    setSmtpPort(c.port != null ? String(c.port) : '587');
+    setSmtpSecure(Boolean(c.secure));
+    setSmtpUser((c.auth_user ?? c.authUser) ?? '');
+    setSmtpPass(''); // Never prefill password
+    setSmtpFromEmail((c.from_email ?? c.fromEmail) ?? '');
+    setSmtpFromName((c.from_name ?? c.fromName) ?? '');
+  };
+
+  // When user opens SMTP tab: sync form from formConfig, or refetch SMTP config so values show from DB
+  useEffect(() => {
+    if (tabValue !== 3) return;
+    const c = formConfig?.smtp_config;
+    if (c && (c.id || c.host || c.auth_user || c.from_email)) {
+      applySmtpConfigToForm(c);
+      return;
+    }
+    // No smtp_config in formConfig: refetch SMTP directly so we show saved values (e.g. after is_active fix)
+    let cancelled = false;
+    adminService.getSMTPConfig().then((data: any) => {
+      if (cancelled || !data) return;
+      applySmtpConfigToForm(data);
+      setFormConfig((prev: any) => (prev ? { ...prev, smtp_config: data } : prev));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [tabValue, formConfig?.smtp_config]);
+
   useEffect(() => {
     loadData();
-  }, [tabValue]);
+  }, [tabValue, formConfig]);
+
+  const handleSaveSMTP = async () => {
+    const host = smtpHost?.trim();
+    const port = Number(smtpPort);
+    const user = smtpUser?.trim();
+    const fromEmail = smtpFromEmail?.trim();
+    if (!host || !user || !fromEmail) {
+      setMessage({ type: 'error', text: 'Host, Username, and From Email are required.' });
+      return;
+    }
+    if (isNaN(port) || port < 1 || port > 65535) {
+      setMessage({ type: 'error', text: 'Port must be between 1 and 65535.' });
+      return;
+    }
+    if (!smtpId && !smtpPass?.trim()) {
+      setMessage({ type: 'error', text: 'Password is required when creating a new SMTP config.' });
+      return;
+    }
+    try {
+      setSaving(true);
+      setMessage(null);
+      const payload: any = {
+        host,
+        port,
+        secure: smtpSecure,
+        auth_user: user,
+        from_email: fromEmail,
+        from_name: smtpFromName?.trim() || undefined,
+      };
+      if (smtpPass?.trim()) payload.auth_pass = smtpPass.trim();
+      if (smtpId) {
+        await adminService.updateSMTPConfig(smtpId, payload);
+        setMessage({ type: 'success', text: 'SMTP settings updated successfully.' });
+      } else {
+        await adminService.createSMTPConfig(payload);
+        setMessage({ type: 'success', text: 'SMTP settings saved successfully.' });
+      }
+      const fresh = await adminService.getFormConfig();
+      setFormConfig(fresh);
+      if (fresh?.smtp_config) {
+        applySmtpConfigToForm(fresh.smtp_config);
+      }
+      setSmtpPass(''); // Clear password after save
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e.response?.data?.message || 'Failed to save SMTP settings.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestSMTP = async () => {
+    const to = smtpTestTo?.trim();
+    if (!to) {
+      setMessage({ type: 'error', text: 'Enter a test recipient email address.' });
+      return;
+    }
+    const host = smtpHost?.trim();
+    const user = smtpUser?.trim();
+    const fromEmail = smtpFromEmail?.trim();
+    const hasFormConfig = host && user && fromEmail;
+    if (!hasFormConfig && !smtpId) {
+      setMessage({ type: 'error', text: 'Save SMTP config first, or fill in Host, Username, and From Email to test.' });
+      return;
+    }
+    if (hasFormConfig && !smtpPass?.trim() && !smtpId) {
+      setMessage({ type: 'error', text: 'Password is required to test new config (or save first then test with saved config).' });
+      return;
+    }
+    try {
+      setSmtpTesting(true);
+      setMessage(null);
+      let payload: any = { to };
+      // Use saved config (send only to) when we have saved config and no password in form
+      if (smtpId && !smtpPass?.trim()) {
+        payload = { to };
+      } else if (hasFormConfig && (smtpPass?.trim() || smtpId)) {
+        payload = {
+          to,
+          host,
+          port: Number(smtpPort) || 587,
+          secure: smtpSecure,
+          auth_user: user,
+          from_email: fromEmail,
+          from_name: smtpFromName?.trim() || undefined,
+        };
+        if (smtpPass?.trim()) payload.auth_pass = smtpPass.trim();
+      }
+      await adminService.testSMTPConfig(payload);
+      setMessage({ type: 'success', text: 'Test email sent successfully. Check the recipient inbox.' });
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e.response?.data?.message || 'Failed to send test email.' });
+    } finally {
+      setSmtpTesting(false);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -364,28 +994,52 @@ export default function AdminPage() {
           .map((u: any) => ({
             ...u,
             role: u.role?.name || u.role || 'Operator',
-            permissions: (u.role?.permissions && Array.isArray(u.role.permissions)) ? mapBackendPermissionsToUI(u.role.permissions) : defaultPermissions
+            // User-level permissions (primary); fallback to role permissions for backward compat
+            permissions: (u.permissions && Array.isArray(u.permissions) && u.permissions.length > 0)
+              ? mapBackendPermissionsToUI(u.permissions)
+              : (u.role?.permissions && Array.isArray(u.role.permissions)) ? mapBackendPermissionsToUI(u.role.permissions) : defaultPermissions
           })));
       } else if (tabValue === 1) {
-        const data = await adminService.getAuditLogs();
-        setActivityLogs((Array.isArray(data) ? data : []).map((log: any) => ({
+        const [auditData, sessionsData] = await Promise.all([
+          adminService.getAuditLogs(),
+          adminService.getSessions({ limit: 100 }).catch(() => ({ sessions: [], lastLogins: {} }))
+        ]);
+        setActivityLogs((Array.isArray(auditData) ? auditData : []).map((log: any) => ({
           id: log.id,
+          userId: log.user_id,
           user: log.actor?.name || 'System',
+          lastLogin: '',
           timestamp: log.createdAt ?? log.created_at ?? '',
           action: log.action || '',
           actionType: (log.action || '').toLowerCase().includes('create') ? 'create' : ((log.action || '').toLowerCase().includes('delete') ? 'delete' : 'update'),
           previousValue: log.old_values != null ? JSON.stringify(log.old_values) : '',
           newValue: log.new_values != null ? JSON.stringify(log.new_values) : ''
         })));
+        setSessions(Array.isArray(sessionsData?.sessions) ? sessionsData.sessions : []);
+        const lastLogins: Record<number, string> = {};
+        if (sessionsData?.lastLogins && typeof sessionsData.lastLogins === 'object') {
+          for (const [uid, iso] of Object.entries(sessionsData.lastLogins)) {
+            if (iso) lastLogins[Number(uid)] = String(iso);
+          }
+        }
+        setLastLoginsByUser(lastLogins);
       } else if (tabValue === 2) {
         const data = await adminService.getTemplates();
-        setEmailTemplates(data);
+        setEmailTemplates(Array.isArray(data) ? data : []);
       } else if (tabValue === 3) {
-        const data = await adminService.getSchedulers();
-        setSchedulerConfigs(data);
+        // Use form-config (single API) instead of getSchedulers()
+        setSchedulerConfigs(Array.isArray(formConfig?.scheduler_config) ? formConfig.scheduler_config : []);
       }
     } catch (e) {
       setMessage({ type: 'error', text: 'Failed to load data' });
+      if (tabValue === 0) setUsers([]);
+      if (tabValue === 1) {
+        setActivityLogs([]);
+        setSessions([]);
+        setLastLoginsByUser({});
+      }
+      if (tabValue === 2) setEmailTemplates([]);
+      if (tabValue === 3) setSchedulerConfigs([]);
     } finally {
       setLoading(false);
     }
@@ -395,8 +1049,8 @@ export default function AdminPage() {
     setSelectedRole(role);
     if (role === 'Admin') {
       setUserPermissions(adminPermissions);
-    } else if (role === 'Viewer') {
-      setUserPermissions(defaultPermissions.map(p => ({ ...p, create: false, update: false, delete: false })));
+    } else if (role === 'Manager') {
+      setUserPermissions(adminPermissions.map(p => ({ ...p, delete: false }))); // Manager can see everything but delete less
     } else {
       setUserPermissions(defaultPermissions);
     }
@@ -412,6 +1066,7 @@ export default function AdminPage() {
   };
 
   const handleOpenCreateUser = () => {
+    setMessage(null);
     setEditingUser(null);
     setUserName('');
     setUserEmail('');
@@ -422,12 +1077,17 @@ export default function AdminPage() {
   };
 
   const handleOpenEditUser = (user: User) => {
+    setMessage(null);
     setEditingUser(user);
     setUserName(user.name);
     setUserEmail(user.email);
     setUserPassword('');
-    setSelectedRole(typeof user.role === 'string' ? user.role : (user.role?.name || 'Operator'));
-    setUserPermissions(Array.isArray(user.permissions) && user.permissions.length > 0 ? user.permissions : defaultPermissions);
+    const roleName = typeof user.role === 'string' ? user.role : (user.role?.name || 'Operator');
+    setSelectedRole(roleName);
+    const perms = Array.isArray(user.permissions) && user.permissions.length > 0
+      ? user.permissions
+      : (roleName === 'Admin' ? adminPermissions : roleName === 'Manager' ? adminPermissions.map(p => ({ ...p, delete: false })) : defaultPermissions);
+    setUserPermissions(perms);
     setOpenUserDialog(true);
   };
 
@@ -445,7 +1105,7 @@ export default function AdminPage() {
         email: userEmail,
         password: userPassword || undefined,
         role: selectedRole,
-        role_id: selectedRole === 'Admin' ? 1 : (selectedRole === 'Operator' ? 2 : 3),
+        role_id: selectedRole === 'Admin' ? 1 : (selectedRole === 'Manager' ? 2 : 3),
         permissions: userPermissions
       };
 
@@ -477,19 +1137,75 @@ export default function AdminPage() {
     }
   };
 
+  const pageToResource: Record<string, string> = {
+    'Dashboard': 'config',
+    'MIS Entry': 'mis_entry',
+    'Consolidated MIS View': 'mis_entry',
+    'Consolidated MIS v2': 'mis_entry',
+    'Admin Panel': 'config',
+    'User Management': 'user',
+    'Roles & Permissions': 'role',
+    'Audit Logs': 'audit',
+    'Import Data': 'mis_entry',
+  };
+
   const handleSavePermissions = async () => {
+    if (selectedRoleIdForPerms == null || !formConfig?.permissions) {
+      setMessage({ type: 'error', text: 'Select a role and ensure config is loaded.' });
+      return;
+    }
     try {
       setSaving(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const permissionIds: number[] = [];
+      for (const perm of rolePermissionsEdit) {
+        const resource = pageToResource[perm.page];
+        if (!resource) continue;
+        for (const action of ['read', 'create', 'update', 'delete'] as const) {
+          if (perm[action]) {
+            const p = formConfig.permissions.find(
+              (x: any) => x.resource === resource && x.action === action
+            );
+            if (p?.id) permissionIds.push(Number(p.id));
+          }
+        }
+      }
+      const role = formConfig.roles?.find((r: any) => Number(r.id) === Number(selectedRoleIdForPerms));
+      const existingIds = new Set((role?.permissions || []).map((p: any) => Number(p.id)).filter((id: number) => !isNaN(id)));
+      const checkboxActions = ['read', 'create', 'update', 'delete'];
+      for (const p of formConfig.permissions) {
+        if (permissionIds.includes(Number(p.id))) continue;
+        if (!checkboxActions.includes(p.action) && existingIds.has(Number(p.id))) {
+          permissionIds.push(Number(p.id));
+        }
+      }
+      await adminService.assignPermissions({
+        roleId: selectedRoleIdForPerms,
+        permissionIds,
+      });
       setMessage({ type: 'success', text: 'Permissions saved successfully!' });
-    } catch (error) {
+      // Refetch form config so role permissions persist when revisiting or refreshing
+      const fresh = await adminService.getFormConfig();
+      setFormConfig(fresh);
+    } catch (error: any) {
       console.error('Failed to save permissions', error);
-      setMessage({ type: 'error', text: 'Failed to save permissions.' });
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to save permissions.' });
     } finally {
       setSaving(false);
       setTimeout(() => setMessage(null), 3000);
     }
+  };
+
+  const handleRolePermissionsTabRoleChange = (roleId: number) => {
+    setSelectedRoleIdForPerms(roleId);
+  };
+
+  const handleRolePermissionCheckboxChange = (pageIndex: number, action: keyof Permission) => {
+    if (action === 'page') return;
+    setRolePermissionsEdit(prev =>
+      prev.map((p, i) =>
+        i === pageIndex ? { ...p, [action]: !p[action] } : p
+      )
+    );
   };
 
   // Activity Logs functions
@@ -551,6 +1267,16 @@ export default function AdminPage() {
 
   const getActionTypeLabel = (actionType: string) => {
     return actionType.charAt(0).toUpperCase() + actionType.slice(1);
+  };
+
+  const formatDateTime = (iso: string | undefined) => {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    } catch {
+      return iso;
+    }
   };
 
   // Filter logs based on current filters
@@ -922,7 +1648,8 @@ export default function AdminPage() {
               <Tab label="Email Templates" />
               <Tab label="SMTP Configuration" />
               <Tab label="Scheduler Configuration" />
-              <Tab label="Role Permissions" />
+              <Tab label="MIS Entry Email" />
+              <Tab label="Final MIS Report Email" />
             </Tabs>
           </Box>
 
@@ -1157,7 +1884,47 @@ export default function AdminPage() {
                 </Grid>
               </Card>
 
+              {/* Login sessions: Last Login, Login time, Logout time, Session duration */}
+              {sessions.length > 0 && (
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mt: 3, mb: 1.5 }}>
+                  Login sessions (active session time)
+                </Typography>
+              )}
+              {sessions.length > 0 && (
+                <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', mb: 3 }}>
+                  <Table size="small">
+                    <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Last Login</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Login Time</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Logout Time</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Session Duration</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sessions.slice(0, 20).map((s, idx) => (
+                        <TableRow key={`session-${s.userId}-${idx}`} className="hover-lift">
+                          <TableCell sx={{ fontWeight: 500 }}>{s.userName}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.lastLogin)}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.loginTime)}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.logoutTime)}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#333842' }}>
+                            {s.sessionDurationMinutes >= 60
+                              ? `${Math.floor(s.sessionDurationMinutes / 60)}h ${s.sessionDurationMinutes % 60}m`
+                              : `${s.sessionDurationMinutes} min`}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+
               {/* Activity Logs Table */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mb: 1.5 }}>
+                Activity log
+              </Typography>
               <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none' }}>
                 <Table>
                   <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
@@ -1176,10 +1943,10 @@ export default function AdminPage() {
                       paginatedLogs.map((log) => (
                         <TableRow key={log.id} className="hover-lift" sx={{ transition: 'all 0.3s ease' }}>
                           <TableCell sx={{ fontWeight: 500 }}>{log.user}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{log.lastLogin}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(log.userId != null ? lastLoginsByUser[log.userId] : undefined)}</TableCell>
                           <TableCell sx={{ fontWeight: 500 }}>{log.action}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{log.previousValue}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#333842' }}>{log.newValue}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: 200 }}>{log.previousValue}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#333842', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: 200 }}>{log.newValue}</TableCell>
                           <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{log.timestamp}</TableCell>
                           <TableCell>
                             <Chip
@@ -1380,42 +2147,141 @@ export default function AdminPage() {
 
           <TabPanel value={tabValue} index={3}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: '#333842' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#333842' }}>
                 SMTP Settings
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configure the mail server used for notifications and test emails. Save your settings, then use &quot;Send Test Email&quot; to verify.
+              </Typography>
+              {message && (
+                <Alert
+                  severity={message.type}
+                  sx={{
+                    mb: 2,
+                    borderRadius: '12px',
+                    '&.MuiAlert-standardSuccess': { backgroundColor: 'rgba(125, 194, 68, 0.1)', color: '#139B49' },
+                  }}
+                >
+                  {message.text}
+                </Alert>
+              )}
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="SMTP Host" placeholder="smtp.example.com" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                  <TextField
+                    fullWidth
+                    label="SMTP Host"
+                    required
+                    placeholder="smtp.gmail.com"
+                    value={smtpHost}
+                    onChange={(e) => setSmtpHost(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="SMTP Port" type="number" placeholder="587" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                  <TextField
+                    fullWidth
+                    label="SMTP Port"
+                    type="number"
+                    required
+                    placeholder="587"
+                    value={smtpPort}
+                    onChange={(e) => setSmtpPort(e.target.value)}
+                    inputProps={{ min: 1, max: 65535 }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Username" placeholder="user@example.com" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                  <TextField
+                    fullWidth
+                    label="Username"
+                    required
+                    placeholder="user@example.com"
+                    value={smtpUser}
+                    onChange={(e) => setSmtpUser(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Password" type="password" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type="password"
+                    placeholder={smtpId ? 'Leave blank to keep current' : ''}
+                    value={smtpPass}
+                    onChange={(e) => setSmtpPass(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="From Email" placeholder="noreply@example.com" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                  <TextField
+                    fullWidth
+                    label="From Email"
+                    required
+                    placeholder="noreply@example.com"
+                    value={smtpFromEmail}
+                    onChange={(e) => setSmtpFromEmail(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="From Name" placeholder="Biogas MIS" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                  <TextField
+                    fullWidth
+                    label="From Name"
+                    placeholder="Biogas MIS"
+                    value={smtpFromName}
+                    onChange={(e) => setSmtpFromName(e.target.value)}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
                 </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={smtpSecure}
+                        onChange={(e) => setSmtpSecure(e.target.checked)}
+                        sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
+                      />
+                    }
+                    label="Use TLS/SSL (secure)"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} />
                 <Grid item xs={12}>
-                  <Button
-                    variant="contained"
-                    className="btn-gradient-primary"
-                    sx={{
-                      textTransform: 'none',
-                      borderRadius: '12px',
-                      px: 4,
-                      color: '#fff',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Save SMTP Settings
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Button
+                      variant="contained"
+                      onClick={handleSaveSMTP}
+                      disabled={saving}
+                      startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : null}
+                      className="btn-gradient-primary"
+                      sx={{ textTransform: 'none', borderRadius: '12px', px: 4, color: '#fff', whiteSpace: 'nowrap' }}
+                    >
+                      {saving ? 'Saving…' : 'Save SMTP Settings'}
+                    </Button>
+                    <TextField
+                      size="small"
+                      label="Test recipient email"
+                      placeholder="test@example.com"
+                      value={smtpTestTo}
+                      onChange={(e) => setSmtpTestTo(e.target.value)}
+                      sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                    <Button
+                      variant="outlined"
+                      onClick={handleTestSMTP}
+                      disabled={smtpTesting || !smtpTestTo?.trim()}
+                      startIcon={smtpTesting ? <CircularProgress size={20} /> : null}
+                      sx={{
+                        textTransform: 'none',
+                        borderRadius: '12px',
+                        borderColor: '#2879b6',
+                        color: '#2879b6',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {smtpTesting ? 'Sending…' : 'Send Test Email'}
+                    </Button>
+                  </Box>
                 </Grid>
               </Grid>
             </CardContent>
@@ -1712,95 +2578,16 @@ export default function AdminPage() {
 
           <TabPanel value={tabValue} index={5}>
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
-                  Role Permissions
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <SaveIcon />}
-                  onClick={handleSavePermissions}
-                  disabled={saving}
-                  className="btn-gradient-success"
-                  sx={{
-                    textTransform: 'none',
-                    borderRadius: '12px',
-                    color: '#fff',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Save Permissions
-                </Button>
-              </Box>
-
-              {message && (
-                <Alert
-                  severity={message.type}
-                  sx={{
-                    mb: 2,
-                    borderRadius: '12px',
-                    '&.MuiAlert-standardSuccess': {
-                      backgroundColor: 'rgba(125, 194, 68, 0.1)',
-                      color: '#139B49',
-                    },
-                  }}
-                >
-                  {message.text}
-                </Alert>
-              )}
-
-              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none' }}>
-                <Table>
-                  <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Page Name</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, color: '#2879b6' }}>
-                        Read
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, color: '#7dc244' }}>
-                        Create
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, color: '#F59E21' }}>
-                        Update
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, color: '#ee6a31' }}>
-                        Delete
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {defaultPermissions.map(perm => (
-                      <TableRow key={perm.page} className="hover-lift" sx={{ transition: 'all 0.3s ease' }}>
-                        <TableCell sx={{ fontWeight: 500 }}>{perm.page}</TableCell>
-                        <TableCell align="center">
-                          <Checkbox
-                            checked={perm.read}
-                            sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Checkbox
-                            checked={perm.create}
-                            sx={{ color: '#7dc244', '&.Mui-checked': { color: '#7dc244' } }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Checkbox
-                            checked={perm.update}
-                            sx={{ color: '#F59E21', '&.Mui-checked': { color: '#F59E21' } }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Checkbox
-                            checked={perm.delete}
-                            sx={{ color: '#ee6a31', '&.Mui-checked': { color: '#ee6a31' } }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <MISEntryEmailPanel
+                formConfig={formConfig}
+                message={message}
+                setMessage={setMessage}
+              />
+            </CardContent>
+          </TabPanel>
+          <TabPanel value={tabValue} index={6}>
+            <CardContent sx={{ p: 3 }}>
+              <FinalMISReportEmailPanel message={message} setMessage={setMessage} />
             </CardContent>
           </TabPanel>
         </Card>
@@ -1885,16 +2672,19 @@ export default function AdminPage() {
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                 >
                   <MenuItem value="Admin">Admin</MenuItem>
+                  <MenuItem value="Manager">Manager</MenuItem>
                   <MenuItem value="Operator">Operator</MenuItem>
-                  <MenuItem value="Viewer">Viewer</MenuItem>
                 </TextField>
               </Grid>
             </Grid>
 
             <Divider sx={{ my: 3 }} />
 
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', mb: 0.5 }}>
               User Permissions
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Assign access per page for this user. These permissions apply only to this user and are the primary way to manage access.
             </Typography>
 
             <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none' }}>
@@ -2196,7 +2986,7 @@ export default function AdminPage() {
                   Recipient Roles:
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {['Admin', 'Manager', 'Operator', 'Viewer'].map(role => (
+                  {['Admin', 'Manager', 'Operator'].map(role => (
                     <FormControlLabel
                       key={role}
                       control={

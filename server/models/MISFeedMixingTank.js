@@ -28,7 +28,11 @@ module.exports = (sequelize) => {
         slurry_vs: DataTypes.FLOAT,
         slurry_ph: DataTypes.FLOAT
 
-    }, { tableName: 'mis_feed_mixing_tank', underscored: true });
+    }, {
+        tableName: 'mis_feed_mixing_tank',
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
+    });
 
     MISFeedMixingTank.associate = (models) => {
         MISFeedMixingTank.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });

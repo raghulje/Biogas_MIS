@@ -10,7 +10,11 @@ module.exports = (sequelize) => {
         mti: DataTypes.INTEGER,
         other_incidents: DataTypes.INTEGER,
         fatalities: DataTypes.INTEGER
-    }, { tableName: 'mis_hse_data', underscored: true });
+    }, {
+        tableName: 'mis_hse_data',
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
+    });
 
     MISHSEData.associate = (models) => {
         MISHSEData.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });

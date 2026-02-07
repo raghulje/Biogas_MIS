@@ -1,13 +1,12 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api', // Hardcoded for now, ideally env variable
+    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:5001/api'),
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Add auth token if available
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -15,6 +14,19 @@ api.interceptors.request.use((config) => {
     }
     return config;
 });
+
+api.interceptors.response.use(
+    (res) => res,
+    (err) => {
+        if (err.response?.status === 401) {
+            localStorage.removeItem('token');
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(err);
+    }
+);
 
 export const misService = {
     createEntry: async (data: any) => {
@@ -61,8 +73,12 @@ export const misService = {
         });
         return response.data;
     },
-    getDashboardData: async (period: string = 'month') => {
-        const response = await api.get('/dashboard/daily', { params: { period } });
+    getDashboardData: async (params: { period?: string; startDate?: string; endDate?: string } = {}) => {
+        const period = params.period ?? 'month';
+        const query: Record<string, string> = { period };
+        if (params.startDate) query.startDate = params.startDate;
+        if (params.endDate) query.endDate = params.endDate;
+        const response = await api.get('/dashboard/daily', { params: query });
         return response.data;
     },
     getConsolidatedData: async (params: {
@@ -73,6 +89,15 @@ export const misService = {
         year?: string;
     }) => {
         const response = await api.get('/mis-entries/consolidated', { params });
+        return response.data;
+    },
+    /** Full MIS entries for Final MIS report (date range). */
+    getEntriesForReport: async (params: { startDate: string; endDate: string }) => {
+        const response = await api.get('/mis-entries/for-report', { params });
+        return response.data;
+    },
+    getImportTemplate: async (): Promise<Blob> => {
+        const response = await api.get('/mis-entries/import-template', { responseType: 'blob' });
         return response.data;
     }
 };

@@ -1,9 +1,10 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Layout } from '../../components/Layout';
 import MISListView from './components/MISListView';
-import MISFormView from './components/MISFormView';
 import { misService } from '../../services/misService';
+import { Box, CircularProgress, Typography } from '@mui/material';
+
+const MISFormView = lazy(() => import('./components/MISFormView'));
 
 // Define loose type for now to avoid strict type errors with mock overrides
 type MISEntry = any;
@@ -68,8 +69,7 @@ export default function MISEntryPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [entries, setEntries] = useState<MISEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<MISEntry | null>(null);
-  // We keep digesters state for legacy compatibility if components rely on it, 
-  // but MISFormView now uses react-hook-form.
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [digesters, setDigesters] = useState<Digester[]>(defaultDigesters);
 
   useEffect(() => {
@@ -88,6 +88,7 @@ export default function MISEntryPage() {
   };
 
   const handleEdit = async (entry: MISEntry) => {
+    setLoadingDetails(true);
     try {
       const fullEntry = await misService.getEntryById(entry.id);
       setSelectedEntry(fullEntry);
@@ -95,10 +96,13 @@ export default function MISEntryPage() {
     } catch (e) {
       console.error(e);
       alert('Failed to load entry details');
+    } finally {
+      setLoadingDetails(false);
     }
   };
 
   const handleView = async (entry: MISEntry) => {
+    setLoadingDetails(true);
     try {
       const fullEntry = await misService.getEntryById(entry.id);
       setSelectedEntry(fullEntry);
@@ -106,6 +110,8 @@ export default function MISEntryPage() {
     } catch (e) {
       console.error(e);
       alert('Failed to load entry details');
+    } finally {
+      setLoadingDetails(false);
     }
   };
 
@@ -134,25 +140,51 @@ export default function MISEntryPage() {
   const addDigester = () => { };
   const removeDigester = (id: number) => { };
 
+  const formFallback = (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 320,
+        gap: 2,
+        bgcolor: 'rgba(255,255,255,0.9)',
+        borderRadius: 2,
+        p: 4,
+      }}
+    >
+      <CircularProgress size={48} sx={{ color: '#2879b6' }} />
+      <Typography variant="body1" sx={{ color: '#58595B', fontWeight: 500 }}>
+        Loading form…
+      </Typography>
+    </Box>
+  );
+
   return (
     <Layout>
-      {viewMode === 'list' ? (
+      {loadingDetails ? (
+        formFallback
+      ) : viewMode === 'list' ? (
         <MISListView
           entries={entries}
           onCreateNew={handleCreateNew}
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDelete}
+          onImportSuccess={fetchEntries}
         />
       ) : (
-        <MISFormView
-          viewMode={viewMode}
-          selectedEntry={selectedEntry}
-          digesters={digesters}
-          onBackToList={handleBackToList}
-          onAddDigester={addDigester}
-          onRemoveDigester={removeDigester}
-        />
+        <Suspense fallback={formFallback}>
+          <MISFormView
+            viewMode={viewMode}
+            selectedEntry={selectedEntry}
+            digesters={digesters}
+            onBackToList={handleBackToList}
+            onAddDigester={addDigester}
+            onRemoveDigester={removeDigester}
+          />
+        </Suspense>
       )}
     </Layout>
   );

@@ -13,7 +13,11 @@ module.exports = (sequelize) => {
         ch4_slippage: DataTypes.FLOAT,
         cbg_stock: DataTypes.FLOAT,
         cbg_sold: DataTypes.FLOAT
-    }, { tableName: 'mis_compressed_biogas', underscored: true });
+    }, {
+        tableName: 'mis_compressed_biogas',
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
+    });
 
     MISCompressedBiogas.associate = (models) => {
         MISCompressedBiogas.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });

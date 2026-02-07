@@ -1,13 +1,10 @@
 
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   TextField,
   Grid,
+  Box,
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { useFormContext } from 'react-hook-form';
 
 interface Props {
@@ -18,29 +15,31 @@ interface Props {
 export default function SLSMachineSection({ isReadOnly }: Props) {
   const { register } = useFormContext();
 
-  return (
-    <Accordion
-      sx={{
-        mb: 2,
-        borderRadius: '12px !important',
-        '&:before': { display: 'none' },
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        border: '1px solid #e0e0e0',
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-        sx={{
-          backgroundColor: '#f5f5f5',
-          borderBottom: '1px solid #e0e0e0',
-          minHeight: '56px',
-        }}
-      >
-        <Typography sx={{ fontWeight: 600, color: '#333' }}>SLS Machine</Typography>
-      </AccordionSummary>
+  const sectionStyle = {
+    mb: 2,
+    borderRadius: '12px !important',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#fff',
+  };
 
-      <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+  const headerStyle = {
+    backgroundColor: '#f5f5f5',
+    borderBottom: '1px solid #e0e0e0',
+    minHeight: '56px',
+    display: 'flex',
+    alignItems: 'center',
+    px: 2,
+  };
+
+  return (
+    <Box sx={sectionStyle}>
+      <Box sx={headerStyle}>
+        <Typography sx={{ fontWeight: 600, color: '#333' }}>SLS Machine</Typography>
+      </Box>
+
+      <Box sx={{ p: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
             <TextField fullWidth label="Water Consumption" type="number" {...register('slsMachine.waterConsumption')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -86,7 +85,7 @@ export default function SLSMachineSection({ isReadOnly }: Props) {
             <TextField fullWidth label="Liquid Sent to Lagoon" type="number" {...register('slsMachine.liquidSentToLagoon')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
-      </AccordionDetails>
-    </Accordion>
+      </Box>
+    </Box>
   );
 }

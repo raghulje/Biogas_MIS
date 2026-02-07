@@ -1,28 +1,28 @@
-
-import { useState } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  CircularProgress,
-  Container,
-  Paper,
-} from '@mui/material';
-import { LockOutlined } from '@mui/icons-material';
+import { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import srelIcon from '../../assets/srel.png';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    // Redirect if already authenticated
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+
+    window.scrollTo(0, 0);
+  }, [isAuthenticated, navigate]);
 
   if (!authLoading && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -30,234 +30,157 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setError('');
-    setLoading(true);
 
     try {
-      await login(email, password);
+      await login(formData.email, formData.password);
       navigate('/dashboard');
     } catch (err: any) {
       if (!err.response) {
-        setError('Cannot connect to server. Check that the backend is running and VITE_API_URL (e.g. http://localhost:5001/api) matches the server port.');
+        setError('Cannot connect to server. Check that the backend is running and VITE_API_URL matches the server port.');
         return;
       }
       const msg = err.response?.data?.message || err.response?.data?.error;
-      setError(msg || 'Login failed. Please check your credentials.');
+      setError(msg || 'Invalid email or password. Please try again.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const fillDemoCredentials = (role: 'admin' | 'operator' | 'viewer') => {
-    const credentials = {
-      admin: { email: 'admin@biogas.com', password: 'Admin@123' },
-      operator: { email: 'operator@biogas.com', password: 'User@123' },
-      viewer: { email: 'manager@biogas.com', password: 'User@123' },
-    };
-    setEmail(credentials[role].email);
-    setPassword(credentials[role].password);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError('');
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #2879b6 0%, #7dc244 50%, #ee6a31 100%)',
-        p: 2,
-      }}
-    >
-      <Container maxWidth="sm">
-        <Card
-          sx={{
-            borderRadius: 3,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          }}
-        >
-          <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <img
-                src="https://static.readdy.ai/image/d0ead66ce635a168f1e83b108be94826/0130f7c80037ff4a20e559ac6865fbbd.png"
-                alt="Logo"
-                style={{ height: '60px', width: 'auto', marginBottom: '16px' }}
-              />
-              <Box
-                sx={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #2879b6 0%, #7dc244 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px',
-                }}
-              >
-                <LockOutlined sx={{ fontSize: 28, color: '#ffffff' }} />
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6', mb: 1 }}>
-                Welcome Back
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#58595B' }}>
-                Industrial Biogas Plant MIS
-              </Typography>
-            </Box>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center p-4">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-[0.02]">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}></div>
+      </div>
 
+      <div className="max-w-md w-full relative z-10">
+        {/* Login Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-10">
+          {/* Logo and Header */}
+          <div className="text-center mb-10">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <img
+                  src={srelIcon}
+                  alt="SREL Logo"
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <p className="text-sm text-gray-600">Industrial Biogas Plant MIS</p>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <i className="ri-mail-line text-gray-400 text-lg"></i>
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white transition-all text-sm shadow-sm"
+                  placeholder="Enter your email"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <i className="ri-lock-line text-gray-400 text-lg"></i>
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="block w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white transition-all text-sm shadow-sm"
+                  placeholder="Enter your password"
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-900 transition-colors duration-200 focus:outline-none cursor-pointer z-10"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                >
+                  <i className={`text-lg ${showPassword ? 'ri-eye-line' : 'ri-eye-off-line'}`}></i>
+                </button>
+              </div>
+            </div>
+
+            {/* Error Message */}
             {error && (
-              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                {error}
-              </Alert>
+              <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <i className="ri-error-warning-line text-red-600 text-lg mt-0.5"></i>
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
+              </div>
             )}
 
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                mb: 3,
-                backgroundColor: 'rgba(40, 121, 182, 0.05)',
-                borderRadius: 2,
-                border: '1px solid rgba(40, 121, 182, 0.2)'
-              }}
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-semibold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  color: '#2879b6',
-                  mb: 2,
-                  textAlign: 'center'
-                }}
-              >
-                Demo Credentials
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  onClick={() => fillDemoCredentials('admin')}
-                  sx={{
-                    textTransform: 'none',
-                    justifyContent: 'flex-start',
-                    borderColor: '#2879b6',
-                    color: '#2879b6',
-                    '&:hover': {
-                      borderColor: '#235EAC',
-                      backgroundColor: 'rgba(40, 121, 182, 0.04)',
-                    },
-                  }}
-                >
-                  <Box sx={{ textAlign: 'left', width: '100%' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      Admin
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#58595B' }}>
-                      admin@biogas.com / Admin@123
-                    </Typography>
-                  </Box>
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  onClick={() => fillDemoCredentials('operator')}
-                  sx={{
-                    textTransform: 'none',
-                    justifyContent: 'flex-start',
-                    borderColor: '#7dc244',
-                    color: '#7dc244',
-                    '&:hover': {
-                      borderColor: '#139B49',
-                      backgroundColor: 'rgba(125, 194, 68, 0.04)',
-                    },
-                  }}
-                >
-                  <Box sx={{ textAlign: 'left', width: '100%' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      Operator
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#58595B' }}>
-                      operator@biogas.com / User@123
-                    </Typography>
-                  </Box>
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  onClick={() => fillDemoCredentials('viewer')}
-                  sx={{
-                    textTransform: 'none',
-                    justifyContent: 'flex-start',
-                    borderColor: '#ee6a31',
-                    color: '#ee6a31',
-                    '&:hover': {
-                      borderColor: '#F59E21',
-                      backgroundColor: 'rgba(238, 106, 49, 0.04)',
-                    },
-                  }}
-                >
-                  <Box sx={{ textAlign: 'left', width: '100%' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      Viewer
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#58595B' }}>
-                      manager@biogas.com / User@123
-                    </Typography>
-                  </Box>
-                </Button>
-              </Box>
-            </Paper>
+              {isSubmitting ? (
+                <>
+                  <i className="ri-loader-4-line animate-spin text-lg"></i>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <i className="ri-arrow-right-line text-lg"></i>
+                </>
+              )}
+            </button>
+          </form>
 
-            <form onSubmit={handleSubmit}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                sx={{ mb: 2.5 }}
-                autoComplete="email"
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                sx={{ mb: 3 }}
-                autoComplete="current-password"
-              />
-              <Button
-                fullWidth
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={loading}
-                sx={{
-                  py: 1.5,
-                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  boxShadow: '0 4px 12px rgba(40, 121, 182, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #235EAC 0%, #2879b6 100%)',
-                    boxShadow: '0 6px 16px rgba(40, 121, 182, 0.4)',
-                  },
-                }}
-              >
-                {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Login'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </Container>
-    </Box>
+          {/* Footer */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                © {new Date().getFullYear()} Refex Group. All rights reserved.
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Secure Admin Access</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

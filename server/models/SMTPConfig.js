@@ -38,7 +38,8 @@ module.exports = (sequelize, DataTypes) => {
         sequelize,
         modelName: 'SMTPConfig',
         tableName: 'smtp_configs',
-        underscored: true
+        underscored: true,
+        timestamps: false
     });
     return SMTPConfig;
 };

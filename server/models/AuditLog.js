@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
         sequelize,
         modelName: 'AuditLog',
         tableName: 'audit_logs',
-        underscored: true
+        underscored: true,
+        indexes: [{ fields: ['created_at'] }]
     });
     return AuditLog;
 };

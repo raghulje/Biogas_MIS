@@ -23,11 +23,22 @@ router.get('/users/:id/activity-logs', permissionMiddleware('user', 'read'), use
 router.get('/roles', permissionMiddleware('role', 'read'), adminController.getRoles);
 router.post('/roles', permissionMiddleware('role', 'create'), adminController.createRole);
 router.post('/roles/assign-permissions', permissionMiddleware('role', 'update'), adminController.assignPermissions);
+router.put('/roles/:id/permissions', permissionMiddleware('role', 'update'), adminController.updateRolePermissions);
 
 // SMTP Configuration
 router.get('/smtp-config', permissionMiddleware('config', 'read'), adminController.getSMTPConfig);
 router.post('/smtp-config', permissionMiddleware('config', 'update'), adminController.createSMTPConfig);
 router.put('/smtp-config/:id', permissionMiddleware('config', 'update'), adminController.updateSMTPConfig);
+router.post('/smtp-config/test', permissionMiddleware('config', 'update'), adminController.testSMTPConfig);
+
+// MIS Entry email recipients (submit + no-entry reminder)
+router.get('/mis-email-config', permissionMiddleware('config', 'read'), adminController.getMISEmailConfig);
+router.put('/mis-email-config', permissionMiddleware('config', 'update'), adminController.saveMISEmailConfig);
+
+// Final MIS Report email (recipients, subject, body, schedule)
+router.get('/final-mis-report-config', permissionMiddleware('config', 'read'), adminController.getFinalMISReportConfig);
+router.put('/final-mis-report-config', permissionMiddleware('config', 'update'), adminController.saveFinalMISReportConfig);
+router.post('/final-mis-report-config/send-test', permissionMiddleware('config', 'update'), adminController.sendTestFinalMISReport);
 
 // Email Schedulers
 router.get('/schedulers', permissionMiddleware('config', 'read'), adminController.getSchedulers);
@@ -43,7 +54,8 @@ router.post('/email-templates/test', permissionMiddleware('config', 'update'), e
 router.post('/email-templates/:id/preview', permissionMiddleware('config', 'read'), emailTemplateController.previewTemplate);
 router.get('/email-templates/:id/variables', permissionMiddleware('config', 'read'), emailTemplateController.getTemplateVariables);
 
-// Audit Logs
+// Audit Logs & Sessions
 router.get('/audit-logs', permissionMiddleware('audit', 'read'), adminController.getAuditLogs);
+router.get('/sessions', permissionMiddleware('audit', 'read'), adminController.getSessions);
 
 module.exports = router;

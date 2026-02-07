@@ -18,6 +18,9 @@ Enterprise-grade Node.js backend using Express, Sequelize, and MySQL.
 1. **Database Config**: `config/config.json`
 2. **Environment**: `.env`
 
+### Optional env for MIS submit notifications
+- **`MIS_NOTIFY_EMAILS`** – Comma-separated emails that receive "MIS Entry Submitted" notifications in addition to Manager/Admin users (e.g. `MIS_NOTIFY_EMAILS=ops@company.com,other@company.com`).
+
 ## 🏃‍♂️ How to Run
 
 ### 1. Install Dependencies

@@ -9,7 +9,11 @@ module.exports = (sequelize) => {
         total_raw_biogas: DataTypes.FLOAT,
         rbg_flared: DataTypes.FLOAT,
         gas_yield: DataTypes.FLOAT
-    }, { tableName: 'mis_raw_biogas', underscored: true });
+    }, {
+        tableName: 'mis_raw_biogas',
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
+    });
 
     MISRawBiogas.associate = (models) => {
         MISRawBiogas.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });

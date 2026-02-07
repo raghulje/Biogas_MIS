@@ -1,14 +1,11 @@
 
 import React from 'react';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   TextField,
   Grid,
+  Box,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useFormContext } from 'react-hook-form';
 
 interface Props {
@@ -19,29 +16,31 @@ interface Props {
 export default function FeedMixingTankSection({ isReadOnly }: Props) {
   const { register } = useFormContext();
 
-  return (
-    <Accordion
-      sx={{
-        mb: 2,
-        borderRadius: '12px !important',
-        '&:before': { display: 'none' },
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        border: '1px solid #e0e0e0',
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-        sx={{
-          backgroundColor: '#f5f5f5',
-          borderBottom: '1px solid #e0e0e0',
-          minHeight: '56px',
-        }}
-      >
-        <Typography sx={{ fontWeight: 600, color: '#333' }}>Feed Mixing Tank</Typography>
-      </AccordionSummary>
+  const sectionStyle = {
+    mb: 2,
+    borderRadius: '12px !important',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#fff',
+  };
 
-      <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+  const headerStyle = {
+    backgroundColor: '#f5f5f5',
+    borderBottom: '1px solid #e0e0e0',
+    minHeight: '56px',
+    display: 'flex',
+    alignItems: 'center',
+    px: 2,
+  };
+
+  return (
+    <Box sx={sectionStyle}>
+      <Box sx={headerStyle}>
+        <Typography sx={{ fontWeight: 600, color: '#333' }}>Feed Mixing Tank</Typography>
+      </Box>
+
+      <Box sx={{ p: 3 }}>
         {/* Cow Dung Feed */}
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#555' }}>
           Cow Dung Feed
@@ -118,7 +117,7 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
             <TextField fullWidth label="pH" type="number" {...register('feedMixingTank.slurry.ph')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
-      </AccordionDetails>
-    </Accordion>
+      </Box>
+    </Box>
   );
 }

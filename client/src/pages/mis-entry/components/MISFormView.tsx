@@ -7,7 +7,7 @@ import {
   Chip,
   IconButton,
   CircularProgress,
-  Alert
+  Alert,
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -15,7 +15,7 @@ import {
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useForm, FormProvider, SubmitHandler } from 'react-hook-form';
-import { MISEntry, mockMISEntries } from '../../../mocks/misEntries';
+import type { MISEntry } from '../../../mocks/misEntries';
 import RawMaterialsSection from './sections/RawMaterialsSection';
 import FeedMixingTankSection from './sections/FeedMixingTankSection';
 import DigestersSection from './sections/DigestersSection';
@@ -60,6 +60,16 @@ interface MISFormViewProps {
   onRemoveDigester: (id: number) => void;
 }
 
+
+const ProgressiveRender = ({ children, delay }: { children: React.ReactNode; delay: number }) => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setReady(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+  return ready ? <>{children}</> : null;
+};
+
 export default function MISFormView({
   viewMode,
   selectedEntry,
@@ -96,7 +106,8 @@ export default function MISFormView({
   };
 
   const methods = useForm<any>({
-    defaultValues: defaultCreateValues
+    defaultValues: defaultCreateValues,
+    shouldUnregister: false
   });
 
   useEffect(() => {
@@ -195,7 +206,46 @@ export default function MISFormView({
 
   return (
     <FormProvider {...methods}>
-      <Box className="aos-fade-up" component="form" onSubmit={methods.handleSubmit(onSubmit)}>
+      <Box className="aos-fade-up" component="form" onSubmit={methods.handleSubmit(onSubmit)} sx={{ position: 'relative' }}>
+        {submitting && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 1300,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(2px)',
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                p: 3,
+                boxShadow: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+              }}
+            >
+              <CircularProgress size={44} sx={{ color: '#2879b6' }} />
+              <Typography variant="body1" fontWeight={600} color="text.primary">
+                Saving…
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Please wait, do not close the page.
+              </Typography>
+            </Box>
+          </Box>
+        )}
         <Box
           sx={{
             mb: 3,
@@ -310,11 +360,21 @@ export default function MISFormView({
         )}
 
         <RawMaterialsSection isReadOnly={isReadOnly} />
-        <FeedMixingTankSection isReadOnly={isReadOnly} />
-        <DigestersSection isReadOnly={isReadOnly} />
-        <SLSMachineSection isReadOnly={isReadOnly} />
-        <BiogasSection isReadOnly={isReadOnly} />
-        <OtherSections isReadOnly={isReadOnly} />
+        <ProgressiveRender delay={100}>
+          <FeedMixingTankSection isReadOnly={isReadOnly} />
+        </ProgressiveRender>
+        <ProgressiveRender delay={200}>
+          <DigestersSection isReadOnly={isReadOnly} />
+        </ProgressiveRender>
+        <ProgressiveRender delay={300}>
+          <SLSMachineSection isReadOnly={isReadOnly} />
+        </ProgressiveRender>
+        <ProgressiveRender delay={400}>
+          <BiogasSection isReadOnly={isReadOnly} />
+        </ProgressiveRender>
+        <ProgressiveRender delay={500}>
+          <OtherSections isReadOnly={isReadOnly} />
+        </ProgressiveRender>
 
         {!isReadOnly && (
           <Box

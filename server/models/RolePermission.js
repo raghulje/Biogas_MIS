@@ -27,7 +27,8 @@ module.exports = (sequelize, DataTypes) => {
         modelName: 'RolePermission',
         tableName: 'role_permissions',
         underscored: true,
-        timestamps: false
+        timestamps: false,
+        indexes: [{ fields: ['role_id', 'permission_id'] }]
     });
     return RolePermission;
 };

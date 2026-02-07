@@ -7,7 +7,11 @@ module.exports = (sequelize) => {
         scheduled_downtime: DataTypes.FLOAT,
         unscheduled_downtime: DataTypes.FLOAT,
         total_availability: DataTypes.FLOAT
-    }, { tableName: 'mis_plant_availability', underscored: true });
+    }, {
+        tableName: 'mis_plant_availability',
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
+    });
 
     MISPlantAvailability.associate = (models) => {
         MISPlantAvailability.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });

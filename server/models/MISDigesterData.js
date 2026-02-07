@@ -50,7 +50,8 @@ module.exports = (sequelize, DataTypes) => {
         sequelize,
         modelName: 'MISDigesterData',
         tableName: 'mis_digester_data',
-        underscored: true
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
     });
     return MISDigesterData;
 };

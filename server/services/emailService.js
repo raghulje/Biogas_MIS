@@ -23,12 +23,25 @@ function getTransportOptions(config) {
 }
 
 class EmailService {
+    constructor() {
+        this.transporter = null;
+        this.lastConfigId = null;
+    }
+
     async getTransporter() {
         const config = await SMTPConfig.findOne({ where: { is_active: true } });
         if (!config) {
             throw new Error('No active SMTP configuration found');
         }
-        return nodemailer.createTransport(getTransportOptions(config));
+
+        // Reuse transporter if config hasn't changed
+        if (this.transporter && this.lastConfigId === config.id) {
+            return this.transporter;
+        }
+
+        this.transporter = nodemailer.createTransport(getTransportOptions(config));
+        this.lastConfigId = config.id;
+        return this.transporter;
     }
 
     /** Create transporter from a config object (for test email without saving). */

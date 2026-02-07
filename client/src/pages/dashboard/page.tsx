@@ -30,18 +30,27 @@ export default function DashboardPage() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboardData();
+    if (filterType !== 'custom') fetchDashboardData();
   }, [filterType]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
-      const data = await misService.getDashboardData(filterType);
+      const params: { period: string; startDate?: string; endDate?: string } = { period: filterType };
+      if (filterType === 'custom' && startDate && endDate) {
+        params.startDate = startDate.toISOString().slice(0, 10);
+        params.endDate = endDate.toISOString().slice(0, 10);
+      }
+      const data = await misService.getDashboardData(params);
       setDashboardData(data);
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
+      setFetchError('Failed to load dashboard. Please try again.');
+      setDashboardData(null);
     } finally {
       setLoading(false);
     }
@@ -55,11 +64,24 @@ export default function DashboardPage() {
     { value: 'custom', label: 'Custom' },
   ];
 
-  if (loading || !dashboardData) {
+  if (loading && !dashboardData) {
     return (
       <Layout>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
           <CircularProgress />
+        </Box>
+      </Layout>
+    );
+  }
+
+  if (fetchError || !dashboardData?.summary) {
+    return (
+      <Layout>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 5, gap: 2 }}>
+          <Typography color="textSecondary">{fetchError || 'No dashboard data available.'}</Typography>
+          <Button variant="contained" onClick={() => fetchDashboardData()} sx={{ textTransform: 'none' }}>
+            Retry
+          </Button>
         </Box>
       </Layout>
     );
@@ -136,40 +158,42 @@ export default function DashboardPage() {
             </Box>
             {filterType === 'custom' && (
               <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} sm={4}>
                     <DatePicker
                       label="Start Date"
                       value={startDate}
-                      onChange={(newValue) => setStartDate(newValue)}
+                      onChange={(newValue) => setStartDate(newValue ?? null)}
                       slotProps={{
                         textField: {
                           fullWidth: true,
-                          sx: {
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '12px',
-                            }
-                          }
+                          sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } }
                         }
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={4}>
                     <DatePicker
                       label="End Date"
                       value={endDate}
-                      onChange={(newValue) => setEndDate(newValue)}
+                      onChange={(newValue) => setEndDate(newValue ?? null)}
                       slotProps={{
                         textField: {
                           fullWidth: true,
-                          sx: {
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '12px',
-                            }
-                          }
+                          sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } }
                         }
                       }}
                     />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Button
+                      variant="contained"
+                      onClick={() => fetchDashboardData()}
+                      disabled={!startDate || !endDate || startDate > endDate}
+                      sx={{ textTransform: 'none', borderRadius: '12px' }}
+                    >
+                      Apply
+                    </Button>
                   </Grid>
                 </Grid>
               </LocalizationProvider>
@@ -196,8 +220,8 @@ export default function DashboardPage() {
               />
             </Box>
 
-            <Accordion
-              defaultExpanded
+            {/* Overall Production Summary */}
+            <Box
               className="aos-fade-right aos-delay-300"
               sx={{
                 mb: 1.5,
@@ -206,31 +230,28 @@ export default function DashboardPage() {
                 borderRadius: '12px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
+                backgroundColor: '#fff',
                 '&:hover': {
                   boxShadow: '0 4px 20px rgba(40, 121, 182, 0.15)',
                   transform: 'translateY(-2px)',
                 },
-                '&:before': {
-                  display: 'none',
-                }
               }}
             >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: '#ffffff' }} />}
+              <Box
                 className="gradient-header"
                 sx={{
                   background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
                   color: '#ffffff',
                   borderRadius: '12px 12px 0 0',
                   minHeight: '56px',
-                  '&.Mui-expanded': {
-                    minHeight: '56px',
-                  }
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 2,
                 }}
               >
                 <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Overall Production Summary</Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+              </Box>
+              <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
                     <Box
@@ -244,10 +265,10 @@ export default function DashboardPage() {
                       }}
                     >
                       <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        Cow Dung Purchased
+                        Total Raw Biogas
                       </Typography>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                        {summary.totalRawBiogas} m³
+                        {summary.totalRawBiogas ?? 0} m³
                       </Typography>
                     </Box>
                   </Grid>
@@ -263,10 +284,10 @@ export default function DashboardPage() {
                       }}
                     >
                       <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        Cow Dung Stock
+                        CBG Produced
                       </Typography>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                        {summary.totalCBGProduced} kg
+                        {summary.totalCBGProduced ?? 0} kg
                       </Typography>
                     </Box>
                   </Grid>
@@ -282,18 +303,19 @@ export default function DashboardPage() {
                       }}
                     >
                       <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        Press Mud Used
+                        CBG Sold
                       </Typography>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                        {summary.totalCBGSold} kg
+                        {summary.totalCBGSold ?? 0} kg
                       </Typography>
                     </Box>
                   </Grid>
                 </Grid>
-              </AccordionDetails>
-            </Accordion>
+              </Box>
+            </Box>
 
-            <Accordion
+            {/* Fertilizer & Plant Availability */}
+            <Box
               className="aos-fade-right aos-delay-400"
               sx={{
                 mb: 1.5,
@@ -302,30 +324,27 @@ export default function DashboardPage() {
                 borderRadius: '12px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
+                backgroundColor: '#fff',
                 '&:hover': {
                   boxShadow: '0 4px 20px rgba(125, 194, 68, 0.15)',
                   transform: 'translateY(-2px)',
                 },
-                '&:before': {
-                  display: 'none',
-                }
               }}
             >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: '#ffffff' }} />}
+              <Box
                 sx={{
                   background: 'linear-gradient(135deg, #7dc244 0%, #139B49 100%)',
                   color: '#ffffff',
                   borderRadius: '12px 12px 0 0',
                   minHeight: '56px',
-                  '&.Mui-expanded': {
-                    minHeight: '56px',
-                  }
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 2,
                 }}
               >
                 <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Fertilizer & Plant Availability</Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+              </Box>
+              <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
                     <Box
@@ -385,10 +404,11 @@ export default function DashboardPage() {
                     </Box>
                   </Grid>
                 </Grid>
-              </AccordionDetails>
-            </Accordion>
+              </Box>
+            </Box>
 
-            <Accordion
+            {/* Utilities & HSE Summary */}
+            <Box
               className="aos-fade-right aos-delay-500"
               sx={{
                 boxShadow: 'none',
@@ -396,30 +416,27 @@ export default function DashboardPage() {
                 borderRadius: '12px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
+                backgroundColor: '#fff',
                 '&:hover': {
                   boxShadow: '0 4px 20px rgba(238, 106, 49, 0.15)',
                   transform: 'translateY(-2px)',
                 },
-                '&:before': {
-                  display: 'none',
-                }
               }}
             >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: '#ffffff' }} />}
+              <Box
                 sx={{
                   background: 'linear-gradient(135deg, #ee6a31 0%, #F59E21 100%)',
                   color: '#ffffff',
                   borderRadius: '12px 12px 0 0',
                   minHeight: '56px',
-                  '&.Mui-expanded': {
-                    minHeight: '56px',
-                  }
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 2,
                 }}
               >
                 <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Utilities & HSE Summary</Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+              </Box>
+              <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <Box
@@ -460,8 +477,8 @@ export default function DashboardPage() {
                     </Box>
                   </Grid>
                 </Grid>
-              </AccordionDetails>
-            </Accordion>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
       </Box>

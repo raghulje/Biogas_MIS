@@ -23,6 +23,7 @@ import {
   Tooltip,
   IconButton,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -40,12 +41,23 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { MISEntry } from '../../../mocks/misEntries';
 
+function displayStatus(status: string | undefined): string {
+  if (!status || typeof status !== 'string') return 'Draft';
+  const s = status.toLowerCase();
+  if (s === 'approved') return 'Approved';
+  if (s === 'submitted' || s === 'under_review') return 'Submitted';
+  if (s === 'rejected') return 'Rejected';
+  if (s === 'deleted') return 'Deleted';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 interface MISListViewProps {
   entries: MISEntry[];
   onCreateNew: () => void;
   onEdit: (entry: MISEntry) => void;
   onView: (entry: MISEntry) => void;
   onDelete: (entry: MISEntry) => void;
+  onImportSuccess?: () => void;
 }
 
 export default function MISListView({
@@ -54,6 +66,7 @@ export default function MISListView({
   onEdit,
   onView,
   onDelete,
+  onImportSuccess,
 }: MISListViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -62,6 +75,7 @@ export default function MISListView({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<MISEntry | null>(null);
   const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -72,7 +86,7 @@ export default function MISListView({
       const { misService } = await import('../../../services/misService');
       await misService.importEntries(file);
       alert('Data imported successfully!');
-      window.location.reload(); // Refresh to see new entries
+      onImportSuccess?.();
     } catch (error: any) {
       console.error(error);
       alert('Import failed: ' + (error.response?.data?.message || error.message));
@@ -82,11 +96,51 @@ export default function MISListView({
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const { misService } = await import('../../../services/misService');
+      const params: Record<string, string> = {};
+      if (startDate) params.startDate = startDate.toISOString().slice(0, 10);
+      if (endDate) params.endDate = endDate.toISOString().slice(0, 10);
+      if (statusFilter !== 'All') params.status = statusFilter.toLowerCase();
+      const blob = await misService.exportEntries(params);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mis_entries_export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error(error);
+      alert('Export failed: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const { misService } = await import('../../../services/misService');
+      const blob = await misService.getImportTemplate();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'MIS_Import_Template.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error(error);
+      alert('Failed to download template: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
   const filteredEntries = entries.filter((entry) => {
     const matchesSearch =
       String(entry.id).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entry.createdBy.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || entry.status === statusFilter;
+      (entry.createdBy && String(entry.createdBy).toLowerCase().includes(searchQuery.toLowerCase()));
+    const entryStatusDisplay = displayStatus(entry.status);
+    const matchesStatus = statusFilter === 'All' || entryStatusDisplay === statusFilter;
     const entryDate = new Date(entry.date);
     const matchesDateRange =
       (!startDate || entryDate >= startDate) && (!endDate || entryDate <= endDate);
@@ -107,16 +161,13 @@ export default function MISListView({
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Submitted':
-        return { bg: 'rgba(40, 121, 182, 0.1)', color: '#2879b6' };
-      case 'Approved':
-        return { bg: 'rgba(125, 194, 68, 0.1)', color: '#7dc244' };
-      case 'Draft':
-        return { bg: 'rgba(245, 158, 33, 0.1)', color: '#F59E21' };
-      default:
+    const s = (status || '').toLowerCase();
+    if (s === 'submitted' || s === 'under_review') return { bg: 'rgba(40, 121, 182, 0.1)', color: '#2879b6' };
+    if (s === 'approved') return { bg: 'rgba(125, 194, 68, 0.1)', color: '#7dc244' };
+    if (s === 'draft') return { bg: 'rgba(245, 158, 33, 0.1)', color: '#F59E21' };
+    if (s === 'rejected') return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
+    if (s === 'deleted') return { bg: 'rgba(88, 89, 91, 0.2)', color: '#58595B' };
         return { bg: 'rgba(88, 89, 91, 0.1)', color: '#58595B' };
-    }
   };
 
   return (
@@ -134,7 +185,23 @@ export default function MISListView({
         <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
           MIS Entry Records
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<ExportIcon />}
+            onClick={handleDownloadTemplate}
+            sx={{
+              textTransform: 'none',
+              borderRadius: '12px',
+              borderColor: '#2879b6',
+              color: '#2879b6',
+              fontWeight: 600,
+              px: 3,
+              py: 1.2,
+            }}
+          >
+            Download Template
+          </Button>
           <input
             type="file"
             id="import-excel"
@@ -145,22 +212,40 @@ export default function MISListView({
           <label htmlFor="import-excel">
             <Button
               component="span"
-              variant="outlined"
+              variant="contained"
               startIcon={importing ? <CircularProgress size={20} /> : <ImportIcon />}
               disabled={importing}
+              className="btn-gradient-primary"
               sx={{
                 textTransform: 'none',
                 borderRadius: '12px',
                 px: 3,
                 py: 1.2,
-                color: '#2879b6',
                 borderColor: '#2879b6',
                 fontWeight: 600,
               }}
             >
-              Import Data
+              {importing ? 'Importing…' : 'Import'}
             </Button>
           </label>
+          <Button
+            variant="contained"
+            startIcon={exporting ? <CircularProgress size={20} /> : <ExportIcon />}
+            onClick={handleExport}
+            disabled={exporting || entries.length === 0}
+            sx={{
+              textTransform: 'none',
+              borderRadius: '12px',
+              px: 3,
+              py: 1.2,
+              backgroundColor: '#58595B',
+              color: '#fff',
+              fontWeight: 600,
+              '&:hover': { backgroundColor: '#333842' },
+            }}
+          >
+            {exporting ? 'Exporting…' : 'Export'}
+          </Button>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -233,6 +318,7 @@ export default function MISListView({
                 <MenuItem value="Draft">Draft</MenuItem>
                 <MenuItem value="Submitted">Submitted</MenuItem>
                 <MenuItem value="Approved">Approved</MenuItem>
+                <MenuItem value="Rejected">Rejected</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6} md={2.5}>
@@ -360,7 +446,7 @@ export default function MISListView({
                     <TableCell>{entry.createdBy}</TableCell>
                     <TableCell>
                       <Chip
-                        label={entry.status}
+                        label={displayStatus(entry.status)}
                         size="small"
                         sx={{
                           fontWeight: 600,
@@ -371,10 +457,10 @@ export default function MISListView({
                       />
                     </TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>
-                      {entry.compressedBiogas.produced} kg
+                      {entry.compressedBiogas?.produced ?? 0} kg
                     </TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>
-                      {entry.rawBiogas.totalRawBiogas} m³
+                      {entry.rawBiogas?.totalRawBiogas ?? 0} m³
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>

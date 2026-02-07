@@ -14,7 +14,11 @@ module.exports = (sequelize) => {
         liquid_ts: DataTypes.FLOAT,
         liquid_vs: DataTypes.FLOAT,
         liquid_sent_to_lagoon: DataTypes.FLOAT
-    }, { tableName: 'mis_sls_data', underscored: true });
+    }, {
+        tableName: 'mis_sls_data',
+        underscored: true,
+        indexes: [{ fields: ['entry_id'] }]
+    });
 
     MISSLSData.associate = (models) => {
         MISSLSData.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });

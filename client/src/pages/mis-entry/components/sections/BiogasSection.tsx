@@ -1,13 +1,10 @@
 
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   TextField,
   Grid,
+  Box,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useFormContext } from 'react-hook-form';
 
 interface Props {
@@ -18,30 +15,32 @@ interface Props {
 export default function BiogasSection({ isReadOnly }: Props) {
   const { register } = useFormContext();
 
+  const sectionStyle = {
+    mb: 2,
+    borderRadius: '12px !important',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#fff',
+  };
+
+  const headerStyle = {
+    backgroundColor: '#f5f5f5',
+    borderBottom: '1px solid #e0e0e0',
+    minHeight: '56px',
+    display: 'flex',
+    alignItems: 'center',
+    px: 2,
+  };
+
   return (
     <>
       {/* Raw Biogas */}
-      <Accordion
-        sx={{
-          mb: 2,
-          borderRadius: '12px !important',
-          '&:before': { display: 'none' },
-          overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          border: '1px solid #e0e0e0',
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-          sx={{
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid #e0e0e0',
-            minHeight: '56px',
-          }}
-        >
+      <Box sx={sectionStyle}>
+        <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Raw Biogas</Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+        </Box>
+        <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField fullWidth label="Digester 01 Gas" type="number" {...register('rawBiogas.digester01Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -62,33 +61,17 @@ export default function BiogasSection({ isReadOnly }: Props) {
               <TextField fullWidth label="Gas Yield" type="number" {...register('rawBiogas.gasYield')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      </Box>
 
       {/* Raw Biogas Quality */}
-      <Accordion
-        sx={{
-          mb: 2,
-          borderRadius: '12px !important',
-          '&:before': { display: 'none' },
-          overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          border: '1px solid #e0e0e0',
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-          sx={{
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid #e0e0e0',
-            minHeight: '56px',
-          }}
-        >
+      <Box sx={sectionStyle}>
+        <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>
             Raw Biogas Quality
           </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+        </Box>
+        <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField fullWidth label="CH4 %" type="number" {...register('rawBiogasQuality.ch4')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -106,33 +89,17 @@ export default function BiogasSection({ isReadOnly }: Props) {
               <TextField fullWidth label="N2 %" type="number" {...register('rawBiogasQuality.n2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      </Box>
 
       {/* Compressed Biogas */}
-      <Accordion
-        sx={{
-          mb: 2,
-          borderRadius: '12px !important',
-          '&:before': { display: 'none' },
-          overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          border: '1px solid #e0e0e0',
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-          sx={{
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid #e0e0e0',
-            minHeight: '56px',
-          }}
-        >
+      <Box sx={sectionStyle}>
+        <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>
             Compressed Biogas
           </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+        </Box>
+        <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField fullWidth label="Produced (kg)" type="number" {...register('compressedBiogas.produced')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -165,33 +132,17 @@ export default function BiogasSection({ isReadOnly }: Props) {
               <TextField fullWidth label="CBG Sold" type="number" {...register('compressedBiogas.cbgSold')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      </Box>
 
       {/* Compressors */}
-      <Accordion
-        sx={{
-          mb: 2,
-          borderRadius: '12px !important',
-          '&:before': { display: 'none' },
-          overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          border: '1px solid #e0e0e0',
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-          sx={{
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid #e0e0e0',
-            minHeight: '56px',
-          }}
-        >
+      <Box sx={sectionStyle}>
+        <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>
             Compressors
           </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+        </Box>
+        <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
               <TextField fullWidth label="Compressor 1 Hours" type="number" {...register('compressors.compressor1Hours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -203,8 +154,8 @@ export default function BiogasSection({ isReadOnly }: Props) {
               <TextField fullWidth label="Total Hours" type="number" {...register('compressors.totalHours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      </Box>
     </>
   );
 }

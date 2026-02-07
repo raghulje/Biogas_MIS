@@ -30,6 +30,7 @@ import {
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import srelIcon from '../assets/srel.png';
 import srelShortIcon from '../assets/srelshort.png';
 
@@ -50,7 +51,8 @@ export const Layout = ({ children }: LayoutProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const dummyUser = { name: 'Demo User', role: 'Admin' };
+  const { user, logout } = useAuth();
+  const dummyUser = user || { name: 'Demo User', role: 'Admin' };
 
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
@@ -73,16 +75,17 @@ export const Layout = ({ children }: LayoutProps) => {
   };
 
   const handleLogout = () => {
+    logout();
     navigate('/login');
   };
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'MIS Entry', icon: <AssignmentIcon />, path: '/mis-entry' },
-    { text: 'Consolidated MIS View', icon: <AssessmentIcon />, path: '/consolidated-mis-view' },
-    { text: 'Consolidated MIS v2', icon: <AssessmentIcon />, path: '/consolidated-mis-v2' },
+    // Consolidated MIS View & v2 hidden for now – routes still work at /consolidated-mis-view, /consolidated-mis-v2
+    { text: 'Final MIS Report', icon: <AssessmentIcon />, path: '/final-mis' },
     { text: 'Admin Panel', icon: <AdminIcon />, path: '/admin' },
-    { text: 'Audit Logs', icon: <HistoryIcon />, path: '/audit-logs' },
+    // Audit Logs hidden for now – route still works at /audit-logs
   ];
 
   const drawer = (
@@ -90,45 +93,30 @@ export const Layout = ({ children }: LayoutProps) => {
       <Box
         className="glass-header"
         sx={{
-          p: 2.5,
+          height: '64px',
           display: 'flex',
           alignItems: 'center',
-          gap: 1.5,
-          justifyContent: collapsed ? 'center' : 'space-between',
+          justifyContent: 'center',
+          px: collapsed ? 1 : 2,
           transition: 'all 0.3s ease',
         }}
       >
         {!collapsed && (
-          <>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-              <img
-                src={srelIcon}
-                alt="Logo"
-                style={{ height: '60px', width: 'auto' }}
-              />
-            </Box>
-          </>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <img
+              src={srelIcon}
+              alt="Logo"
+              style={{ height: '48px', width: 'auto' }}
+            />
+          </Box>
         )}
         {collapsed && (
           <img
             src={srelShortIcon}
             alt="Logo"
-            style={{ height: '40px', width: 'auto' }}
+            style={{ height: '36px', width: 'auto' }}
           />
         )}
-
-        <IconButton
-          onClick={handleCollapsedToggle}
-          sx={{
-            color: '#2879b6',
-            display: { xs: 'none', md: 'flex' },
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            },
-          }}
-        >
-          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
       </Box>
       <Divider />
       <List sx={{ px: collapsed ? 0.5 : 1.5, pt: 2, flex: 1 }}>
@@ -218,6 +206,20 @@ export const Layout = ({ children }: LayoutProps) => {
           </Tooltip>
         </ListItem>
       </List>
+      <Box sx={{ p: 1, display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
+        <IconButton
+          onClick={handleCollapsedToggle}
+          sx={{
+            color: '#2879b6',
+            display: { xs: 'none', md: 'flex' },
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          }}
+        >
+          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
+      </Box>
     </Box>
   );
 
@@ -261,7 +263,7 @@ export const Layout = ({ children }: LayoutProps) => {
                 {dummyUser.name}
               </Typography>
               <Typography variant="caption" sx={{ color: '#58595B' }}>
-                {dummyUser.role}
+                {typeof dummyUser.role === 'string' ? dummyUser.role : (dummyUser.role?.name || 'User')}
               </Typography>
             </Box>
             <IconButton

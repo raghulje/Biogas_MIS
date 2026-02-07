@@ -1,9 +1,6 @@
 
 import React from 'react';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   TextField,
   Grid,
@@ -15,7 +12,6 @@ import {
   MenuItem,
 } from '@mui/material';
 import {
-  ExpandMore as ExpandMoreIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
@@ -24,8 +20,8 @@ import { useFormContext, useFieldArray } from 'react-hook-form';
 interface Props {
   digesters?: any[];
   isReadOnly: boolean;
-  onAddDigester?: () => void; // Deprecated
-  onRemoveDigester?: (id: number) => void; // Deprecated
+  onAddDigester?: () => void;
+  onRemoveDigester?: (id: number) => void;
 }
 
 export default function DigestersSection({ isReadOnly }: Props) {
@@ -44,29 +40,31 @@ export default function DigestersSection({ isReadOnly }: Props) {
     });
   };
 
-  return (
-    <Accordion
-      sx={{
-        mb: 2,
-        borderRadius: '12px !important',
-        '&:before': { display: 'none' },
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        border: '1px solid #e0e0e0',
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon sx={{ color: '#666' }} />}
-        sx={{
-          backgroundColor: '#f5f5f5',
-          borderBottom: '1px solid #e0e0e0',
-          minHeight: '56px',
-        }}
-      >
-        <Typography sx={{ fontWeight: 600, color: '#333' }}>Digesters</Typography>
-      </AccordionSummary>
+  const sectionStyle = {
+    mb: 2,
+    borderRadius: '12px !important',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#fff',
+  };
 
-      <AccordionDetails sx={{ p: 3, backgroundColor: '#fff' }}>
+  const headerStyle = {
+    backgroundColor: '#f5f5f5',
+    borderBottom: '1px solid #e0e0e0',
+    minHeight: '56px',
+    display: 'flex',
+    alignItems: 'center',
+    px: 2,
+  };
+
+  return (
+    <Box sx={sectionStyle}>
+      <Box sx={headerStyle}>
+        <Typography sx={{ fontWeight: 600, color: '#333' }}>Digesters</Typography>
+      </Box>
+
+      <Box sx={{ p: 3 }}>
         {!isReadOnly && (
           <Box sx={{ mb: 2 }}>
             <Button
@@ -94,7 +92,7 @@ export default function DigestersSection({ isReadOnly }: Props) {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
-                    {/* Access name via hook form if editable, else just show it */}
+
                     <TextField
                       variant="standard"
                       {...register(`digesters.${index}.name`)}
@@ -195,7 +193,7 @@ export default function DigestersSection({ isReadOnly }: Props) {
         ) : (
           <Typography variant="body2" color="text.secondary">No digesters available.</Typography>
         )}
-      </AccordionDetails>
-    </Accordion>
+      </Box>
+    </Box>
   );
 }

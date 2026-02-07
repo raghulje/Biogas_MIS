@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const {
     MISDailyEntry,
     MISRawMaterials,
@@ -15,6 +16,7 @@ const {
     MISHSEData,
     User,
     Role,
+    MISEmailConfig,
     sequelize
 } = require('../models');
 const auditService = require('../services/auditService');
@@ -215,9 +217,11 @@ exports.createEntry = async (req, res) => {
         }, { transaction: t });
         const entryId = entry.id;
 
-        if (rawMaterials) await MISRawMaterials.create({ entry_id: entryId, cow_dung_purchased: n(rawMaterials.cowDungPurchased), cow_dung_stock: n(rawMaterials.cowDungStock), old_press_mud_opening_balance: n(rawMaterials.oldPressMudOpeningBalance), old_press_mud_purchased: n(rawMaterials.oldPressMudPurchased), old_press_mud_degradation_loss: n(rawMaterials.oldPressMudDegradationLoss), old_press_mud_closing_stock: n(rawMaterials.oldPressMudClosingStock), new_press_mud_purchased: n(rawMaterials.newPressMudPurchased), press_mud_used: n(rawMaterials.pressMudUsed), total_press_mud_stock: n(rawMaterials.totalPressMudStock), audit_note: rawMaterials.auditNote }, { transaction: t });
+        const childPromises = [];
 
-        if (feedMixingTank) await MISFeedMixingTank.create({ entry_id: entryId, cow_dung_qty: n(feedMixingTank.cowDungFeed?.qty), cow_dung_ts: n(feedMixingTank.cowDungFeed?.ts), cow_dung_vs: n(feedMixingTank.cowDungFeed?.vs), pressmud_qty: n(feedMixingTank.pressmudFeed?.qty), pressmud_ts: n(feedMixingTank.pressmudFeed?.ts), pressmud_vs: n(feedMixingTank.pressmudFeed?.vs), permeate_qty: n(feedMixingTank.permeateFeed?.qty), permeate_ts: n(feedMixingTank.permeateFeed?.ts), permeate_vs: n(feedMixingTank.permeateFeed?.vs), water_qty: n(feedMixingTank.waterQty), slurry_total: n(feedMixingTank.slurry?.total), slurry_ts: n(feedMixingTank.slurry?.ts), slurry_vs: n(feedMixingTank.slurry?.vs), slurry_ph: n(feedMixingTank.slurry?.ph) }, { transaction: t });
+        if (rawMaterials) childPromises.push(MISRawMaterials.create({ entry_id: entryId, cow_dung_purchased: n(rawMaterials.cowDungPurchased), cow_dung_stock: n(rawMaterials.cowDungStock), old_press_mud_opening_balance: n(rawMaterials.oldPressMudOpeningBalance), old_press_mud_purchased: n(rawMaterials.oldPressMudPurchased), old_press_mud_degradation_loss: n(rawMaterials.oldPressMudDegradationLoss), old_press_mud_closing_stock: n(rawMaterials.oldPressMudClosingStock), new_press_mud_purchased: n(rawMaterials.newPressMudPurchased), press_mud_used: n(rawMaterials.pressMudUsed), total_press_mud_stock: n(rawMaterials.totalPressMudStock), audit_note: rawMaterials.auditNote }, { transaction: t }));
+
+        if (feedMixingTank) childPromises.push(MISFeedMixingTank.create({ entry_id: entryId, cow_dung_qty: n(feedMixingTank.cowDungFeed?.qty), cow_dung_ts: n(feedMixingTank.cowDungFeed?.ts), cow_dung_vs: n(feedMixingTank.cowDungFeed?.vs), pressmud_qty: n(feedMixingTank.pressmudFeed?.qty), pressmud_ts: n(feedMixingTank.pressmudFeed?.ts), pressmud_vs: n(feedMixingTank.pressmudFeed?.vs), permeate_qty: n(feedMixingTank.permeateFeed?.qty), permeate_ts: n(feedMixingTank.permeateFeed?.ts), permeate_vs: n(feedMixingTank.permeateFeed?.vs), water_qty: n(feedMixingTank.waterQty), slurry_total: n(feedMixingTank.slurry?.total), slurry_ts: n(feedMixingTank.slurry?.ts), slurry_vs: n(feedMixingTank.slurry?.vs), slurry_ph: n(feedMixingTank.slurry?.ph) }, { transaction: t }));
 
         if (digesters && Array.isArray(digesters)) {
             const digesterPromises = digesters.map(d => MISDigesterData.create({
@@ -227,28 +231,30 @@ exports.createEntry = async (req, res) => {
                 lignin: n(d.characteristics?.lignin), vfa: n(d.characteristics?.vfa), alkalinity: n(d.characteristics?.alkalinity), vfa_alk_ratio: n(d.characteristics?.vfaAlkRatio), ash: n(d.characteristics?.ash), density: n(d.characteristics?.density), ph: n(d.characteristics?.ph), temp: n(d.characteristics?.temperature), pressure: n(d.characteristics?.pressure), slurry_level: n(d.characteristics?.slurryLevel),
                 hrt: n(d.health?.hrt), vs_destruction: n(d.health?.vsDestruction), olr: n(d.health?.olr), balloon_level: n(d.health?.balloonLevel), agitator_condition: d.health?.agitatorCondition != null ? String(d.health.agitatorCondition).slice(0, 255) : null, foaming_level: n(d.health?.foamingLevel)
             }, { transaction: t }));
-            await Promise.all(digesterPromises);
+            childPromises.push(...digesterPromises);
         }
 
-        if (slsMachine) await MISSLSData.create({ entry_id: entryId, water_consumption: n(slsMachine.waterConsumption), poly_electrolyte: n(slsMachine.polyElectrolyte), solution: n(slsMachine.solution), slurry_feed: n(slsMachine.slurryFeed), wet_cake_prod: n(slsMachine.wetCakeProduction), wet_cake_ts: n(slsMachine.wetCakeTs), wet_cake_vs: n(slsMachine.wetCakeVs), liquid_produced: n(slsMachine.liquidProduced), liquid_ts: n(slsMachine.liquidTs), liquid_vs: n(slsMachine.liquidVs), liquid_sent_to_lagoon: n(slsMachine.liquidSentToLagoon) }, { transaction: t });
+        if (slsMachine) childPromises.push(MISSLSData.create({ entry_id: entryId, water_consumption: n(slsMachine.waterConsumption), poly_electrolyte: n(slsMachine.polyElectrolyte), solution: n(slsMachine.solution), slurry_feed: n(slsMachine.slurryFeed), wet_cake_prod: n(slsMachine.wetCakeProduction), wet_cake_ts: n(slsMachine.wetCakeTs), wet_cake_vs: n(slsMachine.wetCakeVs), liquid_produced: n(slsMachine.liquidProduced), liquid_ts: n(slsMachine.liquidTs), liquid_vs: n(slsMachine.liquidVs), liquid_sent_to_lagoon: n(slsMachine.liquidSentToLagoon) }, { transaction: t }));
 
-        if (rawBiogas) await MISRawBiogas.create({ entry_id: entryId, digester_01_gas: n(rawBiogas.digester01Gas), digester_02_gas: n(rawBiogas.digester02Gas), digester_03_gas: n(rawBiogas.digester03Gas), total_raw_biogas: n(rawBiogas.totalRawBiogas), rbg_flared: n(rawBiogas.rbgFlared), gas_yield: n(rawBiogas.gasYield) }, { transaction: t });
+        if (rawBiogas) childPromises.push(MISRawBiogas.create({ entry_id: entryId, digester_01_gas: n(rawBiogas.digester01Gas), digester_02_gas: n(rawBiogas.digester02Gas), digester_03_gas: n(rawBiogas.digester03Gas), total_raw_biogas: n(rawBiogas.totalRawBiogas), rbg_flared: n(rawBiogas.rbgFlared), gas_yield: n(rawBiogas.gasYield) }, { transaction: t }));
 
-        if (rawBiogasQuality) await MISRawBiogasQuality.create({ entry_id: entryId, ch4: n(rawBiogasQuality.ch4), co2: n(rawBiogasQuality.co2), h2s: n(rawBiogasQuality.h2s), o2: n(rawBiogasQuality.o2), n2: n(rawBiogasQuality.n2) }, { transaction: t });
+        if (rawBiogasQuality) childPromises.push(MISRawBiogasQuality.create({ entry_id: entryId, ch4: n(rawBiogasQuality.ch4), co2: n(rawBiogasQuality.co2), h2s: n(rawBiogasQuality.h2s), o2: n(rawBiogasQuality.o2), n2: n(rawBiogasQuality.n2) }, { transaction: t }));
 
-        if (compressedBiogas) await MISCompressedBiogas.create({ entry_id: entryId, produced: n(compressedBiogas.produced), ch4: n(compressedBiogas.ch4), co2: n(compressedBiogas.co2), h2s: n(compressedBiogas.h2s), o2: n(compressedBiogas.o2), n2: n(compressedBiogas.n2), conversion_ratio: n(compressedBiogas.conversionRatio), ch4_slippage: n(compressedBiogas.ch4Slippage), cbg_stock: n(compressedBiogas.cbgStock), cbg_sold: n(compressedBiogas.cbgSold) }, { transaction: t });
+        if (compressedBiogas) childPromises.push(MISCompressedBiogas.create({ entry_id: entryId, produced: n(compressedBiogas.produced), ch4: n(compressedBiogas.ch4), co2: n(compressedBiogas.co2), h2s: n(compressedBiogas.h2s), o2: n(compressedBiogas.o2), n2: n(compressedBiogas.n2), conversion_ratio: n(compressedBiogas.conversionRatio), ch4_slippage: n(compressedBiogas.ch4Slippage), cbg_stock: n(compressedBiogas.cbgStock), cbg_sold: n(compressedBiogas.cbgSold) }, { transaction: t }));
 
-        if (compressors) await MISCompressors.create({ entry_id: entryId, compressor_1_hours: n(compressors.compressor1Hours), compressor_2_hours: n(compressors.compressor2Hours), total_hours: n(compressors.totalHours) }, { transaction: t });
+        if (compressors) childPromises.push(MISCompressors.create({ entry_id: entryId, compressor_1_hours: n(compressors.compressor1Hours), compressor_2_hours: n(compressors.compressor2Hours), total_hours: n(compressors.totalHours) }, { transaction: t }));
 
-        if (fertilizer) await MISFertilizerData.create({ entry_id: entryId, fom_produced: n(fertilizer.fomProduced), inventory: n(fertilizer.inventory), sold: n(fertilizer.sold), weighted_average: n(fertilizer.weightedAverage), revenue_1: n(fertilizer.revenue1), lagoon_liquid_sold: n(fertilizer.lagoonLiquidSold), revenue_2: n(fertilizer.revenue2), loose_fom_sold: n(fertilizer.looseFomSold), revenue_3: n(fertilizer.revenue3) }, { transaction: t });
+        if (fertilizer) childPromises.push(MISFertilizerData.create({ entry_id: entryId, fom_produced: n(fertilizer.fomProduced), inventory: n(fertilizer.inventory), sold: n(fertilizer.sold), weighted_average: n(fertilizer.weightedAverage), revenue_1: n(fertilizer.revenue1), lagoon_liquid_sold: n(fertilizer.lagoonLiquidSold), revenue_2: n(fertilizer.revenue2), loose_fom_sold: n(fertilizer.looseFomSold), revenue_3: n(fertilizer.revenue3) }, { transaction: t }));
 
-        if (utilities) await MISUtilities.create({ entry_id: entryId, electricity_consumption: n(utilities.electricityConsumption), specific_power_consumption: n(utilities.specificPowerConsumption) }, { transaction: t });
+        if (utilities) childPromises.push(MISUtilities.create({ entry_id: entryId, electricity_consumption: n(utilities.electricityConsumption), specific_power_consumption: n(utilities.specificPowerConsumption) }, { transaction: t }));
 
-        if (manpower) await MISManpowerData.create({ entry_id: entryId, refex_srel_staff: n(manpower.refexSrelStaff), third_party_staff: n(manpower.thirdPartyStaff) }, { transaction: t });
+        if (manpower) childPromises.push(MISManpowerData.create({ entry_id: entryId, refex_srel_staff: n(manpower.refexSrelStaff), third_party_staff: n(manpower.thirdPartyStaff) }, { transaction: t }));
 
-        if (plantAvailability) await MISPlantAvailability.create({ entry_id: entryId, working_hours: n(plantAvailability.workingHours), scheduled_downtime: n(plantAvailability.scheduledDowntime), unscheduled_downtime: n(plantAvailability.unscheduledDowntime), total_availability: n(plantAvailability.totalAvailability) }, { transaction: t });
+        if (plantAvailability) childPromises.push(MISPlantAvailability.create({ entry_id: entryId, working_hours: n(plantAvailability.workingHours), scheduled_downtime: n(plantAvailability.scheduledDowntime), unscheduled_downtime: n(plantAvailability.unscheduledDowntime), total_availability: n(plantAvailability.totalAvailability) }, { transaction: t }));
 
-        if (hse) await MISHSEData.create({ entry_id: entryId, safety_lti: n(hse.safetyLti), near_misses: n(hse.nearMisses), first_aid: n(hse.firstAid), reportable_incidents: n(hse.reportableIncidents), mti: n(hse.mti), other_incidents: n(hse.otherIncidents), fatalities: n(hse.fatalities) }, { transaction: t });
+        if (hse) childPromises.push(MISHSEData.create({ entry_id: entryId, safety_lti: n(hse.safetyLti), near_misses: n(hse.nearMisses), first_aid: n(hse.firstAid), reportable_incidents: n(hse.reportableIncidents), mti: n(hse.mti), other_incidents: n(hse.otherIncidents), fatalities: n(hse.fatalities) }, { transaction: t }));
+
+        await Promise.all(childPromises);
 
         await t.commit();
         await auditService.log(userId, 'CREATE_MIS_ENTRY', 'MISDailyEntry', entry.id, null, entry, req);
@@ -256,20 +262,79 @@ exports.createEntry = async (req, res) => {
 
     } catch (error) {
         await t.rollback();
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            const isDateShift = (error.fields && error.fields.mis_daily_entries_date_shift) ||
+                (error.errors && error.errors.some(e => e.path && e.path.includes('date_shift')));
+            if (isDateShift) {
+                return res.status(409).json({
+                    message: 'An entry for this date already exists. Please edit the existing entry from the list or choose a different date.'
+                });
+            }
+        }
         console.error('Create Entry Error:', error);
         res.status(500).json({ message: 'Error creating entry', error: error.message });
+    }
+};
+
+/**
+ * GET /mis-entries/for-report?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Returns full MIS entries (all nested data) for the date range for Final MIS report.
+ */
+exports.getEntriesForReport = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'startDate and endDate query params are required (YYYY-MM-DD)' });
+        }
+        const entries = await MISDailyEntry.findAll({
+            where: {
+                date: { [Op.between]: [startDate, endDate] },
+                status: { [Op.ne]: 'deleted' }
+            },
+            include: [
+                { model: MISRawMaterials, as: 'rawMaterials' },
+                { model: MISFeedMixingTank, as: 'feedMixingTank' },
+                { model: MISDigesterData, as: 'digesters' },
+                { model: MISSLSData, as: 'slsMachine' },
+                { model: MISRawBiogas, as: 'rawBiogas' },
+                { model: MISRawBiogasQuality, as: 'rawBiogasQuality' },
+                { model: MISCompressedBiogas, as: 'compressedBiogas' },
+                { model: MISCompressors, as: 'compressors' },
+                { model: MISFertilizerData, as: 'fertilizer' },
+                { model: MISUtilities, as: 'utilities' },
+                { model: MISManpowerData, as: 'manpower' },
+                { model: MISPlantAvailability, as: 'plantAvailability' },
+                { model: MISHSEData, as: 'hse' },
+                { model: User, as: 'creator', attributes: ['name', 'email'] }
+            ],
+            order: [['date', 'ASC']]
+        });
+        const mapped = entries.map(e => {
+            const transformed = transformEntry(e);
+            const json = e.toJSON ? e.toJSON() : e;
+            transformed.createdBy = json.creator?.name || 'Unknown';
+            transformed.date = json.date; // ensure YYYY-MM-DD
+            return transformed;
+        });
+        res.json(mapped);
+    } catch (error) {
+        console.error('getEntriesForReport error:', error);
+        res.status(500).json({ message: 'Error fetching entries for report', error: error.message });
     }
 };
 
 exports.getEntries = async (req, res) => {
     try {
         const entries = await MISDailyEntry.findAll({
+            where: { status: { [Op.ne]: 'deleted' } },
+            attributes: ['id', 'date', 'status', 'created_by', 'created_at'],
             include: [
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
                 { model: MISCompressedBiogas, as: 'compressedBiogas', attributes: ['produced'] },
                 { model: MISRawBiogas, as: 'rawBiogas', attributes: ['total_raw_biogas'] }
             ],
-            order: [['date', 'DESC']]
+            order: [['date', 'DESC']],
+            limit: 500
         });
 
         const mapped = entries.map(e => {
@@ -285,7 +350,7 @@ exports.getEntries = async (req, res) => {
         res.json(mapped);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error fetching entries' });
+        res.status(500).json({ message: 'Error fetching entries', error: error.message });
     }
 };
 
@@ -311,13 +376,11 @@ exports.getEntryById = async (req, res) => {
         });
         if (!entry) return res.status(404).json({ message: 'Entry not found' });
 
-        // Transform to match Client camelCase
         const transformed = transformEntry(entry);
-
         res.json(transformed);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
@@ -330,19 +393,38 @@ exports.submitEntry = async (req, res) => {
         await entry.update({ status: 'submitted' });
         await auditService.log(req.user.id, 'SUBMIT_ENTRY', 'MISDailyEntry', id, null, { status: 'submitted' }, req);
 
-        // Notify Managers and Admins
-        const roles = await Role.findAll({ where: { name: ['Manager', 'Admin'] } });
-        const reviewers = await User.findAll({ where: { role_id: roles.map(r => r.id), is_active: true } });
-
-        for (const reviewer of reviewers) {
-            await emailService.sendEmail(
-                reviewer.email,
-                `MIS Entry Submitted - ${entry.date}`,
-                `<p>Hello ${reviewer.name},</p>
-                 <p>An MIS entry for <b>${entry.date}</b> has been submitted by ${entry.creator?.name || 'an operator'} and is awaiting your review.</p>
-                 <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/mis-entry/${id}">Click here to review</a></p>`
-            );
+        // Recipients from Admin Panel (MIS Email Config); fallback to Manager/Admin + env if none set
+        const toEmails = new Set();
+        try {
+            const configRow = await MISEmailConfig.findByPk(1);
+            const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+            const adminEmails = configRow ? parse(configRow.submit_notify_emails) : [];
+            adminEmails.forEach(e => { const x = String(e).trim().toLowerCase(); if (x) toEmails.add(x); });
+        } catch (_) { /* ignore */ }
+        if (toEmails.size === 0) {
+            const roles = await Role.findAll({ where: { name: ['Manager', 'Admin'] } });
+            const reviewers = await User.findAll({ where: { role_id: roles.map(r => r.id), is_active: true } });
+            reviewers.forEach(r => { if (r.email) toEmails.add(r.email.trim().toLowerCase()); });
+            (process.env.MIS_NOTIFY_EMAILS || '').split(',').forEach(e => { const x = e.trim().toLowerCase(); if (x) toEmails.add(x); });
         }
+
+        const subject = `MIS Entry Submitted - ${entry.date}`;
+        const html = `<p>Hello,</p>
+                 <p>An MIS entry for <b>${entry.date}</b> has been submitted by ${entry.creator?.name || 'an operator'} and is awaiting your review.</p>
+                 <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/mis-entry">Click here to review</a></p>`;
+
+        // Send emails in parallel to avoid blocking the response
+        const emailPromises = Array.from(toEmails).map(async (email) => {
+            try {
+                await emailService.sendEmail(email, subject, html);
+            } catch (emailErr) {
+                console.error('Submit notification email failed for', email, emailErr.message);
+            }
+        });
+
+        // We don't await ALL of them if we want to respond fast, but awaiting them in parallel is much better than in a loop.
+        // Actually, let's await them so we can log any catastrophic failure but parallelize the latency.
+        await Promise.all(emailPromises);
 
         res.json({ message: 'Entry submitted successfully and notifications sent' });
     } catch (error) {
@@ -374,6 +456,20 @@ exports.approveEntry = async (req, res) => {
     } catch (error) {
         console.error('Approve Entry Error:', error);
         res.status(500).json({ message: 'Error approving entry', error: error.message });
+    }
+};
+
+exports.reviewEntry = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const entry = await MISDailyEntry.findByPk(id);
+        if (!entry) return res.status(404).json({ message: 'Entry not found' });
+        await entry.update({ status: 'under_review' });
+        await auditService.log(req.user.id, 'REVIEW_ENTRY', 'MISDailyEntry', id, { status: entry.status }, { status: 'under_review' }, req);
+        res.json({ message: 'Entry marked for review' });
+    } catch (error) {
+        console.error('Review Entry Error:', error);
+        res.status(500).json({ message: 'Error updating review status', error: error.message });
     }
 };
 

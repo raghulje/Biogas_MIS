@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: 'General'
         },
         status: {
-            type: DataTypes.ENUM('draft', 'submitted', 'under_review', 'approved', 'rejected'),
+            type: DataTypes.ENUM('draft', 'submitted', 'under_review', 'approved', 'rejected', 'deleted'),
             defaultValue: 'draft'
         },
         review_comment: {
@@ -53,10 +53,10 @@ module.exports = (sequelize, DataTypes) => {
         tableName: 'mis_daily_entries',
         underscored: true,
         indexes: [
-            {
-                unique: true,
-                fields: ['date', 'shift']
-            }
+            { unique: true, fields: ['date', 'shift'] },
+            { fields: ['date'] },
+            { fields: ['status'] },
+            { fields: ['created_by'] }
         ]
     });
     return MISDailyEntry;

@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import axios from 'axios';
+import { misService } from '../services/misService';
 
 interface ImportModalProps {
   open: boolean;
@@ -50,29 +50,16 @@ export default function ImportModal({ open, onClose, onSuccess }: ImportModalPro
       return;
     }
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
     try {
       setUploading(true);
       setProgress(0);
       setError('');
       setSuccess(false);
 
-      const response = await axios.post('http://localhost:3000/mis/import', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0;
-          setProgress(percentCompleted);
-        },
-      });
+      const data = await misService.importEntries(selectedFile);
 
       setSuccess(true);
-      setRecordsImported(response.data.recordsImported || 0);
+      setRecordsImported(data?.results?.success ?? data?.recordsImported ?? 0);
       setSelectedFile(null);
 
       if (onSuccess) {
@@ -80,7 +67,7 @@ export default function ImportModal({ open, onClose, onSuccess }: ImportModalPro
       }
     } catch (err: any) {
       setError(
-        err.response?.data?.message || 'Failed to import Excel file. Please try again.'
+        err.response?.data?.message || err.response?.data?.error || 'Failed to import Excel file. Please try again.'
       );
     } finally {
       setUploading(false);
