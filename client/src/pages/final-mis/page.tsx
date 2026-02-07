@@ -1312,30 +1312,7 @@ const FinalMISPage = () => {
                 />
                 Export Excel
               </Button>
-              <Button
-                variant="contained"
-                onClick={() => window.print()}
-                sx={{
-                  background: 'rgba(255,255,255,0.2)',
-                  color: '#fff',
-                  borderRadius: '12px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  whiteSpace: 'nowrap',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  '&:hover': {
-                    background: 'rgba(255,255,255,0.3)',
-                  },
-                }}
-              >
-                <i
-                  className="ri-printer-line"
-                  style={{ marginRight: 8, fontSize: '18px' }}
-                />
-                Print
-              </Button>
+              {/* Print Button Hidden */}
             </Box>
           </Box>
         </Box>

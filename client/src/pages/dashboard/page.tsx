@@ -16,7 +16,14 @@ import {
 import {
   ExpandMore as ExpandMoreIcon,
   FilterList as FilterIcon,
-  Download as DownloadIcon,
+  LocalFireDepartment as BiogasIcon,
+  LocalGasStation as GasIcon,
+  Sell as SellIcon,
+  Grass as FomIcon,
+  Speed as AvgIcon,
+  Storefront as StoreIcon,
+  Bolt as BoltIcon,
+  HealthAndSafety as SafetyIcon,
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -99,22 +106,7 @@ export default function DashboardPage() {
           <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
             Dashboard
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            className="btn-gradient-success"
-            sx={{
-              textTransform: 'none',
-              borderRadius: '12px',
-              color: '#ffffff',
-              fontWeight: 600,
-              px: 3,
-              py: 1.2,
-              boxShadow: '0 4px 15px rgba(125, 194, 68, 0.3)',
-            }}
-          >
-            Export Report
-          </Button>
+          {/* Export Report Hidden */}
         </Box>
 
         <Card
@@ -264,12 +256,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        Total Raw Biogas
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                        {summary.totalRawBiogas ?? 0} m³
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            Total Raw Biogas
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
+                            {summary.totalRawBiogas ?? 0} m³
+                          </Typography>
+                        </Box>
+                        <BiogasIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -283,12 +280,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        CBG Produced
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                        {summary.totalCBGProduced ?? 0} kg
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            CBG Produced
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
+                            {summary.totalCBGProduced ?? 0} kg
+                          </Typography>
+                        </Box>
+                        <GasIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -302,12 +304,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        CBG Sold
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                        {summary.totalCBGSold ?? 0} kg
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            CBG Sold
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
+                            {summary.totalCBGSold ?? 0} kg
+                          </Typography>
+                        </Box>
+                        <SellIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                 </Grid>
@@ -357,12 +364,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        FOM Produced
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                        {summary.totalFOMProduced} kg
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            FOM Produced
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
+                            {summary.totalFOMProduced} kg
+                          </Typography>
+                        </Box>
+                        <FomIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -376,12 +388,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        Avg Availability
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                        {summary.avgPlantAvailability}%
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            Avg Availability
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
+                            {summary.avgPlantAvailability}%
+                          </Typography>
+                        </Box>
+                        <AvgIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -395,12 +412,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        FOM Sold
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                        {summary.totalFOMSold} kg
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            FOM Sold
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
+                            {summary.totalFOMSold} kg
+                          </Typography>
+                        </Box>
+                        <StoreIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                 </Grid>
@@ -449,12 +471,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        Electricity Consumption
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                        {summary.totalElectricityConsumption} kWh
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            Electricity Consumption
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
+                            {summary.totalElectricityConsumption} kWh
+                          </Typography>
+                        </Box>
+                        <BoltIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -468,12 +495,17 @@ export default function DashboardPage() {
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                        HSE Incidents
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                        {summary.totalHSEIncidents}
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            HSE Incidents
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
+                            {summary.totalHSEIncidents}
+                          </Typography>
+                        </Box>
+                        <SafetyIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
+                      </Box>
                     </Box>
                   </Grid>
                 </Grid>
