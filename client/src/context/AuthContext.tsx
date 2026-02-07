@@ -35,7 +35,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.error('Auth sync failed', error);
           localStorage.removeItem('token');
           setToken(null);
+          setUser(null);
         }
+      } else {
+        setUser(null);
       }
       setLoading(false);
     };

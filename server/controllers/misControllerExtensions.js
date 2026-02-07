@@ -367,8 +367,7 @@ exports.deleteEntry = async (req, res) => {
         // Store for audit
         const oldValues = entry.toJSON();
 
-        // Soft delete by updating status
-        await entry.update({ status: 'Deleted' }, { transaction: t });
+        await entry.update({ status: 'deleted' }, { transaction: t });
 
         // Or hard delete if required:
         // await entry.destroy({ transaction: t });
@@ -384,123 +383,248 @@ exports.deleteEntry = async (req, res) => {
     }
 };
 
-// IMPORT FROM EXCEL
+// GET IMPORT TEMPLATE - Excel with all section headers
+exports.getImportTemplate = async (req, res) => {
+    try {
+        const headers = [
+            'Date', 'Status',
+            'CowDungPurchased', 'CowDungStock', 'OldPressMudOpeningBalance', 'OldPressMudPurchased', 'OldPressMudDegradationLoss', 'OldPressMudClosingStock', 'NewPressMudPurchased', 'PressMudUsed', 'TotalPressMudStock', 'AuditNote',
+            'CowDungQty', 'CowDungTS', 'CowDungVS', 'PressmudQty', 'PressmudTS', 'PressmudVS', 'PermeateQty', 'PermeateTS', 'PermeateVS', 'WaterQty', 'SlurryTotal', 'SlurryTS', 'SlurryVS', 'SlurryPH',
+            'Digester01_FeedingSlurry', 'Digester01_FeedingTS', 'Digester01_FeedingVS', 'Digester01_DischargeSlurry', 'Digester01_DischargeTS', 'Digester01_DischargeVS', 'Digester01_PH', 'Digester01_Temp', 'Digester01_HRT', 'Digester01_OLR',
+            'Digester02_FeedingSlurry', 'Digester02_FeedingTS', 'Digester02_FeedingVS', 'Digester02_DischargeSlurry', 'Digester02_DischargeTS', 'Digester02_DischargeVS', 'Digester02_PH', 'Digester02_Temp', 'Digester02_HRT', 'Digester02_OLR',
+            'Digester03_FeedingSlurry', 'Digester03_FeedingTS', 'Digester03_FeedingVS', 'Digester03_DischargeSlurry', 'Digester03_DischargeTS', 'Digester03_DischargeVS', 'Digester03_PH', 'Digester03_Temp', 'Digester03_HRT', 'Digester03_OLR',
+            'Digester01Gas', 'Digester02Gas', 'Digester03Gas', 'TotalRawBiogas', 'RbgFlared', 'GasYield',
+            'RBG_CH4', 'RBG_CO2', 'RBG_H2S', 'RBG_O2', 'RBG_N2',
+            'CBGProduced', 'CBG_CH4', 'CBG_CO2', 'CBG_H2S', 'CBG_O2', 'CBG_N2', 'ConversionRatio', 'Ch4Slippage', 'CbgStock', 'CbgSold',
+            'Compressor1Hours', 'Compressor2Hours', 'TotalHours',
+            'ElectricityConsumption', 'SpecificPowerConsumption',
+            'FOMProduced', 'Inventory', 'Sold', 'WeightedAverage', 'Revenue1', 'LagoonLiquidSold', 'Revenue2', 'LooseFomSold', 'Revenue3',
+            'WorkingHours', 'ScheduledDowntime', 'UnscheduledDowntime', 'TotalAvailability',
+            'SafetyLTI', 'NearMisses', 'FirstAid', 'ReportableIncidents', 'MTI', 'OtherIncidents', 'Fatalities'
+        ];
+        const emptyRow = headers.reduce((acc, h) => ({ ...acc, [h]: '' }), {});
+        const worksheet = XLSX.utils.json_to_sheet([emptyRow], { header: headers });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'MIS Import Template');
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Disposition', 'attachment; filename=MIS_Import_Template.xlsx');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buffer);
+    } catch (error) {
+        console.error('Import template error:', error);
+        res.status(500).json({ message: 'Error generating template', error: error.message });
+    }
+};
+
+function parseExcelDate(val) {
+    if (val == null || val === '') return new Date().toISOString().slice(0, 10);
+    if (typeof val === 'number') {
+        const utc = (val - 25569) * 86400 * 1000;
+        return new Date(utc).toISOString().slice(0, 10);
+    }
+    const s = String(val).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? new Date().toISOString().slice(0, 10) : d.toISOString().slice(0, 10);
+}
+
+// IMPORT FROM EXCEL - parse correctly, insert all MIS tables, log activity
 exports.importEntries = async (req, res) => {
     try {
-        if (!req.file) {
+        if (!req.file || !req.file.buffer) {
             return res.status(400).json({ message: 'No file uploaded' });
         }
-
         const userId = req.user.id;
-        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(worksheet);
+        const data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+        const results = { total: data.length, success: 0, failed: 0, errors: [] };
 
-        const results = {
-            total: data.length,
-            success: 0,
-            failed: 0,
-            errors: []
-        };
-
-        for (const row of data) {
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
             const t = await sequelize.transaction();
             try {
-                // Map Excel columns to database fields
+                const dateStr = parseExcelDate(row.Date || row.date);
+                const statusVal = String(row.Status || row.status || 'draft').toLowerCase();
+                const status = ['draft', 'submitted', 'approved', 'rejected'].includes(statusVal) ? statusVal : 'draft';
+
                 const entry = await MISDailyEntry.create({
-                    date: row.Date || new Date(),
-                    status: row.Status || 'Draft',
+                    date: dateStr,
+                    status,
                     created_by: userId
                 }, { transaction: t });
+                const entryId = entry.id;
 
-                // Raw Materials
                 await MISRawMaterials.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
                     cow_dung_purchased: n(row.CowDungPurchased),
                     cow_dung_stock: n(row.CowDungStock),
+                    old_press_mud_opening_balance: n(row.OldPressMudOpeningBalance),
+                    old_press_mud_purchased: n(row.OldPressMudPurchased),
+                    old_press_mud_degradation_loss: n(row.OldPressMudDegradationLoss),
+                    old_press_mud_closing_stock: n(row.OldPressMudClosingStock),
+                    new_press_mud_purchased: n(row.NewPressMudPurchased),
                     press_mud_used: n(row.PressMudUsed),
                     total_press_mud_stock: n(row.TotalPressMudStock),
+                    audit_note: row.AuditNote != null ? String(row.AuditNote).slice(0, 500) : null
                 }, { transaction: t });
 
-                // Feed Mixing Tank
                 await MISFeedMixingTank.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
                     cow_dung_qty: n(row.CowDungQty),
+                    cow_dung_ts: n(row.CowDungTS),
+                    cow_dung_vs: n(row.CowDungVS),
                     pressmud_qty: n(row.PressmudQty),
+                    pressmud_ts: n(row.PressmudTS),
+                    pressmud_vs: n(row.PressmudVS),
+                    permeate_qty: n(row.PermeateQty),
+                    permeate_ts: n(row.PermeateTS),
+                    permeate_vs: n(row.PermeateVS),
                     water_qty: n(row.WaterQty),
                     slurry_total: n(row.SlurryTotal),
+                    slurry_ts: n(row.SlurryTS),
+                    slurry_vs: n(row.SlurryVS),
+                    slurry_ph: n(row.SlurryPH)
                 }, { transaction: t });
 
-                // Raw Biogas
+                const digesterNames = ['Digester 01', 'Digester 02', 'Digester 03'];
+                for (let d = 0; d < 3; d++) {
+                    const p = 'Digester0' + (d + 1) + '_';
+                    await MISDigesterData.create({
+                        entry_id: entryId,
+                        digester_name: digesterNames[d],
+                        feeding_slurry: n(row[p + 'FeedingSlurry']),
+                        feeding_ts_percent: n(row[p + 'FeedingTS']),
+                        feeding_vs_percent: n(row[p + 'FeedingVS']),
+                        discharge_slurry: n(row[p + 'DischargeSlurry']),
+                        discharge_ts_percent: n(row[p + 'DischargeTS']),
+                        discharge_vs_percent: n(row[p + 'DischargeVS']),
+                        ph: n(row[p + 'PH']),
+                        temp: n(row[p + 'Temp']),
+                        hrt: n(row[p + 'HRT']),
+                        olr: n(row[p + 'OLR'])
+                    }, { transaction: t });
+                }
+
                 await MISRawBiogas.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
+                    digester_01_gas: n(row.Digester01Gas),
+                    digester_02_gas: n(row.Digester02Gas),
+                    digester_03_gas: n(row.Digester03Gas),
                     total_raw_biogas: n(row.TotalRawBiogas),
-                    gas_yield: n(row.GasYield),
+                    rbg_flared: n(row.RbgFlared),
+                    gas_yield: n(row.GasYield)
                 }, { transaction: t });
 
-                // Compressed Biogas
+                await MISRawBiogasQuality.create({
+                    entry_id: entryId,
+                    ch4: n(row.RBG_CH4),
+                    co2: n(row.RBG_CO2),
+                    h2s: n(row.RBG_H2S),
+                    o2: n(row.RBG_O2),
+                    n2: n(row.RBG_N2)
+                }, { transaction: t });
+
                 await MISCompressedBiogas.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
                     produced: n(row.CBGProduced),
-                    cbg_sold: n(row.CBGSold),
+                    ch4: n(row.CBG_CH4),
+                    co2: n(row.CBG_CO2),
+                    h2s: n(row.CBG_H2S),
+                    o2: n(row.CBG_O2),
+                    n2: n(row.CBG_N2),
+                    conversion_ratio: n(row.ConversionRatio),
+                    ch4_slippage: n(row.Ch4Slippage),
+                    cbg_stock: n(row.CbgStock),
+                    cbg_sold: n(row.CbgSold)
                 }, { transaction: t });
 
-                // Fertilizer
+                await MISCompressors.create({
+                    entry_id: entryId,
+                    compressor_1_hours: n(row.Compressor1Hours),
+                    compressor_2_hours: n(row.Compressor2Hours),
+                    total_hours: n(row.TotalHours)
+                }, { transaction: t });
+
                 await MISFertilizerData.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
                     fom_produced: n(row.FOMProduced),
-                    sold: n(row.FOMSold),
+                    inventory: n(row.Inventory),
+                    sold: n(row.Sold),
+                    weighted_average: n(row.WeightedAverage),
+                    revenue_1: n(row.Revenue1),
+                    lagoon_liquid_sold: n(row.LagoonLiquidSold),
+                    revenue_2: n(row.Revenue2),
+                    loose_fom_sold: n(row.LooseFomSold),
+                    revenue_3: n(row.Revenue3)
                 }, { transaction: t });
 
-                // Utilities
                 await MISUtilities.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
                     electricity_consumption: n(row.ElectricityConsumption),
+                    specific_power_consumption: n(row.SpecificPowerConsumption)
                 }, { transaction: t });
 
-                // Plant Availability
                 await MISPlantAvailability.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
                     working_hours: n(row.WorkingHours),
-                    total_availability: n(row.TotalAvailability),
+                    scheduled_downtime: n(row.ScheduledDowntime),
+                    unscheduled_downtime: n(row.UnscheduledDowntime),
+                    total_availability: n(row.TotalAvailability)
                 }, { transaction: t });
 
-                // HSE
                 await MISHSEData.create({
-                    entry_id: entry.id,
+                    entry_id: entryId,
                     safety_lti: n(row.SafetyLTI),
                     near_misses: n(row.NearMisses),
+                    first_aid: n(row.FirstAid),
+                    reportable_incidents: n(row.ReportableIncidents),
+                    mti: n(row.MTI),
+                    other_incidents: n(row.OtherIncidents),
+                    fatalities: n(row.Fatalities)
+                }, { transaction: t });
+
+                await MISManpowerData.create({
+                    entry_id: entryId,
+                    refex_srel_staff: n(row.RefexSrelStaff),
+                    third_party_staff: n(row.ThirdPartyStaff)
+                }, { transaction: t });
+
+                await MISSLSData.create({
+                    entry_id: entryId,
+                    water_consumption: n(row.WaterConsumption),
+                    poly_electrolyte: n(row.PolyElectrolyte),
+                    solution: n(row.Solution),
+                    slurry_feed: n(row.SlurryFeed),
+                    wet_cake_prod: n(row.WetCakeProduction),
+                    wet_cake_ts: n(row.WetCakeTS),
+                    wet_cake_vs: n(row.WetCakeVS),
+                    liquid_produced: n(row.LiquidProduced),
+                    liquid_ts: n(row.LiquidTS),
+                    liquid_vs: n(row.LiquidVS),
+                    liquid_sent_to_lagoon: n(row.LiquidSentToLagoon)
                 }, { transaction: t });
 
                 await t.commit();
                 results.success++;
-
             } catch (error) {
                 await t.rollback();
                 results.failed++;
-                results.errors.push({
-                    row: row,
-                    error: error.message
-                });
+                results.errors.push({ rowIndex: i + 2, error: error.message });
             }
         }
 
-        // Log import
         await ImportLog.create({
             imported_by: userId,
-            filename: req.file.originalname,
+            filename: req.file.originalname || 'upload.xlsx',
             records_processed: results.success,
             records_failed: results.failed,
             status: results.failed === 0 ? 'success' : (results.success > 0 ? 'partial' : 'failed'),
-            error_log: JSON.stringify(results.errors)
+            error_log: results.errors.length ? results.errors : null
         });
 
-        res.json({
-            message: 'Import completed',
-            results
-        });
-
+        res.json({ message: 'Import completed', results });
     } catch (error) {
         console.error('Import Error:', error);
         res.status(500).json({ message: 'Error importing data', error: error.message });
@@ -512,7 +636,7 @@ exports.exportEntries = async (req, res) => {
     try {
         const { startDate, endDate, status } = req.query;
 
-        const where = {};
+        const where = { status: { [Op.not]: 'deleted' } };
         if (startDate && endDate) {
             where.date = { [Op.between]: [startDate, endDate] };
         }
@@ -591,34 +715,47 @@ exports.exportEntries = async (req, res) => {
     }
 };
 
-// DASHBOARD DATA
+// DASHBOARD DATA - uses MIS entry data; supports period (day/week/month/year) or custom startDate/endDate
 exports.getDashboardData = async (req, res) => {
     try {
-        const { period = 'month' } = req.query; // day, week, month, year
-
-        // Calculate date range
+        const { period = 'month', startDate: qStart, endDate: qEnd } = req.query;
+        const toStr = (d) => d.toISOString().slice(0, 10);
         const now = new Date();
-        let startDate;
+        let startStr;
+        let endStr = toStr(now);
+
+        if (qStart && qEnd) {
+            startStr = String(qStart).slice(0, 10);
+            endStr = String(qEnd).slice(0, 10);
+        } else {
         switch (period) {
             case 'day':
-                startDate = new Date(now.setHours(0, 0, 0, 0));
+                    startStr = toStr(now);
                 break;
-            case 'week':
-                startDate = new Date(now.setDate(now.getDate() - 7));
+                case 'week': {
+                    const start = new Date(now);
+                    start.setDate(start.getDate() - 6);
+                    startStr = toStr(start);
                 break;
-            case 'year':
-                startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+                }
+                case 'year': {
+                    const start = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+                    startStr = toStr(start);
                 break;
+                }
             case 'month':
-            default:
-                startDate = new Date(now.setMonth(now.getMonth() - 1));
+                default: {
+                    const start = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                    startStr = toStr(start);
+                    break;
+                }
+            }
         }
 
-        // Aggregate data
         const entries = await MISDailyEntry.findAll({
             where: {
-                date: { [Op.gte]: startDate },
-                status: { [Op.notIn]: ['Deleted', 'Draft'] }
+                date: { [Op.between]: [startStr, endStr] },
+                status: { [Op.notIn]: ['deleted'] }
             },
             include: [
                 { model: MISRawBiogas, as: 'rawBiogas' },

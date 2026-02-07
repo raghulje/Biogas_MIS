@@ -10,9 +10,13 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Middleware applied to all MIS routes
 router.use(authMiddleware);
 
-// Daily Entries - CRUD
+// Daily Entries - CRUD (static paths BEFORE /:id so they are not matched as id)
 router.post('/mis-entries', permissionMiddleware('mis_entry', 'create'), misController.createEntry);
 router.get('/mis-entries/consolidated', permissionMiddleware('mis_entry', 'read'), misExtensions.getConsolidatedData);
+router.get('/mis-entries/for-report', permissionMiddleware('mis_entry', 'read'), misController.getEntriesForReport);
+router.get('/mis-entries/import-template', permissionMiddleware('mis_entry', 'read'), misExtensions.getImportTemplate);
+router.post('/mis-entries/import', permissionMiddleware('mis_entry', 'import'), upload.single('file'), misExtensions.importEntries);
+router.get('/mis-entries/export', permissionMiddleware('mis_entry', 'read'), misExtensions.exportEntries);
 router.get('/mis-entries', permissionMiddleware('mis_entry', 'read'), misController.getEntries);
 router.get('/mis-entries/:id', permissionMiddleware('mis_entry', 'read'), misController.getEntryById);
 router.put('/mis-entries/:id', permissionMiddleware('mis_entry', 'update'), misExtensions.updateEntry);
@@ -20,12 +24,9 @@ router.delete('/mis-entries/:id', permissionMiddleware('mis_entry', 'delete'), m
 
 // Workflow
 router.post('/mis-entries/:id/submit', permissionMiddleware('mis_entry', 'submit'), misController.submitEntry);
+router.post('/mis-entries/:id/review', permissionMiddleware('mis_entry', 'approve'), misController.reviewEntry);
 router.post('/mis-entries/:id/approve', permissionMiddleware('mis_entry', 'approve'), misController.approveEntry);
 router.post('/mis-entries/:id/reject', permissionMiddleware('mis_entry', 'approve'), misController.rejectEntry);
-
-// Import/Export
-router.post('/mis-entries/import', permissionMiddleware('mis_entry', 'import'), upload.single('file'), misExtensions.importEntries);
-router.get('/mis-entries/export', permissionMiddleware('mis_entry', 'read'), misExtensions.exportEntries);
 
 // Dashboard
 router.get('/dashboard/daily', misExtensions.getDashboardData);

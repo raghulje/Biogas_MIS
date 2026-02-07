@@ -7,6 +7,13 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             User.belongsTo(models.Role, { foreignKey: 'role_id', as: 'role' });
             User.hasMany(models.MISDailyEntry, { foreignKey: 'created_by', as: 'entries' });
+            // User-level permissions (primary): admin assigns per user via Create/Edit User
+            User.belongsToMany(models.Permission, {
+                through: models.UserPermission,
+                foreignKey: 'user_id',
+                otherKey: 'permission_id',
+                as: 'permissions'
+            });
         }
 
         async validatePassword(password) {
@@ -47,6 +54,7 @@ module.exports = (sequelize, DataTypes) => {
         modelName: 'User',
         tableName: 'users',
         underscored: true,
+        indexes: [{ fields: ['role_id'] }],
         hooks: {
             beforeCreate: async (user) => {
                 if (user.password) {

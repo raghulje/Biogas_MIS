@@ -13,7 +13,7 @@ import {
   Paper,
 } from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
@@ -22,7 +22,11 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
+
+  if (!authLoading && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +37,12 @@ export default function LoginPage() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      if (!err.response) {
+        setError('Cannot connect to server. Check that the backend is running and VITE_API_URL (e.g. http://localhost:5001/api) matches the server port.');
+        return;
+      }
+      const msg = err.response?.data?.message || err.response?.data?.error;
+      setError(msg || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

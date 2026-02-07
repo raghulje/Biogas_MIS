@@ -16,9 +16,9 @@ exports.createUser = async (req, res) => {
 
         const user = await User.create({ name, email, password, role_id, is_active: is_active ?? true });
 
-        // Sync permissions if provided
-        if (req.body.permissions && role_id) {
-            await syncRolePermissions(role_id, req.body.permissions);
+        // Sync user-level permissions (primary: admin assigns per user)
+        if (req.body.permissions && Array.isArray(req.body.permissions)) {
+            await syncUserPermissions(user.id, req.body.permissions);
         }
 
         await auditService.log(req.user.id, 'CREATE_USER', 'User', user.id, null, { name, email, role_id }, req);
@@ -38,7 +38,10 @@ exports.getUserById = async (req, res) => {
     try {
         const { id } = req.params;
         const user = await User.findByPk(id, {
-            include: [{ model: Role, as: 'role', include: [{ model: Permission, as: 'permissions' }] }],
+            include: [
+                { model: Role, as: 'role', attributes: ['id', 'name'] },
+                { model: Permission, as: 'permissions', through: { attributes: [] }, attributes: ['id', 'name', 'resource', 'action'] }
+            ],
             attributes: { exclude: ['password'] }
         });
 
@@ -50,26 +53,30 @@ exports.getUserById = async (req, res) => {
     }
 };
 
-const syncRolePermissions = async (roleId, uiPermissions) => {
+// Map UI page names to backend resources (shared for user permissions)
+const UI_PAGE_TO_RESOURCE = {
+    'Dashboard': 'config',
+    'MIS Entry': 'mis_entry',
+    'Consolidated MIS View': 'mis_entry',
+    'User Management': 'user',
+    'Roles & Permissions': 'role',
+    'Configurations': 'config',
+    'Admin Panel': 'config',
+    'Audit Logs': 'audit',
+    'Import Data': 'mis_entry'
+};
+
+/** Convert UI permission matrix to DB permission records and set on user (user_permissions). */
+const syncUserPermissions = async (userId, uiPermissions) => {
     if (!uiPermissions || !Array.isArray(uiPermissions)) return;
 
-    // Map UI names to DB resources (page names from admin UI)
-    const resourceMap = {
-        'MIS Entry': 'mis_entry',
-        'User Management': 'user',
-        'Roles & Permissions': 'role',
-        'Configurations': 'config',
-        'Admin Panel': 'config',
-        'Audit Logs': 'audit',
-        'Import Data': 'mis_entry'
-    };
-
-    const role = await Role.findByPk(roleId);
-    if (!role) return;
+    const user = await User.findByPk(userId);
+    if (!user) return;
 
     const dbPermissions = [];
     for (const perm of uiPermissions) {
-        const resource = resourceMap[perm.name];
+        const pageName = perm.page || perm.name;
+        const resource = pageName ? UI_PAGE_TO_RESOURCE[pageName] : null;
         if (!resource) continue;
 
         if (perm.read) dbPermissions.push({ resource, action: 'read' });
@@ -79,15 +86,21 @@ const syncRolePermissions = async (roleId, uiPermissions) => {
         if (resource === 'mis_entry' && perm.create) dbPermissions.push({ resource, action: 'submit' });
     }
 
-    // Find all matching permission records in DB
+    const seen = new Set();
+    const unique = dbPermissions.filter(p => {
+        const key = `${p.resource}:${p.action}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+
     const permissionRecords = [];
-    for (const p of dbPermissions) {
+    for (const p of unique) {
         const rec = await Permission.findOne({ where: { resource: p.resource, action: p.action } });
         if (rec) permissionRecords.push(rec);
     }
 
-    // Update role permissions
-    await role.setPermissions(permissionRecords);
+    await user.setPermissions(permissionRecords);
 };
 
 // Update User
@@ -110,9 +123,9 @@ exports.updateUser = async (req, res) => {
 
         await user.update({ name, email, role_id, is_active });
 
-        // Sync permissions if provided
-        if (permissions && role_id) {
-            await syncRolePermissions(role_id, permissions);
+        // Sync user-level permissions (primary: admin assigns per user)
+        if (permissions && Array.isArray(permissions)) {
+            await syncUserPermissions(user.id, permissions);
         }
 
         await auditService.log(req.user.id, 'UPDATE_USER', 'User', id, oldValues, { name, email, role_id, is_active }, req);

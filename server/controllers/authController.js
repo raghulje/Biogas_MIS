@@ -20,7 +20,10 @@ const generateTokens = (user) => {
 
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.body || {};
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
+        }
         console.log('Login attempt for:', email);
 
         const user = await User.findOne({
@@ -34,13 +37,16 @@ exports.login = async (req, res) => {
 
         const isValid = await user.validatePassword(password);
         if (!isValid) {
-            // Log failed attempt
+            try {
             await UserActivityLog.create({
                 user_id: user.id,
                 activity_type: 'LOGIN_FAILED',
                 description: 'Invalid password',
                 ip_address: req.ip
             });
+            } catch (logErr) {
+                console.warn('Activity log failed:', logErr.message);
+            }
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
@@ -50,13 +56,16 @@ exports.login = async (req, res) => {
 
         const tokens = generateTokens(user);
 
-        // Log success
+        try {
         await UserActivityLog.create({
             user_id: user.id,
             activity_type: 'LOGIN',
             description: 'User logged in successfully',
             ip_address: req.ip
         });
+        } catch (logErr) {
+            console.warn('Activity log failed:', logErr.message);
+        }
 
         res.json({
             success: true,
