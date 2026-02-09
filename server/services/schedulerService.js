@@ -118,6 +118,79 @@ class SchedulerService {
                         await emailService.sendEmail(mgr.email, subject, body);
                     }
                 }
+            } else if (scheduler.job_type === 'mis_creation_check') {
+                // 16:45 Check: Entry created? Submitted?
+                const entries = await MISDailyEntry.findAll({ where: { date: today } });
+                const entryCreated = entries.length > 0;
+                const entrySubmitted = entries.some(e => ['submitted', 'approved', 'under_review'].includes(e.status));
+
+                // Get Recipients: Config + Site Users
+                let siteUserEmails = [];
+                try {
+                    const configRow = await MISEmailConfig.findByPk(1);
+                    const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+                    if (configRow) {
+                        // For "Not Created" scenario
+                        if (!entryCreated) siteUserEmails = [...siteUserEmails, ...parse(configRow.entry_not_created_emails)];
+                        // For "Not Submitted" scenario
+                        if (entryCreated && !entrySubmitted) siteUserEmails = [...siteUserEmails, ...parse(configRow.not_submitted_notify_emails)];
+                    }
+                } catch (_) { }
+
+                // Fallback/Addition: Role 'Site User' or 'Operator'
+                const roles = await Role.findAll({ where: { name: { [Op.in]: ['Site User', 'Operator'] } } });
+                for (const role of roles) {
+                    const users = await User.findAll({ where: { role_id: role.id, is_active: true } });
+                    siteUserEmails = [...siteUserEmails, ...users.map(u => u.email)];
+                }
+                const uniqueEmails = [...new Set(siteUserEmails.filter(Boolean))];
+
+                if (!entryCreated) {
+                    const template = await EmailTemplate.findOne({ where: { name: 'mis_not_created' } });
+                    const subject = template?.subject || `MIS Entry Missing for ${today}`;
+                    for (const email of uniqueEmails) {
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today })
+                            : `<p>Hello,</p><p>The MIS entry for ${today} has NOT been created yet. Please create it immediately.</p>`;
+                        await emailService.sendEmail(email, subject, body);
+                    }
+                } else if (!entrySubmitted) {
+                    const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
+                    const subject = template?.subject || `MIS Entry Draft for ${today}`;
+                    for (const email of uniqueEmails) {
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today })
+                            : `<p>Hello,</p><p>The MIS entry for ${today} is created but NOT submitted. Please submit it immediately.</p>`;
+                        await emailService.sendEmail(email, subject, body);
+                    }
+                }
+
+            } else if (scheduler.job_type === 'mis_escalation_check') {
+                // 17:30 Check: Entry submitted? If not, notify Managers.
+                const entries = await MISDailyEntry.findAll({ where: { date: today } });
+                const entrySubmitted = entries.some(e => ['submitted', 'approved', 'under_review'].includes(e.status));
+
+                if (!entrySubmitted) {
+                    let managerEmails = [];
+                    try {
+                        const configRow = await MISEmailConfig.findByPk(1);
+                        const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+                        if (configRow) managerEmails = parse(configRow.escalation_notify_emails);
+                    } catch (_) { }
+
+                    const managerRole = await Role.findOne({ where: { name: 'Manager' } });
+                    if (managerRole) {
+                        const users = await User.findAll({ where: { role_id: managerRole.id, is_active: true } });
+                        managerEmails = [...managerEmails, ...users.map(u => u.email)];
+                    }
+                    const uniqueEmails = [...new Set(managerEmails.filter(Boolean))];
+
+                    const template = await EmailTemplate.findOne({ where: { name: 'mis_escalation' } });
+                    const subject = template?.subject || `ESCALATION: MIS Entry Missing/Draft for ${today}`;
+                    for (const email of uniqueEmails) {
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today })
+                            : `<p>Hello Manager,</p><p>The MIS entry for ${today} is overdue (not submitted). Please check with the team.</p>`;
+                        await emailService.sendEmail(email, subject, body);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error executing job:', error);

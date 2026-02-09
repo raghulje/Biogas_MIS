@@ -10,6 +10,7 @@ const ConsolidatedMISViewPage = lazy(() => import('../pages/consolidated-mis-vie
 const ConsolidatedMISV2Page = lazy(() => import('../pages/consolidated-mis-v2/page'));
 const FinalMISPage = lazy(() => import('../pages/final-mis/page'));
 const AdminPage = lazy(() => import('../pages/admin/page'));
+const NotificationConfigPage = lazy(() => import('../pages/admin/notifications/page'));
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/page'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
@@ -98,6 +99,16 @@ const routes: RouteObject[] = [
       <ProtectedRoute>
         <Suspense fallback={<PageLoader />}>
           <AuditLogsPage />
+        </Suspense>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/notifications',
+    element: (
+      <ProtectedRoute>
+        <Suspense fallback={<PageLoader />}>
+          <NotificationConfigPage />
         </Suspense>
       </ProtectedRoute>
     ),

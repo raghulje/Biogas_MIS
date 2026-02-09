@@ -8,6 +8,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -19,6 +20,7 @@
     opacity: 0;
     transform: translateY(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -30,6 +32,7 @@
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -41,6 +44,7 @@
     opacity: 0;
     transform: translateX(30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -52,6 +56,7 @@
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -114,10 +119,12 @@
   overflow: hidden;
   transition: all 0.3s ease;
 }
+
 .glass-card:hover {
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
+
 .glass-header {
   background: transparent;
   backdrop-filter: blur(10px);
@@ -128,6 +135,7 @@
 .hover-lift {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .hover-lift:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
@@ -137,6 +145,7 @@
 .gradient-bg {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
+
 .gradient-header {
   background: linear-gradient(135deg, #2879b6 0%, #7dc244 50%, #ee6a31 100%);
 }
@@ -146,14 +155,17 @@
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(40, 121, 182, 0.3);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(40, 121, 182, 0.5);
 }
@@ -163,24 +175,29 @@
   background: linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%);
   transition: all 0.3s ease;
 }
+
 .btn-gradient-primary:hover {
   background: linear-gradient(135deg, #235EAC 0%, #2879b6 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(40, 121, 182, 0.4);
 }
+
 .btn-gradient-success {
   background: linear-gradient(135deg, #7dc244 0%, #139B49 100%);
   transition: all 0.3s ease;
 }
+
 .btn-gradient-success:hover {
   background: linear-gradient(135deg, #139B49 0%, #7dc244 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(125, 194, 68, 0.4);
 }
+
 .btn-gradient-warning {
   background: linear-gradient(135deg, #F59E21 0%, #ee6a31 100%);
   transition: all 0.3s ease;
 }
+
 .btn-gradient-warning:hover {
   background: linear-gradient(135deg, #ee6a31 0%, #F59E21 100%);
   transform: translateY(-2px);
@@ -188,3 +205,64 @@
 }
 
 /* Ensure no stray characters or unsupported CSS */
+
+/* --- Mobile Responsive Overrides (max-width: 768px) --- */
+@media (max-width: 768px) {
+
+
+
+  /* Buttons */
+  .MuiButton-root {
+    min-height: 44px !important;
+    /* Touch target size */
+  }
+
+  /* Inputs */
+  .MuiInputBase-root {
+    min-height: 44px !important;
+  }
+
+  /* Tables */
+  .MuiTablePagination-toolbar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Hide scrollbars for cleaner mobile look but allow scroll */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Utilities */
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  .mobile-sticky-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 16px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* Dialogs/Modals - Card style for non-fullscreen */
+  .MuiDialog-paper:not(.MuiDialog-paperFullScreen) {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: 100% !important;
+    max-height: calc(100% - 32px) !important;
+    border-radius: 20px !important;
+  }
+}

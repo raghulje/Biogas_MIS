@@ -291,6 +291,19 @@ exports.getSchedulers = async (req, res) => {
     } catch (err) { res.status(500).json(err); }
 };
 
+exports.updateScheduler = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const scheduler = await EmailScheduler.findByPk(id);
+        if (!scheduler) return res.status(404).json({ message: 'Scheduler not found' });
+
+        await scheduler.update(req.body);
+        // Refresh service
+        await schedulerService.refresh();
+        res.json(scheduler);
+    } catch (err) { res.status(500).json(err); }
+};
+
 // --- Form config (single endpoint: roles, permissions, smtp, schedulers) ---
 
 exports.getFormConfig = async (req, res) => {
@@ -342,7 +355,9 @@ exports.getFormConfig = async (req, res) => {
                 const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
                 mis_email_config = {
                     submit_notify_emails: parse(row.submit_notify_emails),
-                    entry_not_created_emails: parse(row.entry_not_created_emails)
+                    entry_not_created_emails: parse(row.entry_not_created_emails),
+                    not_submitted_notify_emails: parse(row.not_submitted_notify_emails),
+                    escalation_notify_emails: parse(row.escalation_notify_emails)
                 };
             }
         } catch (e) {
@@ -370,8 +385,15 @@ exports.getMISEmailConfig = async (req, res) => {
         const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
         const mis_email_config = row ? {
             submit_notify_emails: parse(row.submit_notify_emails),
-            entry_not_created_emails: parse(row.entry_not_created_emails)
-        } : { submit_notify_emails: [], entry_not_created_emails: [] };
+            entry_not_created_emails: parse(row.entry_not_created_emails),
+            not_submitted_notify_emails: parse(row.not_submitted_notify_emails),
+            escalation_notify_emails: parse(row.escalation_notify_emails)
+        } : {
+            submit_notify_emails: [],
+            entry_not_created_emails: [],
+            not_submitted_notify_emails: [],
+            escalation_notify_emails: []
+        };
         return res.json(mis_email_config);
     } catch (e) {
         console.error('getMISEmailConfig:', e);
@@ -381,27 +403,29 @@ exports.getMISEmailConfig = async (req, res) => {
 
 exports.saveMISEmailConfig = async (req, res) => {
     try {
-        const { submit_notify_emails, entry_not_created_emails } = req.body;
+        const { submit_notify_emails, entry_not_created_emails, not_submitted_notify_emails, escalation_notify_emails } = req.body;
         const toJson = (arr) => (Array.isArray(arr) ? JSON.stringify(arr) : '[]');
+        const defaults = {
+            submit_notify_emails: toJson(submit_notify_emails),
+            entry_not_created_emails: toJson(entry_not_created_emails),
+            not_submitted_notify_emails: toJson(not_submitted_notify_emails),
+            escalation_notify_emails: toJson(escalation_notify_emails)
+        };
         const [row] = await MISEmailConfig.findOrCreate({
             where: { id: 1 },
-            defaults: {
-                submit_notify_emails: toJson(submit_notify_emails),
-                entry_not_created_emails: toJson(entry_not_created_emails)
-            }
+            defaults: defaults
         });
         if (row && !row.isNewRecord) {
-            await row.update({
-                submit_notify_emails: toJson(submit_notify_emails),
-                entry_not_created_emails: toJson(entry_not_created_emails)
-            });
+            await row.update(defaults);
         }
         const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
         const updated = await MISEmailConfig.findByPk(1);
         return res.json(updated ? {
             submit_notify_emails: parse(updated.submit_notify_emails),
-            entry_not_created_emails: parse(updated.entry_not_created_emails)
-        } : { submit_notify_emails: [], entry_not_created_emails: [] });
+            entry_not_created_emails: parse(updated.entry_not_created_emails),
+            not_submitted_notify_emails: parse(updated.not_submitted_notify_emails),
+            escalation_notify_emails: parse(updated.escalation_notify_emails)
+        } : { submit_notify_emails: [], entry_not_created_emails: [], not_submitted_notify_emails: [], escalation_notify_emails: [] });
     } catch (e) {
         console.error('saveMISEmailConfig:', e);
         res.status(500).json({ message: 'Failed to save MIS email config' });
@@ -618,6 +642,7 @@ exports.getSessions = async (req, res) => {
 
 exports.getAuditLogs = async (req, res) => {
     try {
+        const { formatLog } = require('../services/activityLogFormatter');
         const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
         const offset = parseInt(req.query.offset, 10) || 0;
         const logs = await AuditLog.findAll({
@@ -626,7 +651,8 @@ exports.getAuditLogs = async (req, res) => {
             limit,
             offset
         });
-        res.json(logs);
+        const formattedLogs = logs.map(log => formatLog(log));
+        res.json(formattedLogs);
     } catch (error) {
         console.error('Audit logs error:', error);
         res.status(500).json({ message: 'Error fetching audit logs', error: error.message });

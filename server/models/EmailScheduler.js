@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: true
         },
         job_type: {
-            type: DataTypes.ENUM('daily_reminder', 'status_check', 'report'),
+            type: DataTypes.STRING, // Changed from ENUM for flexibility
             allowNull: false
         }
     }, {

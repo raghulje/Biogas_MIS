@@ -43,6 +43,7 @@ router.post('/final-mis-report-config/send-test', permissionMiddleware('config',
 // Email Schedulers
 router.get('/schedulers', permissionMiddleware('config', 'read'), adminController.getSchedulers);
 router.post('/schedulers', permissionMiddleware('config', 'create'), adminController.createScheduler);
+router.put('/schedulers/:id', permissionMiddleware('config', 'update'), adminController.updateScheduler);
 
 // Email Templates
 router.get('/email-templates', permissionMiddleware('config', 'read'), emailTemplateController.getTemplates);

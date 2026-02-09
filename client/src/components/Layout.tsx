@@ -28,6 +28,7 @@ import {
   Assessment as AssessmentIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  NotificationsActive as NotificationsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -85,10 +86,11 @@ export const Layout = ({ children }: LayoutProps) => {
     // Consolidated MIS View & v2 hidden for now – routes still work at /consolidated-mis-view, /consolidated-mis-v2
     { text: 'Final MIS Report', icon: <AssessmentIcon />, path: '/final-mis' },
     { text: 'Admin Panel', icon: <AdminIcon />, path: '/admin' },
+    { text: 'Email Notifications', icon: <NotificationsIcon />, path: '/admin/notifications' },
     // Audit Logs hidden for now – route still works at /audit-logs
   ];
 
-  const drawer = (
+  const renderDrawerContent = (isCollapsed: boolean) => (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box
         className="glass-header"
@@ -97,11 +99,11 @@ export const Layout = ({ children }: LayoutProps) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          px: collapsed ? 1 : 2,
+          px: isCollapsed ? 1 : 2,
           transition: 'all 0.3s ease',
         }}
       >
-        {!collapsed && (
+        {!isCollapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
             <img
               src={srelIcon}
@@ -110,7 +112,7 @@ export const Layout = ({ children }: LayoutProps) => {
             />
           </Box>
         )}
-        {collapsed && (
+        {isCollapsed && (
           <img
             src={srelShortIcon}
             alt="Logo"
@@ -119,7 +121,7 @@ export const Layout = ({ children }: LayoutProps) => {
         )}
       </Box>
       <Divider />
-      <List sx={{ px: collapsed ? 0.5 : 1.5, pt: 2, flex: 1 }}>
+      <List sx={{ px: isCollapsed ? 0.5 : 1.5, pt: 2, flex: 1 }}>
         {menuItems.map((item, index) => (
           <ListItem
             key={item.text}
@@ -127,7 +129,7 @@ export const Layout = ({ children }: LayoutProps) => {
             sx={{ mb: 1 }}
             className={`aos-fade-right aos-delay-${(index + 1) * 100}`}
           >
-            <Tooltip title={collapsed ? item.text : ''} placement="right" arrow>
+            <Tooltip title={isCollapsed ? item.text : ''} placement="right" arrow>
               <ListItemButton
                 selected={location.pathname === item.path}
                 onClick={() => {
@@ -137,8 +139,8 @@ export const Layout = ({ children }: LayoutProps) => {
                 sx={{
                   borderRadius: '12px',
                   py: 1.5,
-                  px: collapsed ? 1.5 : 2,
-                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  px: isCollapsed ? 1.5 : 2,
+                  justifyContent: isCollapsed ? 'center' : 'flex-start',
                   transition: 'all 0.3s ease',
                   '&.Mui-selected': {
                     background:
@@ -154,14 +156,14 @@ export const Layout = ({ children }: LayoutProps) => {
                   },
                   '&:hover': {
                     backgroundColor: 'rgba(40, 121, 182, 0.08)',
-                    transform: collapsed ? 'scale(1.05)' : 'translateX(4px)',
+                    transform: isCollapsed ? 'scale(1.05)' : 'translateX(4px)',
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 44, justifyContent: 'center' }}>
+                <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 44, justifyContent: 'center' }}>
                   {item.icon}
                 </ListItemIcon>
-                {!collapsed && (
+                {!isCollapsed && (
                   <ListItemText
                     primary={item.text}
                     primaryTypographyProps={{
@@ -174,39 +176,39 @@ export const Layout = ({ children }: LayoutProps) => {
           </ListItem>
         ))}
       </List>
-      <Divider sx={{ mx: collapsed ? 0.5 : 2 }} />
-      <List sx={{ px: collapsed ? 0.5 : 1.5, py: 1.5 }}>
+      <Divider sx={{ mx: isCollapsed ? 0.5 : 2 }} />
+      <List sx={{ px: isCollapsed ? 0.5 : 1.5, py: 1.5 }}>
         <ListItem disablePadding>
-          <Tooltip title={collapsed ? 'Logout' : ''} placement="right" arrow>
+          <Tooltip title={isCollapsed ? 'Logout' : ''} placement="right" arrow>
             <ListItemButton
               onClick={handleLogout}
               sx={{
                 borderRadius: '12px',
                 py: 1.5,
-                px: collapsed ? 1.5 : 2,
-                justifyContent: collapsed ? 'center' : 'flex-start',
+                px: isCollapsed ? 1.5 : 2,
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   backgroundColor: 'rgba(238, 106, 49, 0.1)',
                   color: '#ee6a31',
-                  transform: collapsed ? 'scale(1.05)' : 'translateX(4px)',
+                  transform: isCollapsed ? 'scale(1.05)' : 'translateX(4px)',
                   '& .MuiListItemIcon-root': {
                     color: '#ee6a31',
                   },
                 },
               }}
             >
-              <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 44, justifyContent: 'center' }}>
+              <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 44, justifyContent: 'center' }}>
                 <LogoutIcon />
               </ListItemIcon>
-              {!collapsed && (
+              {!isCollapsed && (
                 <ListItemText primary="Logout" primaryTypographyProps={{ fontWeight: 500 }} />
               )}
             </ListItemButton>
           </Tooltip>
         </ListItem>
       </List>
-      <Box sx={{ p: 1, display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
+      <Box sx={{ p: 1, display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end' }}>
         <IconButton
           onClick={handleCollapsedToggle}
           sx={{
@@ -328,7 +330,7 @@ export const Layout = ({ children }: LayoutProps) => {
             },
           }}
         >
-          {drawer}
+          {renderDrawerContent(false)}
         </Drawer>
 
         <Drawer
@@ -347,7 +349,7 @@ export const Layout = ({ children }: LayoutProps) => {
           }}
           open
         >
-          {drawer}
+          {renderDrawerContent(collapsed)}
         </Drawer>
       </Box>
 
@@ -355,9 +357,9 @@ export const Layout = ({ children }: LayoutProps) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, sm: 3 },
+          p: { xs: 1.5, sm: 3 },
           width: { md: `calc(100% - ${currentDrawerWidth}px)` },
-          mt: 8,
+          mt: { xs: 7, sm: 8 },
           minHeight: 'calc(100vh - 64px)',
           transition: 'all 0.3s ease',
         }}

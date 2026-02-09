@@ -288,7 +288,7 @@ export default function MISFormView({
             )}
           </Box>
           {!isReadOnly ? (
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 startIcon={<SaveIcon />}
@@ -355,7 +355,7 @@ export default function MISFormView({
         {viewMode === 'create' && (
           <Box sx={{ mb: 2, p: 2, bgcolor: '#fff', borderRadius: 2 }}>
             <Typography variant="subtitle2">Date</Typography>
-            <input type="date" {...methods.register('date', { required: true })} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
+            <input type="date" {...methods.register('date', { required: true })} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%', height: '44px' }} />
           </Box>
         )}
 
@@ -378,14 +378,40 @@ export default function MISFormView({
 
         {!isReadOnly && (
           <Box
+            className="mobile-sticky-footer"
             sx={{
               display: 'flex',
               gap: 2,
               justifyContent: 'flex-end',
               flexWrap: 'wrap',
               mt: 3,
+              bgcolor: { xs: 'rgba(255,255,255,0.9)', md: 'transparent' },
+              backdropFilter: { xs: 'blur(10px)', md: 'none' },
+              borderTop: { xs: '1px solid rgba(0,0,0,0.1)', md: 'none' },
+              mx: { xs: -2, md: 0 },
+              px: { xs: 2, md: 0 },
+              py: { xs: 2, md: 0 },
             }}
           >
+            <Button
+              variant="outlined"
+              startIcon={<SaveIcon />}
+              className="btn-gradient-warning"
+              onClick={handleSaveDraft}
+              disabled={submitting}
+              sx={{
+                textTransform: 'none',
+                borderRadius: '12px',
+                border: 'none',
+                color: '#fff',
+                px: 3,
+                whiteSpace: 'nowrap',
+                flex: { xs: 1, md: 'initial' },
+                display: { xs: 'flex', md: 'none' } // Only show at bottom on mobile (since top hidden)
+              }}
+            >
+              Save Draft
+            </Button>
             <Button
               variant="contained"
               startIcon={submitting ? <CircularProgress size={20} /> : <SendIcon />}
@@ -399,6 +425,7 @@ export default function MISFormView({
                 px: 4,
                 color: '#fff',
                 whiteSpace: 'nowrap',
+                flex: { xs: 1, md: 'initial' },
               }}
             >
               Submit

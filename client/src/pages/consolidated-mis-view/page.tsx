@@ -170,7 +170,7 @@ const ConsolidatedMISView = () => {
                   {mockMISData.plantName}
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
                 <TextField
                   type="date"
                   value={selectedDate}
@@ -629,7 +629,7 @@ const GlassCard = ({ title, color, icon, children }: GlassCardProps) => (
       sx={{
         background: `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`,
         borderBottom: `3px solid ${color}`,
-        px: 3,
+        px: { xs: 2, md: 3 }, // Responsive padding
         py: 2,
         display: 'flex',
         alignItems: 'center',
@@ -651,11 +651,11 @@ const GlassCard = ({ title, color, icon, children }: GlassCardProps) => (
       >
         <i className={icon} />
       </Box>
-      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', fontSize: { xs: '1rem', md: '1.25rem' } }}>
         {title}
       </Typography>
     </Box>
-    <Box sx={{ p: 3 }}>{children}</Box>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>{children}</Box>
   </Box>
 );
 
@@ -676,9 +676,12 @@ const TableHeader = ({ children, align = 'left', bg }: TableHeaderProps) => (
       textTransform: 'uppercase',
       letterSpacing: '0.5px',
       color: bg ? '#fff' : '#58595B',
-      background: bg || 'rgba(248, 249, 250, 0.8)',
+      background: bg || 'rgba(248, 249, 250, 0.95)', // Slightly more opaque for sticky
       borderBottom: '2px solid rgba(0,0,0,0.05)',
       whiteSpace: 'nowrap',
+      position: 'sticky', // Sticky header
+      top: 0,
+      zIndex: 1,
     }}
   >
     {children}

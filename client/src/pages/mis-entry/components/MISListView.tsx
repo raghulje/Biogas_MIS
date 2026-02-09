@@ -40,6 +40,21 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { MISEntry } from '../../../mocks/misEntries';
+import Slider from '@mui/material/Slider'; // Ensure Slide is imported
+import Slide from '@mui/material/Slide';
+import { TransitionProps } from '@mui/material/transitions';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import React from 'react';
+
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 function displayStatus(status: string | undefined): string {
   if (!status || typeof status !== 'string') return 'Draft';
@@ -68,6 +83,8 @@ export default function MISListView({
   onDelete,
   onImportSuccess,
 }: MISListViewProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -167,7 +184,7 @@ export default function MISListView({
     if (s === 'draft') return { bg: 'rgba(245, 158, 33, 0.1)', color: '#F59E21' };
     if (s === 'rejected') return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
     if (s === 'deleted') return { bg: 'rgba(88, 89, 91, 0.2)', color: '#58595B' };
-        return { bg: 'rgba(88, 89, 91, 0.1)', color: '#58595B' };
+    return { bg: 'rgba(88, 89, 91, 0.1)', color: '#58595B' };
   };
 
   return (
@@ -389,40 +406,39 @@ export default function MISListView({
         </CardContent>
       </Card>
 
-      {/* Records Table */}
+      {/* Records Table (Desktop) */}
       <Card
         className="glass-card-strong aos-fade-up aos-delay-200"
-        sx={{ borderRadius: '20px', overflow: 'hidden' }}
+        sx={{
+          borderRadius: '20px',
+          overflow: 'hidden',
+          display: { xs: 'none', md: 'block' } // Hide on mobile
+        }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: '60vh' }}>
+          <Table stickyHeader>
             <TableHead>
-              <TableRow
-                sx={{
-                  background:
-                    'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)',
-                }}
-              >
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Entry ID
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Date
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Created By
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   CBG Produced
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Total Biogas
                 </TableCell>
                 <TableCell
-                  sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem' }}
+                  sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}
                   align="center"
                 >
                   Actions
@@ -525,13 +541,99 @@ export default function MISListView({
         </TableContainer>
       </Card>
 
+      {/* Mobile Card List View */}
+      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
+        {filteredEntries.map((entry) => {
+          const statusColors = getStatusColor(entry.status);
+          return (
+            <Card key={entry.id} className="glass-card" sx={{ borderRadius: '16px', overflow: 'visible' }}>
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#2879b6' }}>
+                      #{entry.id}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {new Date(entry.date).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={displayStatus(entry.status)}
+                    size="small"
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: statusColors.bg,
+                      color: statusColors.color,
+                      borderRadius: '8px',
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">CBG Produced:</Typography>
+                    <Typography variant="body2" fontWeight={600}>{entry.compressedBiogas?.produced ?? 0} kg</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Total Biogas:</Typography>
+                    <Typography variant="body2" fontWeight={600}>{entry.rawBiogas?.totalRawBiogas ?? 0} m³</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">Created By:</Typography>
+                    <Typography variant="body2" fontWeight={500}>{entry.createdBy}</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<ViewIcon />}
+                    onClick={() => onView(entry)}
+                    sx={{ borderRadius: '10px', borderColor: '#2879b6', color: '#2879b6' }}
+                  >
+                    View
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<EditIcon />}
+                    onClick={() => onEdit(entry)}
+                    sx={{ borderRadius: '10px', borderColor: '#7dc244', color: '#7dc244' }}
+                  >
+                    Edit
+                  </Button>
+                  <IconButton
+                    onClick={() => handleDeleteClick(entry)}
+                    sx={{
+                      borderRadius: '10px',
+                      color: '#ee6a31',
+                      border: '1px solid rgba(238, 106, 49, 0.5)'
+                    }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </CardContent>
+            </Card>
+          );
+        })}
+        {filteredEntries.length === 0 && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5, textAlign: 'center' }}>
+            <Typography color="textSecondary">No records found matching your criteria</Typography>
+          </Box>
+        )}
+      </Box>
+
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
+        TransitionComponent={Transition}
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
-            borderRadius: '20px',
+            borderRadius: isMobile ? 0 : '20px',
             p: 1,
           },
         }}

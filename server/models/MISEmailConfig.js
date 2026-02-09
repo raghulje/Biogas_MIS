@@ -22,6 +22,18 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: true,
             comment: 'JSON array of email addresses'
+        },
+        // JSON array of emails to notify when entry exists but not submitted (scheduled check)
+        not_submitted_notify_emails: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            comment: 'JSON array of email addresses'
+        },
+        // JSON array of emails to notify when entry is missing or not submitted at escalation time
+        escalation_notify_emails: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            comment: 'JSON array of email addresses'
         }
     }, {
         sequelize,

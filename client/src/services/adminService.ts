@@ -117,6 +117,10 @@ export const adminService = {
         const response = await api.post('/schedulers', scheduler);
         return response.data;
     },
+    updateScheduler: async (id: number, scheduler: any) => {
+        const response = await api.put(`/schedulers/${id}`, scheduler);
+        return response.data;
+    },
 
     // SMTP Configuration
     getSMTPConfig: async () => {
@@ -141,7 +145,12 @@ export const adminService = {
         const response = await api.get('/mis-email-config');
         return response.data;
     },
-    saveMISEmailConfig: async (data: { submit_notify_emails: string[]; entry_not_created_emails: string[] }) => {
+    saveMISEmailConfig: async (data: {
+        submit_notify_emails: string[];
+        entry_not_created_emails: string[];
+        not_submitted_notify_emails: string[];
+        escalation_notify_emails: string[];
+    }) => {
         const response = await api.put('/mis-email-config', data);
         return response.data;
     },

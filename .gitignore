@@ -8,6 +8,8 @@ server/node_modules/
 .env.local
 .env.*.local
 server/.env
+client/.env
+server/config/config.json
 
 # Build outputs
 dist/

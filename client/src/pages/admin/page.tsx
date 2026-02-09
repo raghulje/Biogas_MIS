@@ -65,14 +65,14 @@ interface User {
 
 interface ActivityLog {
   id: number;
-  userId?: number;
   user: string;
-  lastLogin: string;
   action: string;
-  previousValue: string;
-  newValue: string;
+  entity: string;
+  description: string;
+  formatted_description: string;
+  changes: { field: string; from: string; to: string }[];
   timestamp: string;
-  actionType: 'create' | 'update' | 'delete' | 'login' | 'view';
+  original_timestamp?: string;
 }
 
 interface SessionRow {
@@ -123,7 +123,7 @@ function MISEntryEmailPanel({
 }: {
   formConfig: any;
   message: { type: string; text: string } | null;
-  setMessage: (m: { type: string; text: string } | null) => void;
+  setMessage: (m: { type: 'success' | 'error'; text: string } | null) => void;
 }) {
   const [submitNotifyEmails, setSubmitNotifyEmails] = useState<string[]>([]);
   const [entryNotCreatedEmails, setEntryNotCreatedEmails] = useState<string[]>([]);
@@ -146,7 +146,7 @@ function MISEntryEmailPanel({
         setSubmitNotifyEmails(Array.isArray(data.submit_notify_emails) ? data.submit_notify_emails : []);
         setEntryNotCreatedEmails(Array.isArray(data.entry_not_created_emails) ? data.entry_not_created_emails : []);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   };
   useEffect(() => { loadConfig(); }, []);
 
@@ -157,6 +157,8 @@ function MISEntryEmailPanel({
       await adminService.saveMISEmailConfig({
         submit_notify_emails: submitNotifyEmails,
         entry_not_created_emails: entryNotCreatedEmails,
+        not_submitted_notify_emails: [],
+        escalation_notify_emails: [],
       });
       setMessage({ type: 'success', text: 'MIS Entry email settings saved.' });
     } catch (e: any) {
@@ -286,7 +288,7 @@ function FinalMISReportEmailPanel({
   setMessage,
 }: {
   message: { type: string; text: string } | null;
-  setMessage: (m: { type: string; text: string } | null) => void;
+  setMessage: (m: { type: 'success' | 'error'; text: string } | null) => void;
 }) {
   const [toEmails, setToEmails] = useState<string[]>([]);
   const [newEmail, setNewEmail] = useState('');
@@ -316,7 +318,7 @@ function FinalMISReportEmailPanel({
         setCronExpression(data.cron_expression || '');
         setIsActive(data.is_active !== false);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
   useEffect(() => { loadConfig(); }, [loadConfig]);
 
@@ -724,7 +726,25 @@ const mockSchedulerConfigs: SchedulerConfig[] = [
   },
 ];
 
+import Slide from '@mui/material/Slide';
+import { TransitionProps } from '@mui/material/transitions';
+import React from 'react';
+
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 export default function AdminPage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [tabValue, setTabValue] = useState(0);
   const [openUserDialog, setOpenUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -881,7 +901,7 @@ export default function AdminPage() {
       if (cancelled || !data) return;
       applySmtpConfigToForm(data);
       setFormConfig((prev: any) => (prev ? { ...prev, smtp_config: data } : prev));
-    }).catch(() => {});
+    }).catch(() => { });
     return () => { cancelled = true; };
   }, [tabValue, formConfig?.smtp_config]);
 
@@ -1228,7 +1248,35 @@ export default function AdminPage() {
   };
 
   const handleExportLogs = () => {
-    // Simulate export functionality
+    if (filteredLogs.length === 0) {
+      setMessage({ type: 'error', text: 'No logs to export.' });
+      return;
+    }
+
+    const headers = ['User', 'Action', 'Entity', 'Description', 'Timestamp'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredLogs.map(log => {
+        const row = [
+          `"${log.user}"`,
+          `"${log.action}"`,
+          `"${log.entity}"`,
+          `"${log.formatted_description.replace(/"/g, '""')}"`, // Escape quotes
+          `"${log.timestamp}"`
+        ];
+        return row.join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
     setMessage({ type: 'success', text: 'Activity logs exported successfully!' });
     setTimeout(() => setMessage(null), 3000);
   };
@@ -1280,9 +1328,17 @@ export default function AdminPage() {
   };
 
   // Filter logs based on current filters
+  // Filter logs based on current filters
   const filteredLogs = activityLogs.filter(log => {
     if (filterUser && !log.user.toLowerCase().includes(filterUser.toLowerCase())) return false;
-    if (filterActionType !== 'all' && log.actionType !== filterActionType) return false;
+    if (filterActionType !== 'all') {
+      const action = log.action.toLowerCase();
+      if (filterActionType === 'create' && !action.includes('creat')) return false;
+      if (filterActionType === 'update' && !action.includes('updat')) return false;
+      if (filterActionType === 'delete' && !action.includes('delet')) return false;
+      if (filterActionType === 'login' && !action.includes('log')) return false;
+      if (filterActionType === 'view' && !action.includes('view')) return false;
+    }
     if (filterDateFrom && new Date(log.timestamp) < new Date(filterDateFrom)) return false;
     if (filterDateTo && new Date(log.timestamp) > new Date(filterDateTo)) return false;
     return true;
@@ -1627,6 +1683,9 @@ export default function AdminPage() {
             <Tabs
               value={tabValue}
               onChange={(_, newValue) => setTabValue(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
                 '& .MuiTab-root': {
                   textTransform: 'none',
@@ -1675,7 +1734,7 @@ export default function AdminPage() {
                 </Button>
               </Box>
 
-              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none' }}>
+              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', md: 'block' } }}>
                 <Table>
                   <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                     <TableRow>
@@ -1725,6 +1784,23 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              {/* Mobile Card List View for Users */}
+              <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
+                {users.map(user => (
+                  <Card key={user.id} variant="outlined" sx={{ borderRadius: '16px', p: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="h6" fontWeight={600}>{user.name}</Typography>
+                      <Chip label={typeof user.role === 'string' ? user.role : user.role?.name} size="small" color="primary" variant="outlined" />
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{user.email}</Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button variant="outlined" size="small" fullWidth onClick={() => handleOpenEditUser(user)}>Edit</Button>
+                      <Button variant="outlined" size="small" color="error" fullWidth onClick={() => handleDeleteUser(user.id)}>Deactivate</Button>
+                    </Box>
+                  </Card>
+                ))}
+              </Box>
             </CardContent>
           </TabPanel>
 
@@ -1891,8 +1967,8 @@ export default function AdminPage() {
                 </Typography>
               )}
               {sessions.length > 0 && (
-                <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', mb: 3 }}>
-                  <Table size="small">
+                <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', mb: 3, overflowX: 'auto' }}>
+                  <Table size="small" sx={{ minWidth: 650 }}>
                     <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
@@ -1925,17 +2001,15 @@ export default function AdminPage() {
               <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mb: 1.5 }}>
                 Activity log
               </Typography>
-              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none' }}>
-                <Table>
+              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 800 }}>
                   <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Last Login</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Action</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Previous Value</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>New Value</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Entity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Description</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Timestamp</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Type</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1943,23 +2017,36 @@ export default function AdminPage() {
                       paginatedLogs.map((log) => (
                         <TableRow key={log.id} className="hover-lift" sx={{ transition: 'all 0.3s ease' }}>
                           <TableCell sx={{ fontWeight: 500 }}>{log.user}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(log.userId != null ? lastLoginsByUser[log.userId] : undefined)}</TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>{log.action}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: 200 }}>{log.previousValue}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#333842', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: 200 }}>{log.newValue}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{log.timestamp}</TableCell>
                           <TableCell>
                             <Chip
-                              label={getActionTypeLabel(log.actionType)}
+                              label={log.action}
                               size="small"
                               sx={{
-                                backgroundColor: `${getActionTypeColor(log.actionType)}15`,
-                                color: getActionTypeColor(log.actionType),
                                 fontWeight: 600,
                                 borderRadius: '8px',
+                                backgroundColor: log.action.toLowerCase().includes('delete') ? '#ffebee' :
+                                  log.action.toLowerCase().includes('create') ? '#e8f5e9' :
+                                    log.action.toLowerCase().includes('update') ? '#e3f2fd' : '#f5f5f5',
+                                color: log.action.toLowerCase().includes('delete') ? '#d32f2f' :
+                                  log.action.toLowerCase().includes('create') ? '#2e7d32' :
+                                    log.action.toLowerCase().includes('update') ? '#1976d2' : '#616161'
                               }}
                             />
                           </TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{log.entity}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{log.description}</Typography>
+                            {log.changes && log.changes.length > 0 && (
+                              <Box component="ul" sx={{ m: 0, pl: 2, mt: 0.5 }}>
+                                {log.changes.map((change, i) => (
+                                  <Typography component="li" key={i} variant="caption" display="list-item" sx={{ color: '#58595B' }}>
+                                    {change.field}: <span style={{ textDecoration: 'line-through', color: '#9e9e9e' }}>{change.from}</span> &rarr; <span style={{ fontWeight: 600, color: '#2e7d32' }}>{change.to}</span>
+                                  </Typography>
+                                ))}
+                              </Box>
+                            )}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{log.timestamp}</TableCell>
                         </TableRow>
                       ))
                     ) : (
@@ -2599,7 +2686,9 @@ export default function AdminPage() {
         onClose={() => setOpenUserDialog(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '20px' } }}
+        TransitionComponent={Transition}
+        fullScreen={isMobile}
+        PaperProps={{ sx: { borderRadius: isMobile ? 0 : '20px' } }}
       >
         <DialogTitle
           sx={{
@@ -2687,7 +2776,7 @@ export default function AdminPage() {
               Assign access per page for this user. These permissions apply only to this user and are the primary way to manage access.
             </Typography>
 
-            <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none' }}>
+            <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', md: 'block' } }}>
               <Table size="small">
                 <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                   <TableRow>
@@ -2747,6 +2836,36 @@ export default function AdminPage() {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            {/* Mobile Stacked List for Permissions */}
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
+              {userPermissions.map((perm, index) => (
+                <Card key={perm.page} variant="outlined" sx={{ borderRadius: '12px', p: 2 }}>
+                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+                    {perm.page}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {['read', 'create', 'update', 'delete'].map((action) => (
+                      <Box key={action} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>{action}</Typography>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={(perm as any)[action]}
+                              onChange={() => handlePermissionChange(index, action as any)}
+                              size="medium"
+                              sx={{ p: 0.5, color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : '#ee6a31', '&.Mui-checked': { color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : '#ee6a31' } }}
+                            />
+                          }
+                          label=""
+                          sx={{ m: 0 }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+                </Card>
+              ))}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>

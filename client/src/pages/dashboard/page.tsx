@@ -120,8 +120,15 @@ export default function DashboardPage() {
                 Filter Records
               </Typography>
             </Box>
-            <Box sx={{ mb: 2 }}>
-              <ButtonGroup variant="outlined" sx={{ flexWrap: 'wrap' }}>
+            <Box sx={{
+              mb: 2,
+              overflowX: 'auto',
+              pb: 1,
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}>
+              <ButtonGroup variant="outlined" sx={{ flexWrap: 'nowrap' }}>
                 {filterButtons.map((btn) => (
                   <Button
                     key={btn.value}
@@ -129,7 +136,9 @@ export default function DashboardPage() {
                     variant={filterType === btn.value ? 'contained' : 'outlined'}
                     sx={{
                       textTransform: 'none',
-                      minWidth: { xs: '80px', sm: '100px' },
+                      minWidth: { xs: '70px', sm: '100px' },
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                      px: { xs: 1, sm: 2 },
                       backgroundColor: filterType === btn.value ? '#2879b6' : 'transparent',
                       borderColor: '#2879b6',
                       color: filterType === btn.value ? '#ffffff' : '#2879b6',
