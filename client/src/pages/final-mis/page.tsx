@@ -88,7 +88,8 @@ function getDateRangeForFilter(
     }
     case 'quarter': {
       const y = selectedYear;
-      const [qStart, qEnd] = selectedQuarter === 'Q1' ? [1, 3] : selectedQuarter === 'Q2' ? [4, 6] : selectedQuarter === 'Q3' ? [7, 9] : [10, 12];
+      // Financial year quarters: Q1 (Apr-Jun), Q2 (Jul-Sep), Q3 (Oct-Dec), Q4 (Jan-Mar)
+      const [qStart, qEnd] = selectedQuarter === 'Q1' ? [4, 6] : selectedQuarter === 'Q2' ? [7, 9] : selectedQuarter === 'Q3' ? [10, 12] : [1, 3];
       return { startDate: `${y}-${String(qStart).padStart(2, '0')}-01`, endDate: `${y}-${String(qEnd).padStart(2, '0')}-${String(new Date(Number(y), qEnd, 0).getDate()).padStart(2, '0')}` };
     }
     case 'year':
@@ -161,10 +162,11 @@ const FinalMISPage = () => {
           const month = entryDate.getMonth();
           const year = entryDate.getFullYear().toString();
           if (year !== selectedYear) return false;
-          if (selectedQuarter === 'Q1') return month >= 0 && month <= 2;
-          if (selectedQuarter === 'Q2') return month >= 3 && month <= 5;
-          if (selectedQuarter === 'Q3') return month >= 6 && month <= 8;
-          if (selectedQuarter === 'Q4') return month >= 9 && month <= 11;
+          // Financial year quarters: Q1 (Apr-Jun), Q2 (Jul-Sep), Q3 (Oct-Dec), Q4 (Jan-Mar)
+          if (selectedQuarter === 'Q1') return month >= 3 && month <= 5;  // Apr-Jun (months 3-5)
+          if (selectedQuarter === 'Q2') return month >= 6 && month <= 8;  // Jul-Sep (months 6-8)
+          if (selectedQuarter === 'Q3') return month >= 9 && month <= 11; // Oct-Dec (months 9-11)
+          if (selectedQuarter === 'Q4') return month >= 0 && month <= 2;  // Jan-Mar (months 0-2)
           return false;
         }
         case 'year':
@@ -1440,10 +1442,10 @@ const FinalMISPage = () => {
                     onChange={(e) => setSelectedQuarter(e.target.value)}
                     sx={{ borderRadius: '10px' }}
                   >
-                    <MenuItem value="Q1">Q1 (Jan-Mar)</MenuItem>
-                    <MenuItem value="Q2">Q2 (Apr-Jun)</MenuItem>
-                    <MenuItem value="Q3">Q3 (Jul-Sep)</MenuItem>
-                    <MenuItem value="Q4">Q4 (Oct-Dec)</MenuItem>
+                    <MenuItem value="Q1">Q1 (Apr-Jun)</MenuItem>
+                    <MenuItem value="Q2">Q2 (Jul-Sep)</MenuItem>
+                    <MenuItem value="Q3">Q3 (Oct-Dec)</MenuItem>
+                    <MenuItem value="Q4">Q4 (Jan-Mar)</MenuItem>
                   </Select>
                 </FormControl>
                 <FormControl size="small" sx={{ minWidth: 100 }}>

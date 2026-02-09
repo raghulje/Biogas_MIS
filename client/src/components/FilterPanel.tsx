@@ -38,10 +38,10 @@ export interface FilterValues {
 
 const quarters = [
   { value: '', label: 'All Quarters' },
-  { value: 'Q1', label: 'Q1 (Jan-Mar)' },
-  { value: 'Q2', label: 'Q2 (Apr-Jun)' },
-  { value: 'Q3', label: 'Q3 (Jul-Sep)' },
-  { value: 'Q4', label: 'Q4 (Oct-Dec)' },
+  { value: 'Q1', label: 'Q1 (Apr-Jun)' },
+  { value: 'Q2', label: 'Q2 (Jul-Sep)' },
+  { value: 'Q3', label: 'Q3 (Oct-Dec)' },
+  { value: 'Q4', label: 'Q4 (Jan-Mar)' },
 ];
 
 const digesters = [
@@ -285,7 +285,7 @@ export default function FilterPanel({
                   variant="contained"
                   startIcon={<FilterListIcon />}
                   onClick={handleApply}
-                  sx={{ 
+                  sx={{
                     whiteSpace: 'nowrap',
                     backgroundColor: '#2879b6',
                     '&:hover': { backgroundColor: '#235EAC' },
@@ -297,7 +297,7 @@ export default function FilterPanel({
                   variant="outlined"
                   startIcon={<RestartAltIcon />}
                   onClick={handleReset}
-                  sx={{ 
+                  sx={{
                     whiteSpace: 'nowrap',
                     borderColor: '#58595B',
                     color: '#58595B',
@@ -313,7 +313,7 @@ export default function FilterPanel({
                   variant="contained"
                   startIcon={<FileDownloadIcon />}
                   onClick={onExport}
-                  sx={{ 
+                  sx={{
                     whiteSpace: 'nowrap',
                     backgroundColor: '#7dc244',
                     '&:hover': { backgroundColor: '#139B49' },
@@ -325,7 +325,7 @@ export default function FilterPanel({
                   variant="contained"
                   startIcon={<FileUploadIcon />}
                   onClick={onImport}
-                  sx={{ 
+                  sx={{
                     whiteSpace: 'nowrap',
                     backgroundColor: '#ee6a31',
                     '&:hover': { backgroundColor: '#F59E21' },
