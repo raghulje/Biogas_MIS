@@ -250,10 +250,32 @@ export default function NotificationConfigPage() {
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <Grid container spacing={4}>
                                 <Grid item xs={12} md={6}>
-                                    <Card variant="outlined">
-                                        <CardHeader title="Daily Check (Site Users)" subheader="Checks if entry is created and submitted" />
-                                        <CardContent>
-                                            <Typography variant="body2" sx={{ mb: 2 }}>
+                                    <Card
+                                        variant="outlined"
+                                        sx={{
+                                            borderRadius: { xs: '16px', md: '4px' },
+                                            boxShadow: isPhone ? 1 : 0,
+                                            '&:hover': {
+                                                boxShadow: isPhone ? 2 : 0
+                                            }
+                                        }}
+                                    >
+                                        <CardHeader
+                                            title="Daily Check (Site Users)"
+                                            subheader="Checks if entry is created and submitted"
+                                            sx={{
+                                                '& .MuiCardHeader-title': {
+                                                    fontSize: { xs: '1.125rem', sm: '1.25rem' },
+                                                    fontWeight: 600
+                                                },
+                                                '& .MuiCardHeader-subheader': {
+                                                    fontSize: { xs: '0.875rem', sm: '0.875rem' }
+                                                },
+                                                pb: { xs: 1, sm: 2 }
+                                            }}
+                                        />
+                                        <CardContent sx={{ pt: { xs: 1, sm: 2 } }}>
+                                            <Typography variant="body2" sx={{ mb: 2, fontSize: { xs: '0.9375rem', sm: '0.875rem' }, lineHeight: 1.6 }}>
                                                 At this time, system checks if an entry exists for today. <br />
                                                 If NO &rarr; Notify Site Users (Not Created Alert). <br />
                                                 If YES but Draft &rarr; Notify Site Users (Not Submitted Alert).
@@ -262,16 +284,54 @@ export default function NotificationConfigPage() {
                                                 label="Check Time"
                                                 value={creationCheckTime}
                                                 onChange={(val) => setCreationCheckTime(val)}
-                                                slotProps={{ textField: { fullWidth: true } }}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        sx: {
+                                                            '& .MuiOutlinedInput-root': {
+                                                                borderRadius: '12px',
+                                                                fontSize: { xs: '1rem', sm: '1rem' }
+                                                            },
+                                                            '& .MuiInputLabel-root': {
+                                                                fontSize: { xs: '1rem', sm: '1rem' }
+                                                            },
+                                                            '& .MuiOutlinedInput-input': {
+                                                                padding: { xs: '16px 14px', sm: '16.5px 14px' }
+                                                            }
+                                                        }
+                                                    }
+                                                }}
                                             />
                                         </CardContent>
                                     </Card>
                                 </Grid>
                                 <Grid item xs={12} md={6}>
-                                    <Card variant="outlined">
-                                        <CardHeader title="Escalation Check (Managers)" subheader="Re-checks entry status" />
-                                        <CardContent>
-                                            <Typography variant="body2" sx={{ mb: 2 }}>
+                                    <Card
+                                        variant="outlined"
+                                        sx={{
+                                            borderRadius: { xs: '16px', md: '4px' },
+                                            boxShadow: isPhone ? 1 : 0,
+                                            '&:hover': {
+                                                boxShadow: isPhone ? 2 : 0
+                                            }
+                                        }}
+                                    >
+                                        <CardHeader
+                                            title="Escalation Check (Managers)"
+                                            subheader="Re-checks entry status"
+                                            sx={{
+                                                '& .MuiCardHeader-title': {
+                                                    fontSize: { xs: '1.125rem', sm: '1.25rem' },
+                                                    fontWeight: 600
+                                                },
+                                                '& .MuiCardHeader-subheader': {
+                                                    fontSize: { xs: '0.875rem', sm: '0.875rem' }
+                                                },
+                                                pb: { xs: 1, sm: 2 }
+                                            }}
+                                        />
+                                        <CardContent sx={{ pt: { xs: 1, sm: 2 } }}>
+                                            <Typography variant="body2" sx={{ mb: 2, fontSize: { xs: '0.9375rem', sm: '0.875rem' }, lineHeight: 1.6 }}>
                                                 At this time, system re-checks if entry is submitted. <br />
                                                 If NO (Missing or Draft) &rarr; Notify Managers (Escalation Alert).
                                             </Typography>
@@ -279,7 +339,23 @@ export default function NotificationConfigPage() {
                                                 label="Escalation Time"
                                                 value={escalationCheckTime}
                                                 onChange={(val) => setEscalationCheckTime(val)}
-                                                slotProps={{ textField: { fullWidth: true } }}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        sx: {
+                                                            '& .MuiOutlinedInput-root': {
+                                                                borderRadius: '12px',
+                                                                fontSize: { xs: '1rem', sm: '1rem' }
+                                                            },
+                                                            '& .MuiInputLabel-root': {
+                                                                fontSize: { xs: '1rem', sm: '1rem' }
+                                                            },
+                                                            '& .MuiOutlinedInput-input': {
+                                                                padding: { xs: '16px 14px', sm: '16.5px 14px' }
+                                                            }
+                                                        }
+                                                    }
+                                                }}
                                             />
                                         </CardContent>
                                     </Card>
@@ -290,11 +366,19 @@ export default function NotificationConfigPage() {
                                     variant="contained"
                                     onClick={handleSaveSchedule}
                                     fullWidth={isMobile}
+                                    size={isPhone ? 'large' : 'medium'}
                                     sx={{
                                         textTransform: 'none',
                                         borderRadius: '12px',
-                                        py: 1.5,
+                                        py: { xs: 1.75, sm: 1.5 },
                                         fontWeight: 600,
+                                        minHeight: isPhone ? 48 : undefined,
+                                        fontSize: { xs: '1rem', sm: '0.875rem' },
+                                        boxShadow: isPhone ? 2 : 1,
+                                        '&:active': isPhone ? {
+                                            transform: 'scale(0.98)',
+                                            boxShadow: 1
+                                        } : undefined
                                     }}
                                 >
                                     Save Schedule
@@ -306,46 +390,136 @@ export default function NotificationConfigPage() {
                     <TabPanel value={tabValue} index={1}>
                         <Grid container spacing={4}>
                             <Grid item xs={12} md={6}>
-                                <Typography variant="h6" gutterBottom>Site Users (Daily Alerts)</Typography>
-                                <Typography variant="caption" color="textSecondary">Select users to receive "Not Created" and "Not Submitted" alerts.</Typography>
-                                <Paper variant="outlined" sx={{ height: 400, overflow: 'auto', mt: 1 }}>
-                                    <List dense>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
+                                    Site Users (Daily Alerts)
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
+                                    Select users to receive "Not Created" and "Not Submitted" alerts.
+                                </Typography>
+                                <Paper
+                                    variant="outlined"
+                                    sx={{
+                                        maxHeight: { xs: '50vh', sm: '60vh', md: 400 },
+                                        overflow: 'auto',
+                                        mt: 1,
+                                        borderRadius: { xs: '12px', md: '4px' },
+                                        '&::-webkit-scrollbar': {
+                                            width: { xs: 6, md: 8 }
+                                        },
+                                        '&::-webkit-scrollbar-thumb': {
+                                            backgroundColor: 'rgba(40, 121, 182, 0.3)',
+                                            borderRadius: 4,
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(40, 121, 182, 0.5)'
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <List dense={!isPhone}>
                                         {users.map(user => (
-                                                <ListItem
-                                                    key={user.id}
-                                                    button
-                                                    onClick={() => handleToggleSiteUser(user.email)}
-                                                    sx={{ minHeight: isPhone ? 56 : undefined, px: isPhone ? 2 : 1 }}
-                                                >
+                                            <ListItem
+                                                key={user.id}
+                                                button
+                                                onClick={() => handleToggleSiteUser(user.email)}
+                                                sx={{
+                                                    minHeight: isPhone ? 56 : undefined,
+                                                    px: isPhone ? 2 : 1,
+                                                    py: isPhone ? 1.5 : undefined,
+                                                    '&:active': isPhone ? {
+                                                        backgroundColor: 'rgba(40, 121, 182, 0.08)'
+                                                    } : undefined
+                                                }}
+                                            >
                                                 <ListItemIcon>
                                                     <Checkbox
                                                         edge="start"
                                                         checked={siteUserEmails.includes(user.email)}
                                                         disableRipple
-                                                            size={isPhone ? 'medium' : 'small'}
+                                                        size={isPhone ? 'medium' : 'small'}
+                                                        sx={{
+                                                            color: '#2879b6',
+                                                            '&.Mui-checked': { color: '#2879b6' }
+                                                        }}
                                                     />
                                                 </ListItemIcon>
-                                                <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
+                                                <ListItemText
+                                                    primary={user.name}
+                                                    secondary={`${user.email} (${user.role?.name})`}
+                                                    primaryTypographyProps={{
+                                                        sx: { fontSize: isPhone ? '1rem' : '0.875rem', fontWeight: 500 }
+                                                    }}
+                                                    secondaryTypographyProps={{
+                                                        sx: { fontSize: isPhone ? '0.875rem' : '0.75rem' }
+                                                    }}
+                                                />
                                             </ListItem>
                                         ))}
                                     </List>
                                 </Paper>
                             </Grid>
                             <Grid item xs={12} md={6}>
-                                <Typography variant="h6" gutterBottom>Managers (Escalation Alerts)</Typography>
-                                <Typography variant="caption" color="textSecondary">Select users to receive "Escalation" alerts.</Typography>
-                                <Paper variant="outlined" sx={{ height: 400, overflow: 'auto', mt: 1 }}>
-                                    <List dense>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
+                                    Managers (Escalation Alerts)
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
+                                    Select users to receive "Escalation" alerts.
+                                </Typography>
+                                <Paper
+                                    variant="outlined"
+                                    sx={{
+                                        maxHeight: { xs: '50vh', sm: '60vh', md: 400 },
+                                        overflow: 'auto',
+                                        mt: 1,
+                                        borderRadius: { xs: '12px', md: '4px' },
+                                        '&::-webkit-scrollbar': {
+                                            width: { xs: 6, md: 8 }
+                                        },
+                                        '&::-webkit-scrollbar-thumb': {
+                                            backgroundColor: 'rgba(125, 194, 68, 0.3)',
+                                            borderRadius: 4,
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(125, 194, 68, 0.5)'
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <List dense={!isPhone}>
                                         {users.map(user => (
-                                            <ListItem key={user.id} button onClick={() => handleToggleManager(user.email)}>
+                                            <ListItem
+                                                key={user.id}
+                                                button
+                                                onClick={() => handleToggleManager(user.email)}
+                                                sx={{
+                                                    minHeight: isPhone ? 56 : undefined,
+                                                    px: isPhone ? 2 : 1,
+                                                    py: isPhone ? 1.5 : undefined,
+                                                    '&:active': isPhone ? {
+                                                        backgroundColor: 'rgba(125, 194, 68, 0.08)'
+                                                    } : undefined
+                                                }}
+                                            >
                                                 <ListItemIcon>
                                                     <Checkbox
                                                         edge="start"
                                                         checked={managerEmails.includes(user.email)}
                                                         disableRipple
+                                                        size={isPhone ? 'medium' : 'small'}
+                                                        sx={{
+                                                            color: '#7dc244',
+                                                            '&.Mui-checked': { color: '#7dc244' }
+                                                        }}
                                                     />
                                                 </ListItemIcon>
-                                                <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
+                                                <ListItemText
+                                                    primary={user.name}
+                                                    secondary={`${user.email} (${user.role?.name})`}
+                                                    primaryTypographyProps={{
+                                                        sx: { fontSize: isPhone ? '1rem' : '0.875rem', fontWeight: 500 }
+                                                    }}
+                                                    secondaryTypographyProps={{
+                                                        sx: { fontSize: isPhone ? '0.875rem' : '0.75rem' }
+                                                    }}
+                                                />
                                             </ListItem>
                                         ))}
                                     </List>
@@ -356,12 +530,18 @@ export default function NotificationConfigPage() {
                             <Button
                                 variant="contained"
                                 onClick={handleSaveRecipients}
-                            fullWidth={isPhone}
+                                fullWidth={isMobile}
+                                size={isPhone ? 'large' : 'medium'}
                                 sx={{
                                     textTransform: 'none',
                                     borderRadius: '12px',
-                                    py: 1.5,
+                                    py: { xs: 1.75, sm: 1.5 },
                                     fontWeight: 600,
+                                    minHeight: isPhone ? 48 : undefined,
+                                    boxShadow: isPhone ? 2 : 1,
+                                    '&:active': isPhone ? {
+                                        transform: 'scale(0.98)'
+                                    } : undefined
                                 }}
                             >
                                 Save Recipients
@@ -371,16 +551,36 @@ export default function NotificationConfigPage() {
 
                     <TabPanel value={tabValue} index={2}>
                         {templates.filter(t => ['mis_not_created', 'mis_not_submitted', 'mis_escalation'].includes(t.name)).map(template => (
-                            <Card key={template.id} sx={{ mb: 3, borderRadius: '16px', overflow: 'hidden' }}>
+                            <Card
+                                key={template.id}
+                                sx={{
+                                    mb: 3,
+                                    borderRadius: { xs: '16px', md: '16px' },
+                                    overflow: 'hidden',
+                                    boxShadow: isPhone ? 2 : 1,
+                                    '&:active': isPhone ? {
+                                        boxShadow: 1
+                                    } : undefined
+                                }}
+                            >
                                 <CardHeader
                                     title={template.name}
                                     subheader="Variables: {{date}}"
                                     sx={{
                                         background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
-                                        '& .MuiCardHeader-title': { fontWeight: 600, color: '#2879b6' },
+                                        '& .MuiCardHeader-title': {
+                                            fontWeight: 600,
+                                            color: '#2879b6',
+                                            fontSize: { xs: '1.125rem', sm: '1.25rem' }
+                                        },
+                                        '& .MuiCardHeader-subheader': {
+                                            fontSize: { xs: '0.875rem', sm: '0.875rem' }
+                                        },
+                                        py: { xs: 2, sm: 2 },
+                                        px: { xs: 2, sm: 2 }
                                     }}
                                 />
-                                <CardContent>
+                                <CardContent sx={{ px: { xs: 2, sm: 2 }, py: { xs: 2, sm: 2 } }}>
                                     <TextField
                                         label="Subject"
                                         fullWidth
@@ -389,33 +589,69 @@ export default function NotificationConfigPage() {
                                             const newTemplates = templates.map(t => t.id === template.id ? { ...t, subject: e.target.value } : t);
                                             setTemplates(newTemplates);
                                         }}
-                                        sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                        sx={{
+                                            mb: 2,
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '12px',
+                                                fontSize: { xs: '1rem', sm: '1rem' }
+                                            },
+                                            '& .MuiInputLabel-root': {
+                                                fontSize: { xs: '1rem', sm: '1rem' }
+                                            },
+                                            '& .MuiOutlinedInput-input': {
+                                                padding: { xs: '16px 14px', sm: '16.5px 14px' }
+                                            }
+                                        }}
                                     />
                                     <TextField
                                         label="Body (HTML supported)"
                                         fullWidth
                                         multiline
-                                        rows={4}
+                                        rows={isPhone ? 6 : 4}
                                         value={template.body}
                                         onChange={(e) => {
                                             const newTemplates = templates.map(t => t.id === template.id ? { ...t, body: e.target.value } : t);
                                             setTemplates(newTemplates);
                                         }}
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '12px',
+                                                fontSize: { xs: '0.9375rem', sm: '1rem' }
+                                            },
+                                            '& .MuiInputLabel-root': {
+                                                fontSize: { xs: '1rem', sm: '1rem' }
+                                            },
+                                            '& .MuiOutlinedInput-input': {
+                                                padding: { xs: '14px', sm: '16.5px 14px' },
+                                                lineHeight: 1.5
+                                            }
+                                        }}
                                     />
-                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
+                                    <Box sx={{ mt: { xs: 2.5, sm: 2 }, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
                                         <Button
                                             variant="outlined"
                                             onClick={() => handleSaveTemplate(template)}
                                             fullWidth={isMobile}
+                                            size={isPhone ? 'large' : 'medium'}
                                             sx={{
                                                 textTransform: 'none',
                                                 borderRadius: '12px',
-                                                py: 1.5,
+                                                py: { xs: 1.75, sm: 1.5 },
                                                 fontWeight: 600,
                                                 borderColor: '#2879b6',
                                                 color: '#2879b6',
-                                                '&:hover': { borderColor: '#235EAC', backgroundColor: 'rgba(40, 121, 182, 0.04)' },
+                                                minHeight: isPhone ? 48 : undefined,
+                                                fontSize: { xs: '1rem', sm: '0.875rem' },
+                                                boxShadow: isPhone ? 1 : 0,
+                                                '&:hover': {
+                                                    borderColor: '#235EAC',
+                                                    backgroundColor: 'rgba(40, 121, 182, 0.04)',
+                                                    boxShadow: isPhone ? 2 : 0
+                                                },
+                                                '&:active': isPhone ? {
+                                                    transform: 'scale(0.98)',
+                                                    boxShadow: 0
+                                                } : undefined
                                             }}
                                         >
                                             Save Template

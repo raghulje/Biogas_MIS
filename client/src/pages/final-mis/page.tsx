@@ -19,6 +19,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Card,
+  CardContent,
   Stack,
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
@@ -1240,7 +1241,7 @@ const FinalMISPage = () => {
         <Box
           sx={{
             background:
-            'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
+              'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
             borderRadius: '16px',
             p: 3,
             mb: 3,
@@ -1270,11 +1271,13 @@ const FinalMISPage = () => {
                 4 TPD - SREL PLANT | Consolidated Data View
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
               <Button
                 variant="outlined"
                 onClick={loadData}
                 disabled={loading}
+                fullWidth={isPhone}
+                size={isPhone ? 'large' : 'medium'}
                 sx={{
                   borderColor: 'rgba(255,255,255,0.9)',
                   color: '#fff',
@@ -1282,7 +1285,8 @@ const FinalMISPage = () => {
                   textTransform: 'none',
                   fontWeight: 600,
                   px: 3,
-                  py: 1,
+                  py: isPhone ? 1.5 : 1,
+                  minHeight: isPhone ? 48 : undefined,
                 }}
               >
                 {loading ? (
@@ -1298,6 +1302,8 @@ const FinalMISPage = () => {
                 variant="contained"
                 onClick={handleExportExcel}
                 disabled={!aggregatedData || loading}
+                fullWidth={isPhone}
+                size={isPhone ? 'large' : 'medium'}
                 sx={{
                   background: 'rgba(255,255,255,0.95)',
                   color: '#2879b6',
@@ -1305,7 +1311,8 @@ const FinalMISPage = () => {
                   textTransform: 'none',
                   fontWeight: 600,
                   px: 3,
-                  py: 1,
+                  py: isPhone ? 1.5 : 1,
+                  minHeight: isPhone ? 48 : undefined,
                   whiteSpace: 'nowrap',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   '&:hover': {
@@ -1329,59 +1336,406 @@ const FinalMISPage = () => {
           </Box>
         </Box>
 
-        {/* Mobile condensed accordion/cards view (phone only) */}
+        {/* Mobile comprehensive view (phone only) */}
         {isPhone && aggregatedData && (
           <Box sx={{ mb: 2 }}>
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Quick Summary</Typography>
+            {/* Quick Summary */}
+            <Accordion
+              defaultExpanded
+              sx={{
+                borderRadius: '12px !important',
+                mb: 2,
+                '&:before': { display: 'none' },
+                boxShadow: 2
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  minHeight: 56,
+                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  color: '#fff',
+                  borderRadius: '12px 12px 0 0',
+                  '& .MuiAccordionSummary-content': { my: 1.5 }
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  📊 Quick Summary
+                </Typography>
               </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={1}>
-                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                    <Typography variant="caption">Records</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.recordCount}</Typography>
+              <AccordionDetails sx={{ pt: 2, pb: 2 }}>
+                <Stack spacing={1.5}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Typography variant="body2" color="textSecondary">Records</Typography>
+                    <Typography variant="body2" fontWeight={600}>{aggregatedData.recordCount}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Typography variant="body2" color="textSecondary">Date Range</Typography>
+                    <Typography variant="body2" fontWeight={600}>{aggregatedData.dateRange}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Typography variant="body2" color="textSecondary">Total Raw Biogas</Typography>
+                    <Typography variant="body2" fontWeight={600} color="#2879b6">{aggregatedData.biogasProduction.rbgProduced.toFixed(0)} m³</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Typography variant="body2" color="textSecondary">CBG Produced</Typography>
+                    <Typography variant="body2" fontWeight={600} color="#7dc244">{aggregatedData.cbgProduction.production.toFixed(0)} kg</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                    <Typography variant="body2" color="textSecondary">Power Consumption</Typography>
+                    <Typography variant="body2" fontWeight={600} color="#ee6a31">{aggregatedData.powerConsumption.toFixed(0)} kWh</Typography>
+                  </Box>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Feeding Data */}
+            <Accordion sx={{ borderRadius: '12px !important', mb: 2, '&:before': { display: 'none' }, boxShadow: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56, '& .MuiAccordionSummary-content': { my: 1.5 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>🌾 Feeding Data</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                <Stack spacing={2}>
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>Press Mud (tpd)</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-01</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.pressMud.d01.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-02</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.pressMud.d02.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-03</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.pressMud.d03.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '2px solid #2879b6' }}>
+                          <Typography variant="body2" fontWeight={700}>Total</Typography>
+                          <Typography variant="body2" fontWeight={700} color="#2879b6">{aggregatedData.feeding.pressMud.total.toFixed(2)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
                   </Card>
-                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                    <Typography variant="caption">Total Raw Biogas</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.rawBiogas?.totalRawBiogas ?? aggregatedData.totalRawBiogas ?? 0} m³</Typography>
+
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#7dc244" mb={1.5}>Cow Dung (tpd)</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-01</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.cowDung.d01.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-02</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.cowDung.d02.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-03</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.cowDung.d03.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '2px solid #7dc244' }}>
+                          <Typography variant="body2" fontWeight={700}>Total</Typography>
+                          <Typography variant="body2" fontWeight={700} color="#7dc244">{aggregatedData.feeding.cowDung.total.toFixed(2)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
                   </Card>
-                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                    <Typography variant="caption">CBG Produced</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.compressedBiogas?.produced ?? aggregatedData.totalCBGProduced ?? 0} kg</Typography>
-                  </Card>
-                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                    <Typography variant="caption">FOM Produced</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.fertilizer?.fomProduced ?? aggregatedData.totalFOMProduced ?? 0} kg</Typography>
-                  </Card>
-                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                    <Typography variant="caption">Avg Plant Availability</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.avgPlantAvailability ?? aggregatedData.plantAvailability ?? 0}%</Typography>
+
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#ee6a31" mb={1.5}>Total Feed Input (m³)</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-01</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.totalFeedInput.d01.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-02</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.totalFeedInput.d02.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">D-03</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.totalFeedInput.d03.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '2px solid #ee6a31' }}>
+                          <Typography variant="body2" fontWeight={700}>Total</Typography>
+                          <Typography variant="body2" fontWeight={700} color="#ee6a31">{aggregatedData.feeding.totalFeedInput.total.toFixed(2)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
                   </Card>
                 </Stack>
               </AccordionDetails>
             </Accordion>
 
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Digester Performance</Typography>
+            {/* Digester Performance */}
+            <Accordion sx={{ borderRadius: '12px !important', mb: 2, '&:before': { display: 'none' }, boxShadow: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56, '& .MuiAccordionSummary-content': { my: 1.5 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>⚗️ Digester Performance</Typography>
               </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={1}>
+              <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                <Stack spacing={2}>
                   {['d01', 'd02', 'd03'].map((d, i) => {
-                    const perf = aggregatedData.digesterPerformance ? (aggregatedData.digesterPerformance as any)[`d0${i + 1}`] : null;
+                    const perf = aggregatedData.digesterPerformance[d];
                     return (
-                      <Card key={d} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Digester {i + 1}</Typography>
-                        <Stack spacing={0.5} sx={{ mt: 1 }}>
-                          <Box><Typography variant="caption">TS%</Typography><Typography variant="body2">{perf?.ts?.toFixed(1) ?? '-'}</Typography></Box>
-                          <Box><Typography variant="caption">VS%</Typography><Typography variant="body2">{perf?.vs?.toFixed(1) ?? '-'}</Typography></Box>
-                          <Box><Typography variant="caption">pH</Typography><Typography variant="body2">{perf?.ph?.toFixed(1) ?? '-'}</Typography></Box>
-                          <Box><Typography variant="caption">HRT</Typography><Typography variant="body2">{perf?.hrt?.toFixed(1) ?? '-'}</Typography></Box>
-                        </Stack>
+                      <Card key={d} sx={{ borderRadius: '12px', boxShadow: 1, border: '2px solid #2879b6' }}>
+                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                          <Typography variant="subtitle2" fontWeight={700} color="#2879b6" mb={1.5}>
+                            Digester {i + 1}
+                          </Typography>
+                          <Stack spacing={1}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                              <Typography variant="caption" color="textSecondary">TS%</Typography>
+                              <Typography variant="body2" fontWeight={600}>{perf?.ts?.toFixed(1) ?? '-'}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                              <Typography variant="caption" color="textSecondary">VS%</Typography>
+                              <Typography variant="body2" fontWeight={600}>{perf?.vs?.toFixed(1) ?? '-'}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                              <Typography variant="caption" color="textSecondary">pH</Typography>
+                              <Typography variant="body2" fontWeight={600}>{perf?.ph?.toFixed(1) ?? '-'}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                              <Typography variant="caption" color="textSecondary">VFA/TIC</Typography>
+                              <Typography variant="body2" fontWeight={600}>{perf?.vfaTic?.toFixed(2) ?? '-'}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                              <Typography variant="caption" color="textSecondary">HRT (days)</Typography>
+                              <Typography variant="body2" fontWeight={600}>{perf?.hrt?.toFixed(1) ?? '-'}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                              <Typography variant="caption" color="textSecondary">OLR</Typography>
+                              <Typography variant="body2" fontWeight={600}>{perf?.olr?.toFixed(2) ?? '-'}</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                              <Typography variant="caption" color="textSecondary">Temperature (°C)</Typography>
+                              <Typography variant="body2" fontWeight={600}>{perf?.temp?.toFixed(1) ?? '-'}</Typography>
+                            </Box>
+                          </Stack>
+                        </CardContent>
                       </Card>
                     );
                   })}
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Biogas Quality & Production */}
+            <Accordion sx={{ borderRadius: '12px !important', mb: 2, '&:before': { display: 'none' }, boxShadow: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56, '& .MuiAccordionSummary-content': { my: 1.5 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>💨 Biogas Quality & Production</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                <Stack spacing={2}>
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>Raw Biogas Quality</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">CH₄ (%)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasQuality.ch4.toFixed(1)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">CO₂ (%)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasQuality.co2.toFixed(1)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">H₂S (ppm)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasQuality.h2s.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">O₂ (%)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasQuality.o2.toFixed(1)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">N₂ (%)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasQuality.n2.toFixed(1)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#7dc244" mb={1.5}>Raw Biogas Production</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">RBG Produced (m³)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasProduction.rbgProduced.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">RBG Flared (m³)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasProduction.rbgFlared.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Sent to Purification (m³)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.biogasProduction.sentToPurification.toFixed(0)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* CBG Quality & Production */}
+            <Accordion sx={{ borderRadius: '12px !important', mb: 2, '&:before': { display: 'none' }, boxShadow: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56, '& .MuiAccordionSummary-content': { my: 1.5 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>⛽ CBG Quality & Production</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                <Stack spacing={2}>
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>CBG Quality</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">CH₄ (%)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.cbgQuality.ch4.toFixed(1)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">CO₂ (%)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.cbgQuality.co2.toFixed(1)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">H₂S (ppm)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.cbgQuality.h2s.toFixed(0)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#7dc244" mb={1.5}>CBG Production</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Production (kg)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.cbgProduction.production.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Dispatch (kg)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.cbgProduction.dispatch.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Gas Yield (m³/kg VS)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.cbgProduction.gasYield.toFixed(2)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Conversion Factor</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.cbgProduction.cf.toFixed(2)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* SLS & FOM Data */}
+            <Accordion sx={{ borderRadius: '12px !important', mb: 2, '&:before': { display: 'none' }, boxShadow: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56, '& .MuiAccordionSummary-content': { my: 1.5 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>🌱 SLS & FOM Data</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                <Stack spacing={2}>
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>Decanter</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Run Hours</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.slsData.decanter.runHrs.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Wet Cake (kg)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.fomLfom.decanter.wetCakeQty.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Wet Cake TS%</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.fomLfom.decanter.wetCakeTs.toFixed(1)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">LFOM (m³)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.fomLfom.decanter.lfomQty.toFixed(0)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" fontWeight={600} color="#7dc244" mb={1.5}>Screw Press</Typography>
+                      <Stack spacing={1}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Run Hours</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.slsData.screwPress.runHrs.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Wet Cake (kg)</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.fomLfom.screwPress.wetCakeQty.toFixed(0)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="textSecondary">Wet Cake TS%</Typography>
+                          <Typography variant="body2" fontWeight={600}>{aggregatedData.fomLfom.screwPress.wetCakeTs.toFixed(1)}</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Slurry Management */}
+            <Accordion sx={{ borderRadius: '12px !important', mb: 2, '&:before': { display: 'none' }, boxShadow: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56, '& .MuiAccordionSummary-content': { my: 1.5 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>💧 Slurry Management</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                <Stack spacing={1.5}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Typography variant="body2" color="textSecondary">Total Slurry Out (m³)</Typography>
+                    <Typography variant="body2" fontWeight={600}>{aggregatedData.slurryManagement.totalSlurryOut.toFixed(0)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Typography variant="body2" color="textSecondary">SLS Inlet (m³)</Typography>
+                    <Typography variant="body2" fontWeight={600}>{aggregatedData.slurryManagement.slsInlet.toFixed(0)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <Typography variant="body2" color="textSecondary">FOM Cake Dispatch (kg)</Typography>
+                    <Typography variant="body2" fontWeight={600}>{aggregatedData.slurryManagement.fomCakeDispatch.toFixed(0)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                    <Typography variant="body2" color="textSecondary">LFOM Dispatch (m³)</Typography>
+                    <Typography variant="body2" fontWeight={600}>{aggregatedData.slurryManagement.lfomDispatch.toFixed(0)}</Typography>
+                  </Box>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Power & Breakdown */}
+            <Accordion sx={{ borderRadius: '12px !important', mb: 2, '&:before': { display: 'none' }, boxShadow: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56, '& .MuiAccordionSummary-content': { my: 1.5 } }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>⚡ Power & Breakdown</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                <Stack spacing={2}>
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1, background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.08) 0%, rgba(40, 121, 182, 0.03) 100%)' }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="caption" color="textSecondary" mb={0.5}>Total Power Consumption</Typography>
+                      <Typography variant="h5" fontWeight={700} color="#2879b6">{aggregatedData.powerConsumption.toFixed(0)} kWh</Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="caption" color="textSecondary" mb={1}>Major Breakdown Reasons</Typography>
+                      <Typography variant="body2" color="textPrimary" sx={{ lineHeight: 1.6 }}>{aggregatedData.breakdownReasons}</Typography>
+                    </CardContent>
+                  </Card>
                 </Stack>
               </AccordionDetails>
             </Accordion>
@@ -1426,14 +1780,14 @@ const FinalMISPage = () => {
               Date Filters
             </Typography>
             {aggregatedData && (
-                <Chip
+              <Chip
                 label={`${aggregatedData.recordCount} record${aggregatedData.recordCount !== 1 ? 's' : ''
                   } found`}
                 size="small"
                 sx={{
                   ml: 2,
                   background:
-                  'linear-gradient(135deg, #7dc244 0%, #139B49 100%)',
+                    'linear-gradient(135deg, #7dc244 0%, #139B49 100%)',
                   color: '#fff',
                   fontWeight: 500,
                 }}
@@ -1635,8 +1989,8 @@ const FinalMISPage = () => {
           </Box>
         )}
 
-        {/* MIS Report Table */}
-        {aggregatedData && (
+        {/* MIS Report Table - Desktop/Tablet Only */}
+        {aggregatedData && !isPhone && (
           <Box
             sx={{
               background: '#fff',

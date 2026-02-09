@@ -29,6 +29,9 @@ import {
   CircularProgress,
   TablePagination,
   Chip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import { useTheme, useMediaQuery } from '@mui/material';
 import ErrorBoundary from '../../components/ErrorBoundary';
@@ -40,6 +43,7 @@ import {
   Save as SaveIcon,
   FileDownload as FileDownloadIcon,
   Refresh as RefreshIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
 import { adminService } from '../../services/adminService';
@@ -239,7 +243,7 @@ function MISEntryEmailPanel({
             </Box>
           </Card>
         </Grid>
-            {/* Mobile SMTP card removed from this panel to avoid referencing parent SMTP state.
+        {/* Mobile SMTP card removed from this panel to avoid referencing parent SMTP state.
                 The SMTP settings are available in the SMTP tab (responsive there). */}
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
@@ -572,82 +576,46 @@ const mockActivityLogs: ActivityLog[] = [
   {
     id: 1,
     user: 'John Doe',
-    lastLogin: '2024-01-15 09:30:00',
     action: 'Updated MIS Entry #1234',
-    previousValue: 'Total Slurry Feed: 150 m³',
-    newValue: 'Total Slurry Feed: 155 m³',
+    entity: 'MIS Entry',
+    description: 'Updated total slurry feed from 150 to 155',
+    formatted_description: 'Updated total slurry feed from 150 to 155',
+    changes: [
+      { field: 'Total Slurry Feed', from: '150 m³', to: '155 m³' }
+    ],
     timestamp: '2024-01-15 10:45:00',
-    actionType: 'update',
   },
   {
     id: 2,
     user: 'Jane Smith',
-    lastLogin: '2024-01-15 08:00:00',
     action: 'Created MIS Entry #1235',
-    previousValue: '-',
-    newValue: 'New entry for 2024-01-15',
+    entity: 'MIS Entry',
+    description: 'Created new entry for 2024-01-15',
+    formatted_description: 'Created new entry for 2024-01-15',
+    changes: [],
     timestamp: '2024-01-15 08:15:00',
-    actionType: 'create',
   },
   {
     id: 3,
     user: 'Mike Johnson',
-    lastLogin: '2024-01-15 07:45:00',
     action: 'Viewed Dashboard',
-    previousValue: '-',
-    newValue: '-',
+    entity: 'Dashboard',
+    description: 'Viewed main dashboard',
+    formatted_description: 'Viewed main dashboard',
+    changes: [],
     timestamp: '2024-01-15 07:45:00',
-    actionType: 'view',
   },
   {
     id: 4,
     user: 'John Doe',
-    lastLogin: '2024-01-15 09:30:00',
     action: 'Updated Digester D-01 Temperature',
-    previousValue: 'Temperature: 35°C',
-    newValue: 'Temperature: 37°C',
+    entity: 'Digester',
+    description: 'Updated temperature from 35°C to 37°C',
+    formatted_description: 'Updated temperature from 35°C to 37°C',
+    changes: [
+      { field: 'Temperature', from: '35°C', to: '37°C' }
+    ],
     timestamp: '2024-01-15 11:20:00',
-    actionType: 'update',
-  },
-  {
-    id: 5,
-    user: 'Jane Smith',
-    lastLogin: '2024-01-15 08:00:00',
-    action: 'Deleted MIS Entry #1200',
-    previousValue: 'Entry for 2024-01-10',
-    newValue: '-',
-    timestamp: '2024-01-15 09:30:00',
-    actionType: 'delete',
-  },
-  {
-    id: 6,
-    user: 'Mike Johnson',
-    lastLogin: '2024-01-15 07:45:00',
-    action: 'Updated User Role',
-    previousValue: 'Role: Viewer',
-    newValue: 'Role: Operator',
-    timestamp: '2024-01-15 08:00:00',
-    actionType: 'update',
-  },
-  {
-    id: 7,
-    user: 'John Doe',
-    lastLogin: '2024-01-15 09:30:00',
-    action: 'Created User Account',
-    previousValue: '-',
-    newValue: 'User: Sarah Williams',
-    timestamp: '2024-01-15 12:00:00',
-    actionType: 'create',
-  },
-  {
-    id: 8,
-    user: 'Jane Smith',
-    lastLogin: '2024-01-15 08:00:00',
-    action: 'Updated Biogas Production',
-    previousValue: 'Production: 1200 m³',
-    newValue: 'Production: 1250 m³',
-    timestamp: '2024-01-15 10:00:00',
-    actionType: 'update',
   },
 ];
 
@@ -750,8 +718,7 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
+
 
 export default function AdminPage() {
   const theme = useTheme();
@@ -1054,22 +1021,13 @@ export default function AdminPage() {
         ]);
         setActivityLogs((Array.isArray(auditData) ? auditData : []).map((log: any) => ({
           id: log.id,
-          userId: log.user_id,
           user: log.user || log.actor?.name || 'System',
-          lastLogin: '',
+          entity: log.entity || 'System',
           timestamp: log.timestamp || log.createdAt || log.created_at || '',
-          action: log.action || log.action || '',
-          actionType: ((log.action || '').toLowerCase().includes('create')) ? 'create' :
-                      ((log.action || '').toLowerCase().includes('delete')) ? 'delete' :
-                      ((log.action || '').toLowerCase().includes('login')) ? 'login' :
-                      ((log.action || '').toLowerCase().includes('logout')) ? 'logout' : 'update',
-          // Prefer server-provided structured changes when available
-          changes: Array.isArray(log.changes) ? log.changes : (log.changes ? log.changes : (Array.isArray(log.changes) ? log.changes : [])),
+          action: log.action || '',
+          changes: Array.isArray(log.changes) ? log.changes : [],
           formatted_description: log.formatted_description || log.description || '',
           description: log.description || log.formatted_description || '',
-          // Also keep raw old/new JSON strings for debugging if needed
-          previousValue: log.old_values != null ? (typeof log.old_values === 'string' ? log.old_values : JSON.stringify(log.old_values)) : '',
-          newValue: log.new_values != null ? (typeof log.new_values === 'string' ? log.new_values : JSON.stringify(log.new_values)) : ''
         })));
         setSessions(Array.isArray(sessionsData?.sessions) ? sessionsData.sessions : []);
         const lastLogins: Record<number, string> = {};
@@ -1727,7 +1685,9 @@ export default function AdminPage() {
                 '& .MuiTab-root': {
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: '1rem',
+                  fontSize: isPhone ? '0.9rem' : '1rem',
+                  minHeight: isPhone ? 48 : 56,
+                  px: isPhone ? 1.5 : 2,
                 },
                 '& .Mui-selected': {
                   color: '#2879b6',
@@ -1748,27 +1708,36 @@ export default function AdminPage() {
               <Tab label="Final MIS Report Email" />
             </Tabs>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2 }}>
-            <Typography sx={{ fontWeight: 600 }}>Theme:</Typography>
-            <TextField
-              select
-              size="small"
-              value={selectedThemeKey}
-              onChange={(e) => setSelectedThemeKey(e.target.value)}
-              sx={{ minWidth: 220 }}
+          <Box sx={{ display: 'flex', flexDirection: isPhone ? 'column' : 'row', alignItems: isPhone ? 'stretch' : 'center', gap: 2, p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: isPhone ? '100%' : 'auto' }}>
+              <Typography sx={{ fontWeight: 600, minWidth: isPhone ? 'auto' : undefined }}>Theme:</Typography>
+              <TextField
+                select
+                size="small"
+                fullWidth={isPhone}
+                value={selectedThemeKey}
+                onChange={(e) => setSelectedThemeKey(e.target.value)}
+                sx={{ minWidth: isPhone ? 0 : 220, flex: isPhone ? 1 : undefined, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              >
+                {Object.values(themePresets).map((p: any) => (
+                  <MenuItem key={p.key} value={p.key}>{p.name}</MenuItem>
+                ))}
+              </TextField>
+            </Box>
+            <Button
+              variant="contained"
+              onClick={handleSaveTheme}
+              disabled={saving}
+              fullWidth={isPhone}
+              sx={{ textTransform: 'none', borderRadius: '10px' }}
             >
-              {Object.values(themePresets).map((p: any) => (
-                <MenuItem key={p.key} value={p.key}>{p.name}</MenuItem>
-              ))}
-            </TextField>
-            <Button variant="contained" onClick={handleSaveTheme} disabled={saving} sx={{ textTransform: 'none' }}>
               Save Theme
             </Button>
           </Box>
 
           <TabPanel value={tabValue} index={0}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <CardContent sx={{ p: isPhone ? 2 : 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: isPhone ? 'column' : 'row', justifyContent: 'space-between', alignItems: isPhone ? 'stretch' : 'center', gap: isPhone ? 2 : 0, mb: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                   Users
                 </Typography>
@@ -1777,15 +1746,15 @@ export default function AdminPage() {
                   startIcon={<AddIcon />}
                   onClick={handleOpenCreateUser}
                   className="btn-gradient-success"
-                size={isPhone ? 'large' : 'medium'}
-                fullWidth={isPhone}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: '12px',
-                  color: '#fff',
-                  whiteSpace: 'nowrap',
-                  minHeight: isPhone ? 48 : undefined,
-                }}
+                  size={isPhone ? 'large' : 'medium'}
+                  fullWidth={isPhone}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    whiteSpace: 'nowrap',
+                    minHeight: isPhone ? 48 : undefined,
+                  }}
                 >
                   Create User
                 </Button>
@@ -1841,38 +1810,51 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
-              {/* Mobile list for users */}
-              <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 2 }}>
-                {users.map((u) => (
-                  <Card key={`user-mobile-${u.id}`} variant="outlined" sx={{ mb: 2, p: 2, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box>
-                        <Typography sx={{ fontWeight: 700 }}>{u.name}</Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>{u.email}</Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>{typeof u.role === 'string' ? u.role : u.role?.name}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton size="small" onClick={() => handleOpenEditUser(u)}><EditIcon /></IconButton>
-                        <IconButton size="small" onClick={() => handleOpenDeleteUser(u)}><DeleteIcon /></IconButton>
-                      </Box>
-                    </Box>
-                  </Card>
-                ))}
-              </Box>
-
               {/* Mobile Card List View for Users */}
-              <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2, mt: 2 }}>
                 {users.map(user => (
-                  <Card key={user.id} variant="outlined" sx={{ borderRadius: '16px', p: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="h6" fontWeight={600}>{user.name}</Typography>
-                      <Chip label={typeof user.role === 'string' ? user.role : user.role?.name} size="small" color="primary" variant="outlined" />
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{user.email}</Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button variant="outlined" size="small" fullWidth onClick={() => handleOpenEditUser(user)}>Edit</Button>
-                      <Button variant="outlined" size="small" color="error" fullWidth onClick={() => handleDeleteUser(user.id)}>Deactivate</Button>
-                    </Box>
+                  <Card key={user.id} variant="outlined" sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight={700} color="#333842">{user.name}</Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, wordBreak: 'break-all' }}>{user.email}</Typography>
+                          <Chip
+                            label={typeof user.role === 'string' ? user.role : user.role?.name}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                              color: '#2879b6',
+                              fontWeight: 600,
+                              borderRadius: '8px',
+                              height: '24px'
+                            }}
+                          />
+                        </Box>
+                        <IconButton
+                          size="medium"
+                          onClick={() => handleOpenEditUser(user)}
+                          sx={{
+                            color: '#2879b6',
+                            bgcolor: 'rgba(40,121,182,0.1)',
+                            '&:hover': { bgcolor: 'rgba(40,121,182,0.2)' }
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        fullWidth
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDeleteUser(user.id)}
+                        sx={{ borderRadius: '10px', textTransform: 'none', height: 40 }}
+                      >
+                        Remove User
+                      </Button>
+                    </CardContent>
                   </Card>
                 ))}
               </Box>
@@ -1880,7 +1862,7 @@ export default function AdminPage() {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: isPhone ? 2 : 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                   User Activity Logs
@@ -1939,101 +1921,201 @@ export default function AdminPage() {
               )}
 
               {/* Filters */}
-              <Card className="glass-card" sx={{ borderRadius: '16px', mb: 3, p: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mb: 2 }}>
-                  Filters
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Search User"
-                      placeholder="Enter user name"
-                      value={filterUser}
-                      onChange={(e) => setFilterUser(e.target.value)}
-                      size="small"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <TextField
-                      fullWidth
-                      select
-                      label="Action Type"
-                      value={filterActionType}
-                      onChange={(e) => setFilterActionType(e.target.value)}
-                      size="small"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                    >
-                      <MenuItem value="all">All Actions</MenuItem>
-                      <MenuItem value="create">Create</MenuItem>
-                      <MenuItem value="update">Update</MenuItem>
-                      <MenuItem value="delete">Delete</MenuItem>
-                      <MenuItem value="login">Login</MenuItem>
-                      <MenuItem value="view">View</MenuItem>
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={2}>
-                    <TextField
-                      fullWidth
-                      label="Date From"
-                      type="date"
-                      value={filterDateFrom}
-                      onChange={(e) => setFilterDateFrom(e.target.value)}
-                      size="small"
-                      InputLabelProps={{ shrink: true }}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={2}>
-                    <TextField
-                      fullWidth
-                      label="Date To"
-                      type="date"
-                      value={filterDateTo}
-                      onChange={(e) => setFilterDateTo(e.target.value)}
-                      size="small"
-                      InputLabelProps={{ shrink: true }}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={12} md={2}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button
-                        variant="contained"
-                        onClick={handleApplyFilters}
-                        className="btn-gradient-primary"
-                        sx={{
-                          textTransform: 'none',
-                          borderRadius: '12px',
-                          color: '#fff',
-                          whiteSpace: 'nowrap',
-                          flex: 1,
-                        }}
+              {isPhone ? (
+                <Accordion sx={{ mb: 3, borderRadius: '16px !important', background: '#fff', border: '1px solid #e2e8f0', boxShadow: 'none', '&:before': { display: 'none' } }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography sx={{ fontWeight: 600, color: '#333842' }}>Filters</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ p: 2 }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Search User"
+                          placeholder="Enter user name"
+                          value={filterUser}
+                          onChange={(e) => setFilterUser(e.target.value)}
+                          size="small"
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          select
+                          label="Action Type"
+                          value={filterActionType}
+                          onChange={(e) => setFilterActionType(e.target.value)}
+                          size="small"
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                        >
+                          <MenuItem value="all">All Actions</MenuItem>
+                          <MenuItem value="create">Create</MenuItem>
+                          <MenuItem value="update">Update</MenuItem>
+                          <MenuItem value="delete">Delete</MenuItem>
+                          <MenuItem value="login">Login</MenuItem>
+                          <MenuItem value="view">View</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Date From"
+                          type="date"
+                          value={filterDateFrom}
+                          onChange={(e) => setFilterDateFrom(e.target.value)}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Date To"
+                          type="date"
+                          value={filterDateTo}
+                          onChange={(e) => setFilterDateTo(e.target.value)}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            variant="contained"
+                            onClick={handleApplyFilters}
+                            className="btn-gradient-primary"
+                            sx={{
+                              textTransform: 'none',
+                              borderRadius: '12px',
+                              color: '#fff',
+                              whiteSpace: 'nowrap',
+                              flex: 1,
+                            }}
+                          >
+                            Apply
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            onClick={handleResetFilters}
+                            sx={{
+                              textTransform: 'none',
+                              borderRadius: '12px',
+                              borderColor: '#58595B',
+                              color: '#58595B',
+                              whiteSpace: 'nowrap',
+                              '&:hover': {
+                                borderColor: '#58595B',
+                                backgroundColor: 'rgba(88, 89, 91, 0.05)',
+                              },
+                            }}
+                          >
+                            Reset
+                          </Button>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              ) : (
+                <Card className="glass-card" sx={{ borderRadius: '16px', mb: 3, p: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mb: 2 }}>
+                    Filters
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <TextField
+                        fullWidth
+                        label="Search User"
+                        placeholder="Enter user name"
+                        value={filterUser}
+                        onChange={(e) => setFilterUser(e.target.value)}
+                        size="small"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <TextField
+                        fullWidth
+                        select
+                        label="Action Type"
+                        value={filterActionType}
+                        onChange={(e) => setFilterActionType(e.target.value)}
+                        size="small"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                       >
-                        Apply
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        onClick={handleResetFilters}
-                        sx={{
-                          textTransform: 'none',
-                          borderRadius: '12px',
-                          borderColor: '#58595B',
-                          color: '#58595B',
-                          whiteSpace: 'nowrap',
-                          '&:hover': {
+                        <MenuItem value="all">All Actions</MenuItem>
+                        <MenuItem value="create">Create</MenuItem>
+                        <MenuItem value="update">Update</MenuItem>
+                        <MenuItem value="delete">Delete</MenuItem>
+                        <MenuItem value="login">Login</MenuItem>
+                        <MenuItem value="view">View</MenuItem>
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                      <TextField
+                        fullWidth
+                        label="Date From"
+                        type="date"
+                        value={filterDateFrom}
+                        onChange={(e) => setFilterDateFrom(e.target.value)}
+                        size="small"
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                      <TextField
+                        fullWidth
+                        label="Date To"
+                        type="date"
+                        value={filterDateTo}
+                        onChange={(e) => setFilterDateTo(e.target.value)}
+                        size="small"
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={12} md={2}>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                          variant="contained"
+                          onClick={handleApplyFilters}
+                          className="btn-gradient-primary"
+                          sx={{
+                            textTransform: 'none',
+                            borderRadius: '12px',
+                            color: '#fff',
+                            whiteSpace: 'nowrap',
+                            flex: 1,
+                          }}
+                        >
+                          Apply
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          onClick={handleResetFilters}
+                          sx={{
+                            textTransform: 'none',
+                            borderRadius: '12px',
                             borderColor: '#58595B',
-                            backgroundColor: 'rgba(88, 89, 91, 0.05)',
-                          },
-                        }}
-                      >
-                        Reset
-                      </Button>
-                    </Box>
+                            color: '#58595B',
+                            whiteSpace: 'nowrap',
+                            '&:hover': {
+                              borderColor: '#58595B',
+                              backgroundColor: 'rgba(88, 89, 91, 0.05)',
+                            },
+                          }}
+                        >
+                          Reset
+                        </Button>
+                      </Box>
+                    </Grid>
                   </Grid>
-                </Grid>
-              </Card>
+                </Card>
+              )}
 
               {/* Login sessions: Last Login, Login time, Logout time, Session duration */}
               {sessions.length > 0 && (
@@ -2042,39 +2124,85 @@ export default function AdminPage() {
                 </Typography>
               )}
               {sessions.length > 0 && (
-                <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', mb: 3, overflowX: 'auto' }}>
-                  <Table size="small" sx={{ minWidth: 650 }}>
-                    <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Last Login</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Login Time</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Logout Time</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Session Duration</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Device</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>IP</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {sessions.slice(0, 20).map((s, idx) => (
-                        <TableRow key={`session-${s.userId}-${idx}`} className="hover-lift">
-                          <TableCell sx={{ fontWeight: 500 }}>{s.userName}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.lastLogin)}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.loginTime)}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.logoutTime)}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#333842' }}>
-                            {s.sessionDurationMinutes >= 60
-                              ? `${Math.floor(s.sessionDurationMinutes / 60)}h ${s.sessionDurationMinutes % 60}m`
-                              : `${s.sessionDurationMinutes} min`}
-                          </TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{s.device || '-'}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{s.ipAddress || '-'}</TableCell>
+                isPhone ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+                    {sessions.slice(0, 5).map((s, idx) => (
+                      <Card key={`session-mobile-${s.userId}-${idx}`} variant="outlined" sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                        <CardContent sx={{ p: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography variant="subtitle2" fontWeight={700} color="#333842">{s.userName}</Typography>
+                            <Chip
+                              size="small"
+                              label={s.sessionDurationMinutes >= 60
+                                ? `${Math.floor(s.sessionDurationMinutes / 60)}h ${s.sessionDurationMinutes % 60}m`
+                                : `${s.sessionDurationMinutes} min`}
+                              sx={{
+                                height: 24,
+                                fontSize: '0.75rem',
+                                bgcolor: 'rgba(40, 121, 182, 0.1)',
+                                color: '#2879b6',
+                                fontWeight: 600
+                              }}
+                            />
+                          </Box>
+                          <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                              <Typography variant="caption" color="text.secondary" display="block">Last Login</Typography>
+                              <Typography variant="body2" fontWeight={500} fontSize="0.85rem">
+                                {formatDateTime(s.lastLogin).split(' ')[0]}
+                                <Box component="span" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.75rem' }}>
+                                  {formatDateTime(s.lastLogin).split(' ').slice(1).join(' ')}
+                                </Box>
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Typography variant="caption" color="text.secondary" display="block">Device / IP</Typography>
+                              <Typography variant="body2" fontWeight={500} fontSize="0.85rem" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {s.device || 'Unknown'}
+                                <Box component="span" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.75rem' }}>
+                                  {s.ipAddress || '-'}
+                                </Box>
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Box>
+                ) : (
+                  <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', mb: 3, overflowX: 'auto' }}>
+                    <Table size="small" sx={{ minWidth: 650 }}>
+                      <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Last Login</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Login Time</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Logout Time</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Session Duration</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Device</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>IP</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
+                      </TableHead>
+                      <TableBody>
+                        {sessions.slice(0, 20).map((s, idx) => (
+                          <TableRow key={`session-${s.userId}-${idx}`} className="hover-lift">
+                            <TableCell sx={{ fontWeight: 500 }}>{s.userName}</TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.lastLogin)}</TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.loginTime)}</TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{formatDateTime(s.logoutTime)}</TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#333842' }}>
+                              {s.sessionDurationMinutes >= 60
+                                ? `${Math.floor(s.sessionDurationMinutes / 60)}h ${s.sessionDurationMinutes % 60}m`
+                                : `${s.sessionDurationMinutes} min`}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{s.device || '-'}</TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{s.ipAddress || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ))}
 
               {/* Activity Logs Table */}
               <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mb: 1.5 }}>
@@ -2084,31 +2212,51 @@ export default function AdminPage() {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {paginatedLogs.length > 0 ? (
                     paginatedLogs.map((log) => (
-                      <Card key={log.id} variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{log.user}</Typography>
-                          <Chip label={log.action} size="small" sx={{ fontWeight: 600 }} />
-                        </Box>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>{log.entity}</Typography>
-                        <Typography variant="body2" sx={{ color: '#58595B', mb: 1 }}>{log.description}</Typography>
-                        {log.changes && log.changes.length > 0 && (
-                          <Box sx={{ mt: 1 }}>
-                            {log.changes.map((change, i) => (
-                              <Typography key={i} variant="caption" display="block" sx={{ color: '#58595B' }}>
-                                {change.field}: <span style={{ textDecoration: 'line-through', color: '#9e9e9e' }}>{change.from}</span> → <span style={{ fontWeight: 600, color: '#2e7d32' }}>{change.to}</span>
-                              </Typography>
-                            ))}
+                      <Card key={log.id} variant="outlined" sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                        <CardContent sx={{ p: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                            <Box>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#333842' }}>{log.user}</Typography>
+                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{log.timestamp}</Typography>
+                            </Box>
+                            <Chip
+                              label={log.action}
+                              size="small"
+                              sx={{
+                                fontWeight: 600,
+                                borderRadius: '6px',
+                                height: 24,
+                                backgroundColor: log.action.toLowerCase().includes('delete') ? '#ffebee' :
+                                  log.action.toLowerCase().includes('create') ? '#e8f5e9' :
+                                    log.action.toLowerCase().includes('update') ? '#e3f2fd' : '#f5f5f5',
+                                color: log.action.toLowerCase().includes('delete') ? '#d32f2f' :
+                                  log.action.toLowerCase().includes('create') ? '#2e7d32' :
+                                    log.action.toLowerCase().includes('update') ? '#1976d2' : '#616161'
+                              }}
+                            />
                           </Box>
-                        )}
-                        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1 }}>{log.timestamp}</Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', mb: 0.5, display: 'block' }}>{log.entity}</Typography>
+                          <Box sx={{ bgcolor: 'rgba(0,0,0,0.02)', p: 1.5, borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                            <Typography variant="body2" sx={{ color: '#333842', mb: log.changes?.length ? 1 : 0 }}>{log.description}</Typography>
+                            {log.changes && log.changes.length > 0 && (
+                              <Box sx={{ mt: 1 }}>
+                                {log.changes.map((change, i) => (
+                                  <Typography key={i} variant="caption" display="block" sx={{ color: '#58595B', lineHeight: 1.6 }}>
+                                    {change.field}: <Box component="span" sx={{ textDecoration: 'line-through', color: '#9e9e9e' }}>{change.from}</Box> → <Box component="span" sx={{ fontWeight: 600, color: '#2e7d32' }}>{change.to}</Box>
+                                  </Typography>
+                                ))}
+                              </Box>
+                            )}
+                          </Box>
+                        </CardContent>
                       </Card>
                     ))
                   ) : (
                     <Typography color="text.secondary">No activity logs found</Typography>
                   )}
                   <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-                    <Button onClick={() => handleChangePage(null as any, Math.max(0, page - 1))} disabled={page === 0} sx={{ mr: 1 }} size="small">Prev</Button>
-                    <Button onClick={() => handleChangePage(null as any, page + 1)} disabled={(page + 1) * rowsPerPage >= filteredLogs.length} size="small">Next</Button>
+                    <Button onClick={() => handleChangePage(null as any, Math.max(0, page - 1))} disabled={page === 0} sx={{ mr: 1, borderRadius: '8px' }} variant="outlined" size="small">Prev</Button>
+                    <Button onClick={() => handleChangePage(null as any, page + 1)} disabled={(page + 1) * rowsPerPage >= filteredLogs.length} variant="outlined" sx={{ borderRadius: '8px' }} size="small">Next</Button>
                   </Box>
                 </Box>
               ) : (
@@ -2191,347 +2339,409 @@ export default function AdminPage() {
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: isPhone ? 2 : 3 }}>
               <ErrorBoundary>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
-                  Email Templates
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleOpenCreateTemplate}
-                  className="btn-gradient-success"
-                  sx={{
-                    textTransform: 'none',
-                    borderRadius: '12px',
-                    color: '#fff',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Create Template
-                </Button>
-              </Box>
-
-              {message && (
-                <Alert
-                  severity={message.type}
-                  sx={{
-                    mb: 2,
-                    borderRadius: '12px',
-                    '&.MuiAlert-standardSuccess': {
-                      backgroundColor: 'rgba(125, 194, 68, 0.1)',
-                      color: '#139B49',
-                    },
-                  }}
-                >
-                  {message.text}
-                </Alert>
-              )}
-
-              {/* Mobile SMTP card (phone only) */}
-              <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 2 }}>
-                <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
-                    SMTP Settings
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
+                    Email Templates
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Configure mail server used for notifications. Save then Send Test to verify.
-                  </Typography>
-                  <TextField fullWidth label="SMTP Host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} sx={{ mb: 1 }} />
-                  <TextField fullWidth label="SMTP Port" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} sx={{ mb: 1 }} />
-                  <TextField fullWidth label="Username" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} sx={{ mb: 1 }} />
-                  <TextField fullWidth label="Password" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} sx={{ mb: 1 }} />
-                  <TextField fullWidth label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} sx={{ mb: 1 }} />
-                  <TextField fullWidth label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} sx={{ mb: 1 }} />
-                  <FormControlLabel control={<Checkbox checked={smtpSecure} onChange={(e) => setSmtpSecure(e.target.checked)} sx={{ color: '#2879b6' }} />} label="Use TLS/SSL (secure)" />
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
-                    <Button variant="contained" onClick={handleSaveSMTP} disabled={saving} fullWidth size="large" sx={{ borderRadius: '12px' }}>
-                      {saving ? 'Saving…' : 'Save SMTP Settings'}
-                    </Button>
-                    <TextField size="small" label="Test recipient email" placeholder="test@example.com" value={smtpTestTo} onChange={(e) => setSmtpTestTo(e.target.value)} sx={{ mt: 1 }} />
-                    <Button variant="outlined" onClick={handleTestSMTP} disabled={smtpTesting || !smtpTestTo?.trim()} fullWidth size="large" sx={{ borderRadius: '12px' }}>
-                      {smtpTesting ? 'Sending…' : 'Send Test Email'}
-                    </Button>
-                  </Box>
-                </Card>
-              </Box>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleOpenCreateTemplate}
+                    className="btn-gradient-success"
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: '12px',
+                      color: '#fff',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Create Template
+                  </Button>
+                </Box>
 
-              <Grid container spacing={3} sx={{ display: { xs: 'none', md: 'flex' } }}>
-                {emailTemplates.map((template, index) => (
-                  <Grid item xs={12} md={6} key={template.id}>
-                    <Card
-                      className="glass-card hover-lift"
-                      sx={{
-                        borderRadius: '16px',
-                        p: 2.5,
-                        transition: 'all 0.3s ease',
-                        borderLeft: `4px solid ${getTemplateTypeColor(template.type)}`,
-                      }}
-                      data-aos="fade-up"
-                      data-aos-delay={index * 100}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', mb: 0.5 }}>
-                            {template.name}
-                          </Typography>
-                          <Chip
-                            label={getTemplateTypeLabel(template.type)}
-                            size="small"
-                            sx={{
-                              backgroundColor: `${getTemplateTypeColor(template.type)}15`,
-                              color: getTemplateTypeColor(template.type),
-                              fontWeight: 600,
-                              borderRadius: '8px',
-                            }}
-                          />
-                        </Box>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={template.isActive}
-                              onChange={() => handleToggleTemplateStatus(template.id)}
-                              sx={{
-                                color: '#7dc244',
-                                '&.Mui-checked': { color: '#7dc244' },
-                              }}
-                            />
-                          }
-                          label="Active"
-                          sx={{ m: 0 }}
-                        />
-                      </Box>
+                {message && (
+                  <Alert
+                    severity={message.type}
+                    sx={{
+                      mb: 2,
+                      borderRadius: '12px',
+                      '&.MuiAlert-standardSuccess': {
+                        backgroundColor: 'rgba(125, 194, 68, 0.1)',
+                        color: '#139B49',
+                      },
+                    }}
+                  >
+                    {message.text}
+                  </Alert>
+                )}
 
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#58595B', mb: 0.5 }}>
-                          Subject:
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#333842' }}>
-                          {template.subject}
-                        </Typography>
-                      </Box>
-
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#58595B', mb: 0.5 }}>
-                          Placeholders:
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {(template.placeholders || []).map(placeholder => (
-                            <Chip
-                              key={placeholder}
-                              label={placeholder}
-                              size="small"
-                              sx={{
-                                backgroundColor: 'rgba(40, 121, 182, 0.1)',
-                                color: '#2879b6',
-                                fontSize: '0.75rem',
-                                height: '24px',
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-
-                      <Divider sx={{ my: 2 }} />
-
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="caption" sx={{ color: '#58595B' }}>
-                          Updated: {template.updatedAt}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenEditTemplate(template)}
-                            sx={{
-                              color: '#2879b6',
-                              backgroundColor: 'rgba(40, 121, 182, 0.1)',
-                              borderRadius: '10px',
-                              '&:hover': { backgroundColor: 'rgba(40, 121, 182, 0.2)' },
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDeleteTemplate(template.id)}
-                            sx={{
-                              color: '#ee6a31',
-                              backgroundColor: 'rgba(238, 106, 49, 0.1)',
-                              borderRadius: '10px',
-                              '&:hover': { backgroundColor: 'rgba(238, 106, 49, 0.2)' },
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-              {/* Mobile list for email templates */}
-              <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 2 }}>
-                {emailTemplates.map((template) => (
-                  <Card key={`tmpl-mobile-${template.id}`} variant="outlined" sx={{ mb: 2, p: 2, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
-                        <Typography sx={{ fontWeight: 700 }}>{template.name}</Typography>
-                        <Chip label={getTemplateTypeLabel(template.type)} size="small" sx={{ mt: 1 }} />
-                        <Typography variant="body2" sx={{ mt: 1 }}>{template.subject}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton size="small" onClick={() => handleOpenEditTemplate(template)}><EditIcon /></IconButton>
-                        <IconButton size="small" onClick={() => handleDeleteTemplate(template.id)}><DeleteIcon /></IconButton>
-                      </Box>
+                {/* Mobile SMTP card (phone only) */}
+                <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 2 }}>
+                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+                      SMTP Settings
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Configure mail server used for notifications. Save then Send Test to verify.
+                    </Typography>
+                    <TextField fullWidth label="SMTP Host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} sx={{ mb: 1 }} />
+                    <TextField fullWidth label="SMTP Port" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} sx={{ mb: 1 }} />
+                    <TextField fullWidth label="Username" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} sx={{ mb: 1 }} />
+                    <TextField fullWidth label="Password" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} sx={{ mb: 1 }} />
+                    <TextField fullWidth label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} sx={{ mb: 1 }} />
+                    <TextField fullWidth label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} sx={{ mb: 1 }} />
+                    <FormControlLabel control={<Checkbox checked={smtpSecure} onChange={(e) => setSmtpSecure(e.target.checked)} sx={{ color: '#2879b6' }} />} label="Use TLS/SSL (secure)" />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
+                      <Button variant="contained" onClick={handleSaveSMTP} disabled={saving} fullWidth size="large" sx={{ borderRadius: '12px' }}>
+                        {saving ? 'Saving…' : 'Save SMTP Settings'}
+                      </Button>
+                      <TextField size="small" label="Test recipient email" placeholder="test@example.com" value={smtpTestTo} onChange={(e) => setSmtpTestTo(e.target.value)} sx={{ mt: 1 }} />
+                      <Button variant="outlined" onClick={handleTestSMTP} disabled={smtpTesting || !smtpTestTo?.trim()} fullWidth size="large" sx={{ borderRadius: '12px' }}>
+                        {smtpTesting ? 'Sending…' : 'Send Test Email'}
+                      </Button>
                     </Box>
                   </Card>
-                ))}
-              </Box>
+                </Box>
+
+                <Grid container spacing={3} sx={{ display: { xs: 'none', md: 'flex' } }}>
+                  {emailTemplates.map((template, index) => (
+                    <Grid item xs={12} md={6} key={template.id}>
+                      <Card
+                        className="glass-card hover-lift"
+                        sx={{
+                          borderRadius: '16px',
+                          p: 2.5,
+                          transition: 'all 0.3s ease',
+                          borderLeft: `4px solid ${getTemplateTypeColor(template.type)}`,
+                        }}
+                        data-aos="fade-up"
+                        data-aos-delay={index * 100}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', mb: 0.5 }}>
+                              {template.name}
+                            </Typography>
+                            <Chip
+                              label={getTemplateTypeLabel(template.type)}
+                              size="small"
+                              sx={{
+                                backgroundColor: `${getTemplateTypeColor(template.type)}15`,
+                                color: getTemplateTypeColor(template.type),
+                                fontWeight: 600,
+                                borderRadius: '8px',
+                              }}
+                            />
+                          </Box>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={template.isActive}
+                                onChange={() => handleToggleTemplateStatus(template.id)}
+                                sx={{
+                                  color: '#7dc244',
+                                  '&.Mui-checked': { color: '#7dc244' },
+                                }}
+                              />
+                            }
+                            label="Active"
+                            sx={{ m: 0 }}
+                          />
+                        </Box>
+
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#58595B', mb: 0.5 }}>
+                            Subject:
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#333842' }}>
+                            {template.subject}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#58595B', mb: 0.5 }}>
+                            Placeholders:
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {(template.placeholders || []).map(placeholder => (
+                              <Chip
+                                key={placeholder}
+                                label={placeholder}
+                                size="small"
+                                sx={{
+                                  backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                                  color: '#2879b6',
+                                  fontSize: '0.75rem',
+                                  height: '24px',
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+
+                        <Divider sx={{ my: 2 }} />
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="caption" sx={{ color: '#58595B' }}>
+                            Updated: {template.updatedAt}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenEditTemplate(template)}
+                              sx={{
+                                color: '#2879b6',
+                                backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                                borderRadius: '10px',
+                                '&:hover': { backgroundColor: 'rgba(40, 121, 182, 0.2)' },
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                              sx={{
+                                color: '#ee6a31',
+                                backgroundColor: 'rgba(238, 106, 49, 0.1)',
+                                borderRadius: '10px',
+                                '&:hover': { backgroundColor: 'rgba(238, 106, 49, 0.2)' },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+                {/* Mobile list for email templates */}
+                <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 2 }}>
+                  {emailTemplates.map((template) => (
+                    <Card key={`tmpl-mobile-${template.id}`} variant="outlined" sx={{ mb: 2, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                          <Box sx={{ flex: 1, mr: 1 }}>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ lineHeight: 1.3, mb: 0.5, color: '#333842' }}>{template.name}</Typography>
+                            <Chip
+                              label={getTemplateTypeLabel(template.type)}
+                              size="small"
+                              sx={{
+                                height: 24,
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                mb: 1,
+                                backgroundColor: `${getTemplateTypeColor(template.type)}15`,
+                                color: getTemplateTypeColor(template.type),
+                                borderRadius: '6px'
+                              }}
+                            />
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <IconButton
+                              size="medium"
+                              onClick={() => handleOpenEditTemplate(template)}
+                              sx={{
+                                bgcolor: 'rgba(40,121,182,0.1)',
+                                color: '#2879b6',
+                                borderRadius: '8px',
+                                '&:hover': { bgcolor: 'rgba(40,121,182,0.2)' }
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="medium"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                              sx={{
+                                bgcolor: 'rgba(238,106,49,0.1)',
+                                color: '#ee6a31',
+                                borderRadius: '8px',
+                                '&:hover': { bgcolor: 'rgba(238,106,49,0.2)' }
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                        <Divider sx={{ my: 1.5, borderColor: 'rgba(0,0,0,0.05)' }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" gutterBottom>SUBJECT</Typography>
+                          <Typography variant="body2" sx={{ color: '#333842', fontWeight: 500 }}>{template.subject}</Typography>
+                        </Box>
+                        <Box sx={{ mt: 1.5 }}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={template.isActive}
+                                onChange={() => handleToggleTemplateStatus(template.id)}
+                                size="small"
+                                sx={{
+                                  color: '#7dc244',
+                                  '&.Mui-checked': { color: '#7dc244' },
+                                  p: 0.5,
+                                  mr: 0.5
+                                }}
+                              />
+                            }
+                            label={<Typography variant="body2" fontWeight={600} color={template.isActive ? '#7dc244' : 'text.secondary'}>{template.isActive ? 'Active Template' : 'Inactive'}</Typography>}
+                            sx={{ m: 0 }}
+                          />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
               </ErrorBoundary>
             </CardContent>
           </TabPanel>
 
           <TabPanel value={tabValue} index={3}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: isPhone ? 2 : 3 }}>
               <ErrorBoundary>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#333842' }}>
-                SMTP Settings
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Configure the mail server used for notifications and test emails. Save your settings, then use &quot;Send Test Email&quot; to verify.
-              </Typography>
-              {message && (
-                <Alert
-                  severity={message.type}
-                  sx={{
-                    mb: 2,
-                    borderRadius: '12px',
-                    '&.MuiAlert-standardSuccess': { backgroundColor: 'rgba(125, 194, 68, 0.1)', color: '#139B49' },
-                  }}
-                >
-                  {message.text}
-                </Alert>
-              )}
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="SMTP Host"
-                    required
-                    placeholder="smtp.gmail.com"
-                    value={smtpHost}
-                    onChange={(e) => setSmtpHost(e.target.value)}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="SMTP Port"
-                    type="number"
-                    required
-                    placeholder="587"
-                    value={smtpPort}
-                    onChange={(e) => setSmtpPort(e.target.value)}
-                    inputProps={{ min: 1, max: 65535 }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Username"
-                    required
-                    placeholder="user@example.com"
-                    value={smtpUser}
-                    onChange={(e) => setSmtpUser(e.target.value)}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Password"
-                    type="password"
-                    placeholder={smtpId ? 'Leave blank to keep current' : ''}
-                    value={smtpPass}
-                    onChange={(e) => setSmtpPass(e.target.value)}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="From Email"
-                    required
-                    placeholder="noreply@example.com"
-                    value={smtpFromEmail}
-                    onChange={(e) => setSmtpFromEmail(e.target.value)}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="From Name"
-                    placeholder="Biogas MIS"
-                    value={smtpFromName}
-                    onChange={(e) => setSmtpFromName(e.target.value)}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={smtpSecure}
-                        onChange={(e) => setSmtpSecure(e.target.checked)}
-                        sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
-                      />
-                    }
-                    label="Use TLS/SSL (secure)"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} />
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    <Button
-                      variant="contained"
-                      onClick={handleSaveSMTP}
-                      disabled={saving}
-                      startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : null}
-                      className="btn-gradient-primary"
-                      sx={{ textTransform: 'none', borderRadius: '12px', px: 4, color: '#fff', whiteSpace: 'nowrap' }}
-                    >
-                      {saving ? 'Saving…' : 'Save SMTP Settings'}
-                    </Button>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#333842' }}>
+                  SMTP Settings
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Configure the mail server used for notifications and test emails. Save your settings, then use &quot;Send Test Email&quot; to verify.
+                </Typography>
+                {message && (
+                  <Alert
+                    severity={message.type}
+                    sx={{
+                      mb: 2,
+                      borderRadius: '12px',
+                      '&.MuiAlert-standardSuccess': { backgroundColor: 'rgba(125, 194, 68, 0.1)', color: '#139B49' },
+                    }}
+                  >
+                    {message.text}
+                  </Alert>
+                )}
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
-                      size="small"
-                      label="Test recipient email"
-                      placeholder="test@example.com"
-                      value={smtpTestTo}
-                      onChange={(e) => setSmtpTestTo(e.target.value)}
-                      sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                      fullWidth
+                      label="SMTP Host"
+                      required
+                      placeholder="smtp.gmail.com"
+                      value={smtpHost}
+                      onChange={(e) => setSmtpHost(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                     />
-                    <Button
-                      variant="outlined"
-                      onClick={handleTestSMTP}
-                      disabled={smtpTesting || !smtpTestTo?.trim()}
-                      startIcon={smtpTesting ? <CircularProgress size={20} /> : null}
-                      sx={{
-                        textTransform: 'none',
-                        borderRadius: '12px',
-                        borderColor: '#2879b6',
-                        color: '#2879b6',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {smtpTesting ? 'Sending…' : 'Send Test Email'}
-                    </Button>
-                  </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="SMTP Port"
+                      type="number"
+                      required
+                      placeholder="587"
+                      value={smtpPort}
+                      onChange={(e) => setSmtpPort(e.target.value)}
+                      inputProps={{ min: 1, max: 65535 }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Username"
+                      required
+                      placeholder="user@example.com"
+                      value={smtpUser}
+                      onChange={(e) => setSmtpUser(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Password"
+                      type="password"
+                      placeholder={smtpId ? 'Leave blank to keep current' : ''}
+                      value={smtpPass}
+                      onChange={(e) => setSmtpPass(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="From Email"
+                      required
+                      placeholder="noreply@example.com"
+                      value={smtpFromEmail}
+                      onChange={(e) => setSmtpFromEmail(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="From Name"
+                      placeholder="Biogas MIS"
+                      value={smtpFromName}
+                      onChange={(e) => setSmtpFromName(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={smtpSecure}
+                          onChange={(e) => setSmtpSecure(e.target.checked)}
+                          sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
+                        />
+                      }
+                      label="Use TLS/SSL (secure)"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6} />
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', flexDirection: isPhone ? 'column' : 'row', gap: 2, flexWrap: 'wrap', alignItems: isPhone ? 'stretch' : 'center' }}>
+                      <Button
+                        variant="contained"
+                        onClick={handleSaveSMTP}
+                        disabled={saving}
+                        fullWidth={isPhone}
+                        startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : null}
+                        className="btn-gradient-primary"
+                        sx={{ textTransform: 'none', borderRadius: '12px', px: 4, color: '#fff', whiteSpace: 'nowrap' }}
+                      >
+                        {saving ? 'Saving…' : 'Save SMTP Settings'}
+                      </Button>
+                      <TextField
+                        size="small"
+                        fullWidth={isPhone}
+                        label="Test recipient email"
+                        placeholder="test@example.com"
+                        value={smtpTestTo}
+                        onChange={(e) => setSmtpTestTo(e.target.value)}
+                        sx={{ minWidth: isPhone ? '100%' : 220, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                      />
+                      <Button
+                        variant="outlined"
+                        onClick={handleTestSMTP}
+                        disabled={smtpTesting || !smtpTestTo?.trim()}
+                        fullWidth={isPhone}
+                        startIcon={smtpTesting ? <CircularProgress size={20} /> : null}
+                        sx={{
+                          textTransform: 'none',
+                          borderRadius: '12px',
+                          borderColor: '#2879b6',
+                          color: '#2879b6',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {smtpTesting ? 'Sending…' : 'Send Test Email'}
+                      </Button>
+                    </Box>
+                  </Grid>
                 </Grid>
-              </Grid>
               </ErrorBoundary>
             </CardContent>
           </TabPanel>
@@ -3305,7 +3515,7 @@ export default function AdminPage() {
           >
             Cancel
           </Button>
-            <Button
+          <Button
             variant="contained"
             onClick={handleSaveSchedulerConfig}
             disabled={saving || (Array.isArray(schedulerRecipientRoles) ? schedulerRecipientRoles.length === 0 : true)}
@@ -3325,6 +3535,6 @@ export default function AdminPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Layout>
+    </Layout >
   );
 }
