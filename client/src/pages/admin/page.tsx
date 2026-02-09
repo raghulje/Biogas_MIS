@@ -1055,13 +1055,21 @@ export default function AdminPage() {
         setActivityLogs((Array.isArray(auditData) ? auditData : []).map((log: any) => ({
           id: log.id,
           userId: log.user_id,
-          user: log.actor?.name || 'System',
+          user: log.user || log.actor?.name || 'System',
           lastLogin: '',
-          timestamp: log.createdAt ?? log.created_at ?? '',
-          action: log.action || '',
-          actionType: (log.action || '').toLowerCase().includes('create') ? 'create' : ((log.action || '').toLowerCase().includes('delete') ? 'delete' : 'update'),
-          previousValue: log.old_values != null ? JSON.stringify(log.old_values) : '',
-          newValue: log.new_values != null ? JSON.stringify(log.new_values) : ''
+          timestamp: log.timestamp || log.createdAt || log.created_at || '',
+          action: log.action || log.action || '',
+          actionType: ((log.action || '').toLowerCase().includes('create')) ? 'create' :
+                      ((log.action || '').toLowerCase().includes('delete')) ? 'delete' :
+                      ((log.action || '').toLowerCase().includes('login')) ? 'login' :
+                      ((log.action || '').toLowerCase().includes('logout')) ? 'logout' : 'update',
+          // Prefer server-provided structured changes when available
+          changes: Array.isArray(log.changes) ? log.changes : (log.changes ? log.changes : (Array.isArray(log.changes) ? log.changes : [])),
+          formatted_description: log.formatted_description || log.description || '',
+          description: log.description || log.formatted_description || '',
+          // Also keep raw old/new JSON strings for debugging if needed
+          previousValue: log.old_values != null ? (typeof log.old_values === 'string' ? log.old_values : JSON.stringify(log.old_values)) : '',
+          newValue: log.new_values != null ? (typeof log.new_values === 'string' ? log.new_values : JSON.stringify(log.new_values)) : ''
         })));
         setSessions(Array.isArray(sessionsData?.sessions) ? sessionsData.sessions : []);
         const lastLogins: Record<number, string> = {};
@@ -2221,7 +2229,35 @@ export default function AdminPage() {
                 </Alert>
               )}
 
-              <Grid container spacing={3}>
+              {/* Mobile SMTP card (phone only) */}
+              <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 2 }}>
+                <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+                    SMTP Settings
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Configure mail server used for notifications. Save then Send Test to verify.
+                  </Typography>
+                  <TextField fullWidth label="SMTP Host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} sx={{ mb: 1 }} />
+                  <TextField fullWidth label="SMTP Port" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} sx={{ mb: 1 }} />
+                  <TextField fullWidth label="Username" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} sx={{ mb: 1 }} />
+                  <TextField fullWidth label="Password" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} sx={{ mb: 1 }} />
+                  <TextField fullWidth label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} sx={{ mb: 1 }} />
+                  <TextField fullWidth label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} sx={{ mb: 1 }} />
+                  <FormControlLabel control={<Checkbox checked={smtpSecure} onChange={(e) => setSmtpSecure(e.target.checked)} sx={{ color: '#2879b6' }} />} label="Use TLS/SSL (secure)" />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
+                    <Button variant="contained" onClick={handleSaveSMTP} disabled={saving} fullWidth size="large" sx={{ borderRadius: '12px' }}>
+                      {saving ? 'Saving…' : 'Save SMTP Settings'}
+                    </Button>
+                    <TextField size="small" label="Test recipient email" placeholder="test@example.com" value={smtpTestTo} onChange={(e) => setSmtpTestTo(e.target.value)} sx={{ mt: 1 }} />
+                    <Button variant="outlined" onClick={handleTestSMTP} disabled={smtpTesting || !smtpTestTo?.trim()} fullWidth size="large" sx={{ borderRadius: '12px' }}>
+                      {smtpTesting ? 'Sending…' : 'Send Test Email'}
+                    </Button>
+                  </Box>
+                </Card>
+              </Box>
+
+              <Grid container spacing={3} sx={{ display: { xs: 'none', md: 'flex' } }}>
                 {emailTemplates.map((template, index) => (
                   <Grid item xs={12} md={6} key={template.id}>
                     <Card

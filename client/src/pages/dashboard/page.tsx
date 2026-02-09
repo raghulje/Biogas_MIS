@@ -37,6 +37,14 @@ export default function DashboardPage() {
   const theme = useTheme();
   const isPhone = useMediaQuery('(max-width:768px)');
   const [filterType, setFilterType] = useState('month');
+  // Format numbers: round to max 2 decimals for display on cards
+  const formatNumber = (val: any) => {
+    if (val === null || val === undefined) return '0';
+    const n = Number(val);
+    if (Number.isNaN(n)) return String(val);
+    if (Number.isInteger(n)) return String(n);
+    return n.toFixed(2);
+  };
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
@@ -279,7 +287,7 @@ export default function DashboardPage() {
                             Total Raw Biogas
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {summary.totalRawBiogas ?? 0} m³
+                            {formatNumber(summary.totalRawBiogas ?? 0)} m³
                           </Typography>
                         </Box>
                         <BiogasIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
@@ -303,7 +311,7 @@ export default function DashboardPage() {
                             CBG Produced
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {summary.totalCBGProduced ?? 0} kg
+                            {formatNumber(summary.totalCBGProduced ?? 0)} kg
                           </Typography>
                         </Box>
                         <GasIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
@@ -327,7 +335,7 @@ export default function DashboardPage() {
                             CBG Sold
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {summary.totalCBGSold ?? 0} kg
+                            {formatNumber(summary.totalCBGSold ?? 0)} kg
                           </Typography>
                         </Box>
                         <SellIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
@@ -387,7 +395,7 @@ export default function DashboardPage() {
                             FOM Produced
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {summary.totalFOMProduced} kg
+                            {formatNumber(summary.totalFOMProduced ?? 0)} kg
                           </Typography>
                         </Box>
                         <FomIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
@@ -411,7 +419,7 @@ export default function DashboardPage() {
                             Avg Availability
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {summary.avgPlantAvailability}%
+                            {formatNumber(summary.avgPlantAvailability ?? 0)}%
                           </Typography>
                         </Box>
                         <AvgIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
@@ -435,7 +443,7 @@ export default function DashboardPage() {
                             FOM Sold
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {summary.totalFOMSold} kg
+                            {formatNumber(summary.totalFOMSold ?? 0)} kg
                           </Typography>
                         </Box>
                         <StoreIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
@@ -494,7 +502,7 @@ export default function DashboardPage() {
                             Electricity Consumption
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {summary.totalElectricityConsumption} kWh
+                            {formatNumber(summary.totalElectricityConsumption ?? 0)} kWh
                           </Typography>
                         </Box>
                         <BoltIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
@@ -518,7 +526,7 @@ export default function DashboardPage() {
                             HSE Incidents
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {summary.totalHSEIncidents}
+                            {formatNumber(summary.totalHSEIncidents ?? 0)}
                           </Typography>
                         </Box>
                         <SafetyIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />

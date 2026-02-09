@@ -25,6 +25,7 @@ import {
   MenuItem,
   CircularProgress,
   Checkbox,
+  TablePagination,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -39,6 +40,8 @@ import {
   CheckBox as CheckBoxIcon,
   CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon,
   IndeterminateCheckBox as IndeterminateCheckBoxIcon,
+  ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -99,6 +102,8 @@ export default function MISListView({
   const [exporting, setExporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 10;
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -169,6 +174,8 @@ export default function MISListView({
       (!startDate || entryDate >= startDate) && (!endDate || entryDate <= endDate);
     return matchesSearch && matchesStatus && matchesDateRange;
   });
+  const pageCount = Math.max(1, Math.ceil(filteredEntries.length / rowsPerPage));
+  const paginatedEntries = filteredEntries.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
   const handleDeleteClick = (entry: MISEntry) => {
     setEntryToDelete(entry);
@@ -547,7 +554,7 @@ export default function MISListView({
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredEntries.map((entry) => {
+              {paginatedEntries.map((entry) => {
                 const statusColors = getStatusColor(entry.status);
                 return (
                   <TableRow
@@ -653,11 +660,21 @@ export default function MISListView({
             </TableBody>
           </Table>
         </TableContainer>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+          <TablePagination
+            component="div"
+            count={filteredEntries.length}
+            page={page}
+            onPageChange={(_e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[]}
+          />
+        </Box>
       </Card>
 
       {/* Mobile Card List View */}
       <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
-        {filteredEntries.map((entry) => {
+        {paginatedEntries.map((entry) => {
           const statusColors = getStatusColor(entry.status);
           return (
             <Card key={entry.id} className="glass-card" sx={{ borderRadius: '16px', overflow: 'visible' }}>
@@ -735,6 +752,26 @@ export default function MISListView({
         {filteredEntries.length === 0 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5, textAlign: 'center' }}>
             <Typography color="textSecondary">No records found matching your criteria</Typography>
+          </Box>
+        )}
+        {/* Mobile pagination controls */}
+        {filteredEntries.length > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mt: 2 }}>
+            <IconButton
+              onClick={() => { setPage((p) => Math.max(0, p - 1)); }}
+              disabled={page === 0}
+              aria-label="previous page"
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="body2">Page {page + 1} of {pageCount}</Typography>
+            <IconButton
+              onClick={() => { setPage((p) => Math.min(pageCount - 1, p + 1)); }}
+              disabled={page >= pageCount - 1}
+              aria-label="next page"
+            >
+              <ArrowForwardIcon />
+            </IconButton>
           </Box>
         )}
       </Box>
