@@ -365,7 +365,7 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
                   color: '#ffffff',
                   borderRadius: '12px 12px 0 0',
                   minHeight: '56px',
@@ -472,7 +472,7 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(135deg, #ee6a31 0%, #F59E21 100%)',
+                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
                   color: '#ffffff',
                   borderRadius: '12px 12px 0 0',
                   minHeight: '56px',
