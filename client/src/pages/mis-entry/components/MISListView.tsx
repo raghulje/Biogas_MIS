@@ -24,6 +24,7 @@ import {
   IconButton,
   MenuItem,
   CircularProgress,
+  Checkbox,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -35,6 +36,9 @@ import {
   Refresh as RefreshIcon,
   FileUpload as ImportIcon,
   FileDownload as ExportIcon,
+  CheckBox as CheckBoxIcon,
+  CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon,
+  IndeterminateCheckBox as IndeterminateCheckBoxIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -93,6 +97,8 @@ export default function MISListView({
   const [entryToDelete, setEntryToDelete] = useState<MISEntry | null>(null);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -175,6 +181,38 @@ export default function MISListView({
       setDeleteDialogOpen(false);
       setEntryToDelete(null);
     }
+  };
+
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allIds = new Set(filteredEntries.map(entry => entry.id));
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = () => {
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteConfirm = () => {
+    selectedIds.forEach(id => {
+      const entry = entries.find(e => e.id === id);
+      if (entry) onDelete(entry);
+    });
+    setSelectedIds(new Set());
+    setBulkDeleteDialogOpen(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -282,6 +320,57 @@ export default function MISListView({
           </Button>
         </Box>
       </Box>
+
+      {/* Bulk Actions Toolbar */}
+      {selectedIds.size > 0 && (
+        <Card
+          className="glass-card aos-fade-down"
+          sx={{
+            mb: 2,
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)',
+            border: '2px solid #2879b6',
+          }}
+        >
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#2879b6' }}>
+                {selectedIds.size} {selectedIds.size === 1 ? 'entry' : 'entries'} selected
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setSelectedIds(new Set())}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    borderColor: '#58595B',
+                    color: '#58595B',
+                    fontWeight: 600,
+                  }}
+                >
+                  Clear Selection
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<DeleteIcon />}
+                  onClick={handleBulkDelete}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    backgroundColor: '#ee6a31',
+                    color: '#fff',
+                    fontWeight: 600,
+                    '&:hover': { backgroundColor: '#d45a21' },
+                  }}
+                >
+                  Delete Selected
+                </Button>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filter Section */}
       <Card
@@ -419,6 +508,18 @@ export default function MISListView({
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox" sx={{ bgcolor: '#f8f9fa' }}>
+                  <Checkbox
+                    indeterminate={selectedIds.size > 0 && selectedIds.size < filteredEntries.length}
+                    checked={filteredEntries.length > 0 && selectedIds.size === filteredEntries.length}
+                    onChange={handleSelectAll}
+                    sx={{
+                      color: '#2879b6',
+                      '&.Mui-checked': { color: '#2879b6' },
+                      '&.MuiCheckbox-indeterminate': { color: '#2879b6' },
+                    }}
+                  />
+                </TableCell>
                 <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Entry ID
                 </TableCell>
@@ -454,9 +555,22 @@ export default function MISListView({
                     className="hover-lift"
                     sx={{
                       transition: 'all 0.3s ease',
-                      '&:hover': { backgroundColor: 'rgba(40, 121, 182, 0.03)' },
+                      backgroundColor: selectedIds.has(entry.id) ? 'rgba(40, 121, 182, 0.05)' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: selectedIds.has(entry.id) ? 'rgba(40, 121, 182, 0.1)' : 'rgba(40, 121, 182, 0.03)',
+                      },
                     }}
                   >
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedIds.has(entry.id)}
+                        onChange={() => handleSelectOne(entry.id)}
+                        sx={{
+                          color: '#2879b6',
+                          '&.Mui-checked': { color: '#2879b6' },
+                        }}
+                      />
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: '#333842' }}>{entry.id}</TableCell>
                     <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
                     <TableCell>{entry.createdBy}</TableCell>
@@ -664,6 +778,60 @@ export default function MISListView({
             }}
           >
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        open={bulkDeleteDialogOpen}
+        onClose={() => setBulkDeleteDialogOpen(false)}
+        TransitionComponent={Transition}
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            borderRadius: isMobile ? 0 : '20px',
+            minWidth: isMobile ? '100%' : '400px',
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, rgba(238, 106, 49, 0.1) 0%, rgba(238, 106, 49, 0.05) 100%)',
+            fontWeight: 700,
+            color: '#ee6a31',
+            borderBottom: '1px solid rgba(238, 106, 49, 0.2)',
+          }}
+        >
+          Confirm Bulk Delete
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Typography variant="body1" sx={{ color: '#333842', mb: 2 }}>
+            Are you sure you want to delete <strong>{selectedIds.size}</strong> selected {selectedIds.size === 1 ? 'entry' : 'entries'}?
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#58595B' }}>
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button
+            onClick={() => setBulkDeleteDialogOpen(false)}
+            sx={{ textTransform: 'none', color: '#58595B', borderRadius: '12px' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleBulkDeleteConfirm}
+            sx={{
+              textTransform: 'none',
+              backgroundColor: '#ee6a31',
+              borderRadius: '12px',
+              whiteSpace: 'nowrap',
+              '&:hover': { backgroundColor: '#d55a28' },
+            }}
+          >
+            Delete {selectedIds.size} {selectedIds.size === 1 ? 'Entry' : 'Entries'}
           </Button>
         </DialogActions>
       </Dialog>
