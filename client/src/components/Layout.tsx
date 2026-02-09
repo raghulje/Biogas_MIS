@@ -423,7 +423,7 @@ export const Layout = ({ children }: LayoutProps) => {
         {/* Global footer */ }
         <Box component="footer" sx={{ mt: 4, py: 2, textAlign: 'center', color: 'text.secondary' }}>
           <Typography variant="caption">
-            Built & Maintained by Refex AI Team @ {new Date().getFullYear()}
+            Built & Maintained by Refex AI Team © {new Date().getFullYear()}
           </Typography>
         </Box>
       </Box>
