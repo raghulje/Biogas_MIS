@@ -34,8 +34,13 @@ export const misService = {
         return response.data;
     },
     getEntries: async () => {
-        const response = await api.get('/mis-entries');
-        return response.data;
+        try {
+            const response = await api.get('/mis-entries');
+            return response.data;
+        } catch (err) {
+            console.error('misService.getEntries error:', err);
+            return []; // graceful fallback for network errors
+        }
     },
     getEntryById: async (id: number) => {
         const response = await api.get(`/mis-entries/${id}`);
@@ -93,8 +98,13 @@ export const misService = {
     },
     /** Full MIS entries for Final MIS report (date range). */
     getEntriesForReport: async (params: { startDate: string; endDate: string }) => {
-        const response = await api.get('/mis-entries/for-report', { params });
-        return response.data;
+        try {
+            const response = await api.get('/mis-entries/for-report', { params });
+            return response.data;
+        } catch (err) {
+            console.error('misService.getEntriesForReport error:', err);
+            return []; // graceful fallback
+        }
     },
     getImportTemplate: async (): Promise<Blob> => {
         const response = await api.get('/mis-entries/import-template', { responseType: 'blob' });

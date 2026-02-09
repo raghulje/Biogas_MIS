@@ -30,6 +30,9 @@ import {
   TablePagination,
   Chip,
 } from '@mui/material';
+import { useTheme, useMediaQuery } from '@mui/material';
+import ErrorBoundary from '../../components/ErrorBoundary';
+import { themePresets } from '../../themes';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -82,6 +85,9 @@ interface SessionRow {
   loginTime: string;
   logoutTime: string;
   sessionDurationMinutes: number;
+  device?: string | null;
+  userAgent?: string | null;
+  ipAddress?: string | null;
 }
 
 interface EmailTemplate {
@@ -233,6 +239,8 @@ function MISEntryEmailPanel({
             </Box>
           </Card>
         </Grid>
+            {/* Mobile SMTP card removed from this panel to avoid referencing parent SMTP state.
+                The SMTP settings are available in the SMTP tab (responsive there). */}
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
@@ -321,6 +329,8 @@ function FinalMISReportEmailPanel({
     }).catch(() => { });
   }, []);
   useEffect(() => { loadConfig(); }, [loadConfig]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const addEmail = () => {
     const trimmed = newEmail.trim().toLowerCase();
@@ -398,7 +408,7 @@ function FinalMISReportEmailPanel({
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addEmail())}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
-              <Button variant="contained" onClick={addEmail} sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}>
+              <Button variant="contained" onClick={addEmail} fullWidth={isMobile} sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}>
                 Add
               </Button>
             </Box>
@@ -513,7 +523,7 @@ function FinalMISReportEmailPanel({
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
               <TextField type="date" size="small" label="Start date" value={testStartDate} onChange={(e) => setTestStartDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
               <TextField type="date" size="small" label="End date" value={testEndDate} onChange={(e) => setTestEndDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
-              <Button variant="outlined" onClick={handleSendTest} disabled={sendingTest || toEmails.length === 0} startIcon={sendingTest ? <CircularProgress size={18} /> : null} sx={{ borderRadius: '12px', textTransform: 'none' }}>
+              <Button variant="outlined" onClick={handleSendTest} disabled={sendingTest || toEmails.length === 0} startIcon={sendingTest ? <CircularProgress size={18} /> : null} fullWidth={isMobile} sx={{ borderRadius: '12px', textTransform: 'none' }}>
                 {sendingTest ? 'Sending…' : 'Send test report'}
               </Button>
             </Box>
@@ -526,6 +536,7 @@ function FinalMISReportEmailPanel({
         onClick={handleSave}
         disabled={saving}
         className="btn-gradient-success"
+        fullWidth={isMobile}
         sx={{ mt: 3, borderRadius: '12px', textTransform: 'none', color: '#fff' }}
       >
         Save Final MIS Report Email Settings
@@ -745,12 +756,29 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 export default function AdminPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // Explicit mobile breakpoint required by project (<=768px)
+  const isPhone = useMediaQuery('(max-width:768px)');
   const [tabValue, setTabValue] = useState(0);
   const [openUserDialog, setOpenUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userPermissions, setUserPermissions] = useState<Permission[]>(defaultPermissions);
   const [selectedRole, setSelectedRole] = useState('Operator');
   const [saving, setSaving] = useState(false);
+  const [selectedThemeKey, setSelectedThemeKey] = useState<string>(() => localStorage.getItem('appTheme') || 'professional');
+
+  const handleSaveTheme = async () => {
+    try {
+      setSaving(true);
+      await adminService.saveAppTheme(selectedThemeKey);
+      localStorage.setItem('appTheme', selectedThemeKey);
+      // reload so theme applies globally
+      window.location.reload();
+    } catch (e: any) {
+      setMessage({ type: 'error', text: e?.response?.data?.message || 'Failed to save theme' });
+    } finally {
+      setSaving(false);
+    }
+  };
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
@@ -1603,7 +1631,7 @@ export default function AdminPage() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       setSchedulerConfigs(
-        schedulerConfigs.map(config =>
+        (schedulerConfigs || []).map(config =>
           config.id === configId ? { ...config, isEnabled: !config.isEnabled } : config
         )
       );
@@ -1621,7 +1649,7 @@ export default function AdminPage() {
     setEditingScheduler(config);
     setSchedulerNotificationType(config.notificationType);
     setSchedulerCheckTime(config.checkTime);
-    setSchedulerRecipientRoles(config.recipientRoles);
+    setSchedulerRecipientRoles(Array.isArray(config.recipientRoles) ? config.recipientRoles : []);
     setSchedulerReminderFrequency(config.reminderFrequency);
     setSchedulerTemplateId(config.templateId);
     setOpenSchedulerDialog(true);
@@ -1635,7 +1663,7 @@ export default function AdminPage() {
 
       if (editingScheduler) {
         setSchedulerConfigs(
-          schedulerConfigs.map(config =>
+          (schedulerConfigs || []).map(config =>
             config.id === editingScheduler.id
               ? {
                 ...config,
@@ -1660,9 +1688,10 @@ export default function AdminPage() {
   };
 
   const handleRoleToggle = (role: string) => {
-    setSchedulerRecipientRoles(prev =>
-      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
-    );
+    setSchedulerRecipientRoles(prev => {
+      const cur = Array.isArray(prev) ? prev : [];
+      return cur.includes(role) ? cur.filter(r => r !== role) : [...cur, role];
+    });
   };
 
   return (
@@ -1706,10 +1735,27 @@ export default function AdminPage() {
               <Tab label="User Activity Logs" />
               <Tab label="Email Templates" />
               <Tab label="SMTP Configuration" />
-              <Tab label="Scheduler Configuration" />
+              {/* Scheduler Configuration tab hidden for now */}
               <Tab label="MIS Entry Email" />
               <Tab label="Final MIS Report Email" />
             </Tabs>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2 }}>
+            <Typography sx={{ fontWeight: 600 }}>Theme:</Typography>
+            <TextField
+              select
+              size="small"
+              value={selectedThemeKey}
+              onChange={(e) => setSelectedThemeKey(e.target.value)}
+              sx={{ minWidth: 220 }}
+            >
+              {Object.values(themePresets).map((p: any) => (
+                <MenuItem key={p.key} value={p.key}>{p.name}</MenuItem>
+              ))}
+            </TextField>
+            <Button variant="contained" onClick={handleSaveTheme} disabled={saving} sx={{ textTransform: 'none' }}>
+              Save Theme
+            </Button>
           </Box>
 
           <TabPanel value={tabValue} index={0}>
@@ -1723,12 +1769,15 @@ export default function AdminPage() {
                   startIcon={<AddIcon />}
                   onClick={handleOpenCreateUser}
                   className="btn-gradient-success"
-                  sx={{
-                    textTransform: 'none',
-                    borderRadius: '12px',
-                    color: '#fff',
-                    whiteSpace: 'nowrap',
-                  }}
+                size={isPhone ? 'large' : 'medium'}
+                fullWidth={isPhone}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  color: '#fff',
+                  whiteSpace: 'nowrap',
+                  minHeight: isPhone ? 48 : undefined,
+                }}
                 >
                   Create User
                 </Button>
@@ -1784,6 +1833,24 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
+              {/* Mobile list for users */}
+              <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 2 }}>
+                {users.map((u) => (
+                  <Card key={`user-mobile-${u.id}`} variant="outlined" sx={{ mb: 2, p: 2, borderRadius: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 700 }}>{u.name}</Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>{u.email}</Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>{typeof u.role === 'string' ? u.role : u.role?.name}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton size="small" onClick={() => handleOpenEditUser(u)}><EditIcon /></IconButton>
+                        <IconButton size="small" onClick={() => handleOpenDeleteUser(u)}><DeleteIcon /></IconButton>
+                      </Box>
+                    </Box>
+                  </Card>
+                ))}
+              </Box>
 
               {/* Mobile Card List View for Users */}
               <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
@@ -1976,6 +2043,8 @@ export default function AdminPage() {
                         <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Login Time</TableCell>
                         <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Logout Time</TableCell>
                         <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Session Duration</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Device</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>IP</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1990,6 +2059,8 @@ export default function AdminPage() {
                               ? `${Math.floor(s.sessionDurationMinutes / 60)}h ${s.sessionDurationMinutes % 60}m`
                               : `${s.sessionDurationMinutes} min`}
                           </TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{s.device || '-'}</TableCell>
+                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{s.ipAddress || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -2001,85 +2072,119 @@ export default function AdminPage() {
               <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mb: 1.5 }}>
                 Activity log
               </Typography>
-              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', overflowX: 'auto' }}>
-                <Table sx={{ minWidth: 800 }}>
-                  <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Action</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Entity</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Description</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Timestamp</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {paginatedLogs.length > 0 ? (
-                      paginatedLogs.map((log) => (
-                        <TableRow key={log.id} className="hover-lift" sx={{ transition: 'all 0.3s ease' }}>
-                          <TableCell sx={{ fontWeight: 500 }}>{log.user}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={log.action}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                borderRadius: '8px',
-                                backgroundColor: log.action.toLowerCase().includes('delete') ? '#ffebee' :
-                                  log.action.toLowerCase().includes('create') ? '#e8f5e9' :
-                                    log.action.toLowerCase().includes('update') ? '#e3f2fd' : '#f5f5f5',
-                                color: log.action.toLowerCase().includes('delete') ? '#d32f2f' :
-                                  log.action.toLowerCase().includes('create') ? '#2e7d32' :
-                                    log.action.toLowerCase().includes('update') ? '#1976d2' : '#616161'
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>{log.entity}</TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{log.description}</Typography>
-                            {log.changes && log.changes.length > 0 && (
-                              <Box component="ul" sx={{ m: 0, pl: 2, mt: 0.5 }}>
-                                {log.changes.map((change, i) => (
-                                  <Typography component="li" key={i} variant="caption" display="list-item" sx={{ color: '#58595B' }}>
-                                    {change.field}: <span style={{ textDecoration: 'line-through', color: '#9e9e9e' }}>{change.from}</span> &rarr; <span style={{ fontWeight: 600, color: '#2e7d32' }}>{change.to}</span>
-                                  </Typography>
-                                ))}
-                              </Box>
-                            )}
-                          </TableCell>
-                          <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{log.timestamp}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
+              {isPhone ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {paginatedLogs.length > 0 ? (
+                    paginatedLogs.map((log) => (
+                      <Card key={log.id} variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{log.user}</Typography>
+                          <Chip label={log.action} size="small" sx={{ fontWeight: 600 }} />
+                        </Box>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>{log.entity}</Typography>
+                        <Typography variant="body2" sx={{ color: '#58595B', mb: 1 }}>{log.description}</Typography>
+                        {log.changes && log.changes.length > 0 && (
+                          <Box sx={{ mt: 1 }}>
+                            {log.changes.map((change, i) => (
+                              <Typography key={i} variant="caption" display="block" sx={{ color: '#58595B' }}>
+                                {change.field}: <span style={{ textDecoration: 'line-through', color: '#9e9e9e' }}>{change.from}</span> → <span style={{ fontWeight: 600, color: '#2e7d32' }}>{change.to}</span>
+                              </Typography>
+                            ))}
+                          </Box>
+                        )}
+                        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1 }}>{log.timestamp}</Typography>
+                      </Card>
+                    ))
+                  ) : (
+                    <Typography color="text.secondary">No activity logs found</Typography>
+                  )}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                    <Button onClick={() => handleChangePage(null as any, Math.max(0, page - 1))} disabled={page === 0} sx={{ mr: 1 }} size="small">Prev</Button>
+                    <Button onClick={() => handleChangePage(null as any, page + 1)} disabled={(page + 1) * rowsPerPage >= filteredLogs.length} size="small">Next</Button>
+                  </Box>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', overflowX: 'auto' }}>
+                  <Table sx={{ minWidth: 800 }}>
+                    <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4, color: '#58595B' }}>
-                          No activity logs found
-                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Action</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Entity</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Timestamp</TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-                <TablePagination
-                  rowsPerPageOptions={[5, 10, 25, 50]}
-                  component="div"
-                  count={filteredLogs.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                  sx={{
-                    borderTop: '1px solid rgba(40, 121, 182, 0.1)',
-                    '& .MuiTablePagination-toolbar': {
-                      paddingLeft: 2,
-                      paddingRight: 2,
-                    },
-                  }}
-                />
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedLogs.length > 0 ? (
+                        paginatedLogs.map((log) => (
+                          <TableRow key={log.id} className="hover-lift" sx={{ transition: 'all 0.3s ease' }}>
+                            <TableCell sx={{ fontWeight: 500 }}>{log.user}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={log.action}
+                                size="small"
+                                sx={{
+                                  fontWeight: 600,
+                                  borderRadius: '8px',
+                                  backgroundColor: log.action.toLowerCase().includes('delete') ? '#ffebee' :
+                                    log.action.toLowerCase().includes('create') ? '#e8f5e9' :
+                                      log.action.toLowerCase().includes('update') ? '#e3f2fd' : '#f5f5f5',
+                                  color: log.action.toLowerCase().includes('delete') ? '#d32f2f' :
+                                    log.action.toLowerCase().includes('create') ? '#2e7d32' :
+                                      log.action.toLowerCase().includes('update') ? '#1976d2' : '#616161'
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>{log.entity}</TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>{log.description}</Typography>
+                              {log.changes && log.changes.length > 0 && (
+                                <Box component="ul" sx={{ m: 0, pl: 2, mt: 0.5 }}>
+                                  {log.changes.map((change, i) => (
+                                    <Typography component="li" key={i} variant="caption" display="list-item" sx={{ color: '#58595B' }}>
+                                      {change.field}: <span style={{ textDecoration: 'line-through', color: '#9e9e9e' }}>{change.from}</span> &rarr; <span style={{ fontWeight: 600, color: '#2e7d32' }}>{change.to}</span>
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              )}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem', color: '#58595B' }}>{log.timestamp}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center" sx={{ py: 4, color: '#58595B' }}>
+                            No activity logs found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25, 50]}
+                    component="div"
+                    count={filteredLogs.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    sx={{
+                      borderTop: '1px solid rgba(40, 121, 182, 0.1)',
+                      '& .MuiTablePagination-toolbar': {
+                        paddingLeft: 2,
+                        paddingRight: 2,
+                      },
+                    }}
+                  />
+                </TableContainer>
+              )}
             </CardContent>
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
             <CardContent sx={{ p: 3 }}>
+              <ErrorBoundary>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                   Email Templates
@@ -2176,7 +2281,7 @@ export default function AdminPage() {
                           Placeholders:
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {template.placeholders.map(placeholder => (
+                          {(template.placeholders || []).map(placeholder => (
                             <Chip
                               key={placeholder}
                               label={placeholder}
@@ -2229,11 +2334,31 @@ export default function AdminPage() {
                   </Grid>
                 ))}
               </Grid>
+              {/* Mobile list for email templates */}
+              <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 2 }}>
+                {emailTemplates.map((template) => (
+                  <Card key={`tmpl-mobile-${template.id}`} variant="outlined" sx={{ mb: 2, p: 2, borderRadius: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 700 }}>{template.name}</Typography>
+                        <Chip label={getTemplateTypeLabel(template.type)} size="small" sx={{ mt: 1 }} />
+                        <Typography variant="body2" sx={{ mt: 1 }}>{template.subject}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton size="small" onClick={() => handleOpenEditTemplate(template)}><EditIcon /></IconButton>
+                        <IconButton size="small" onClick={() => handleDeleteTemplate(template.id)}><DeleteIcon /></IconButton>
+                      </Box>
+                    </Box>
+                  </Card>
+                ))}
+              </Box>
+              </ErrorBoundary>
             </CardContent>
           </TabPanel>
 
           <TabPanel value={tabValue} index={3}>
             <CardContent sx={{ p: 3 }}>
+              <ErrorBoundary>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#333842' }}>
                 SMTP Settings
               </Typography>
@@ -2371,10 +2496,11 @@ export default function AdminPage() {
                   </Box>
                 </Grid>
               </Grid>
+              </ErrorBoundary>
             </CardContent>
           </TabPanel>
 
-          <TabPanel value={tabValue} index={4}>
+          {false && (<TabPanel value={tabValue} index={4}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box>
@@ -2508,7 +2634,7 @@ export default function AdminPage() {
 
               {/* Notification Configurations */}
               <Grid container spacing={3}>
-                {schedulerConfigs.map((config, index) => {
+                {(schedulerConfigs || []).map((config, index) => {
                   const template = emailTemplates.find(t => t.id === config.templateId);
                   return (
                     <Grid item xs={12} md={6} key={config.id}>
@@ -2581,7 +2707,7 @@ export default function AdminPage() {
                             Recipients:
                           </Typography>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {config.recipientRoles.map(role => (
+                            {(config.recipientRoles || []).map(role => (
                               <Chip
                                 key={role}
                                 label={role}
@@ -2661,9 +2787,9 @@ export default function AdminPage() {
                 })}
               </Grid>
             </CardContent>
-          </TabPanel>
+          </TabPanel>)}
 
-          <TabPanel value={tabValue} index={5}>
+          <TabPanel value={tabValue} index={4}>
             <CardContent sx={{ p: 3 }}>
               <MISEntryEmailPanel
                 formConfig={formConfig}
@@ -2672,7 +2798,7 @@ export default function AdminPage() {
               />
             </CardContent>
           </TabPanel>
-          <TabPanel value={tabValue} index={6}>
+          <TabPanel value={tabValue} index={5}>
             <CardContent sx={{ p: 3 }}>
               <FinalMISReportEmailPanel message={message} setMessage={setMessage} />
             </CardContent>
@@ -2687,8 +2813,8 @@ export default function AdminPage() {
         maxWidth="md"
         fullWidth
         TransitionComponent={Transition}
-        fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: isMobile ? 0 : '20px' } }}
+        fullScreen={isPhone}
+        PaperProps={{ sx: { borderRadius: isPhone ? 0 : '20px' } }}
       >
         <DialogTitle
           sx={{
@@ -2868,19 +2994,22 @@ export default function AdminPage() {
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setOpenUserDialog(false)} sx={{ textTransform: 'none', color: '#58595B', borderRadius: '12px' }}>
+        <DialogActions sx={{ p: 2.5, flexDirection: isPhone ? 'column' : 'row', gap: isPhone ? 1 : 0 }}>
+          <Button onClick={() => setOpenUserDialog(false)} sx={{ textTransform: 'none', color: '#58595B', borderRadius: '12px' }} fullWidth={isPhone}>
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={handleSaveUser}
             className="btn-gradient-success"
+            fullWidth={isPhone}
+            size={isPhone ? 'large' : 'medium'}
             sx={{
               textTransform: 'none',
               borderRadius: '12px',
               color: '#fff',
               whiteSpace: 'nowrap',
+              minHeight: isPhone ? 48 : undefined,
             }}
           >
             {editingUser ? 'Save Changes' : 'Create User'}
@@ -2894,7 +3023,9 @@ export default function AdminPage() {
         onClose={() => setOpenTemplateDialog(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '20px' } }}
+        TransitionComponent={Transition}
+        fullScreen={isPhone}
+        PaperProps={{ sx: { borderRadius: isPhone ? 0 : '20px' } }}
       >
         <DialogTitle
           sx={{
@@ -3003,10 +3134,11 @@ export default function AdminPage() {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
+        <DialogActions sx={{ p: 2.5, flexDirection: isPhone ? 'column' : 'row', gap: isPhone ? 1 : 0 }}>
           <Button
             onClick={() => setOpenTemplateDialog(false)}
             sx={{ textTransform: 'none', color: '#58595B', borderRadius: '12px' }}
+            fullWidth={isPhone}
           >
             Cancel
           </Button>
@@ -3016,11 +3148,14 @@ export default function AdminPage() {
             disabled={saving || !templateName || !templateSubject || !templateBody}
             startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <SaveIcon />}
             className="btn-gradient-success"
+            fullWidth={isPhone}
+            size={isPhone ? 'large' : 'medium'}
             sx={{
               textTransform: 'none',
               borderRadius: '12px',
               color: '#fff',
               whiteSpace: 'nowrap',
+              minHeight: isPhone ? 48 : undefined,
             }}
           >
             {editingTemplate ? 'Save Changes' : 'Create Template'}
@@ -3110,7 +3245,7 @@ export default function AdminPage() {
                       key={role}
                       control={
                         <Checkbox
-                          checked={schedulerRecipientRoles.includes(role)}
+                          checked={(schedulerRecipientRoles || []).includes(role)}
                           onChange={() => handleRoleToggle(role)}
                           sx={{
                             color: '#2879b6',
@@ -3126,24 +3261,28 @@ export default function AdminPage() {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
+        <DialogActions sx={{ p: 2.5, flexDirection: isPhone ? 'column' : 'row', gap: isPhone ? 1 : 0 }}>
           <Button
             onClick={() => setOpenSchedulerDialog(false)}
             sx={{ textTransform: 'none', color: '#58595B', borderRadius: '12px' }}
+            fullWidth={isPhone}
           >
             Cancel
           </Button>
-          <Button
+            <Button
             variant="contained"
             onClick={handleSaveSchedulerConfig}
-            disabled={saving || schedulerRecipientRoles.length === 0}
+            disabled={saving || (Array.isArray(schedulerRecipientRoles) ? schedulerRecipientRoles.length === 0 : true)}
             startIcon={saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <SaveIcon />}
             className="btn-gradient-success"
+            fullWidth={isPhone}
+            size={isPhone ? 'large' : 'medium'}
             sx={{
               textTransform: 'none',
               borderRadius: '12px',
               color: '#fff',
               whiteSpace: 'nowrap',
+              minHeight: isPhone ? 48 : undefined,
             }}
           >
             Save Configuration

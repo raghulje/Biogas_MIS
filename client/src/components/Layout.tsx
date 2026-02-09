@@ -16,6 +16,8 @@ import {
   Menu,
   MenuItem,
   Tooltip,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,10 +32,12 @@ import {
   ChevronRight as ChevronRightIcon,
   NotificationsActive as NotificationsIcon,
 } from '@mui/icons-material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import srelIcon from '../assets/srel.png';
-import srelShortIcon from '../assets/srelshort.png';
+import refexLogo from '../assets/refex-logo.png';
+const SREL_LOGO = refexLogo;
+const SREL_LOGO_SHORT = refexLogo;
 
 
 const drawerWidth = 280;
@@ -54,6 +58,31 @@ export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const dummyUser = user || { name: 'Demo User', role: 'Admin' };
+  const { loginAt } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Session timer
+  const [elapsed, setElapsed] = useState<number>(0);
+  useEffect(() => {
+    let timer: any = null;
+    if (loginAt) {
+      const start = new Date(loginAt).getTime();
+      const update = () => setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000)));
+      update();
+      timer = setInterval(update, 1000);
+    }
+    return () => { if (timer) clearInterval(timer); };
+  }, [loginAt]);
+
+  const formatElapsed = (secs: number) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
 
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
@@ -80,13 +109,26 @@ export const Layout = ({ children }: LayoutProps) => {
     navigate('/login');
   };
 
+  // Only users with role name 'Admin' should see admin menus.
+  const hasAdminAccess = (() => {
+    try {
+      if (!user) return false;
+      const roleName = typeof user.role === 'string' ? user.role : (user.role?.name || '');
+      return Boolean(roleName && String(roleName).toLowerCase() === 'admin');
+    } catch {
+      return false;
+    }
+  })();
+
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'MIS Entry', icon: <AssignmentIcon />, path: '/mis-entry' },
     // Consolidated MIS View & v2 hidden for now – routes still work at /consolidated-mis-view, /consolidated-mis-v2
     { text: 'Final MIS Report', icon: <AssessmentIcon />, path: '/final-mis' },
-    { text: 'Admin Panel', icon: <AdminIcon />, path: '/admin' },
-    { text: 'Email Notifications', icon: <NotificationsIcon />, path: '/admin/notifications' },
+    ...(hasAdminAccess ? [
+      { text: 'Admin Panel', icon: <AdminIcon />, path: '/admin' },
+      { text: 'Email Notifications', icon: <NotificationsIcon />, path: '/admin/notifications' },
+    ] : []),
     // Audit Logs hidden for now – route still works at /audit-logs
   ];
 
@@ -103,10 +145,10 @@ export const Layout = ({ children }: LayoutProps) => {
           transition: 'all 0.3s ease',
         }}
       >
-        {!isCollapsed && (
+          {!isCollapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
             <img
-              src={srelIcon}
+              src={SREL_LOGO}
               alt="Logo"
               style={{ height: '48px', width: 'auto' }}
             />
@@ -114,7 +156,7 @@ export const Layout = ({ children }: LayoutProps) => {
         )}
         {isCollapsed && (
           <img
-            src={srelShortIcon}
+            src={SREL_LOGO_SHORT}
             alt="Logo"
             style={{ height: '36px', width: 'auto' }}
           />
@@ -268,6 +310,19 @@ export const Layout = ({ children }: LayoutProps) => {
                 {typeof dummyUser.role === 'string' ? dummyUser.role : (dummyUser.role?.name || 'User')}
               </Typography>
             </Box>
+            {loginAt && (
+              <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1, mr: 1 }}>
+                <AccessTimeIcon sx={{ color: '#64748b', fontSize: 18 }} />
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="caption" sx={{ color: '#58595B', display: 'block' }}>
+                    Logged in: {new Date(loginAt).toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#64748b' }}>
+                    Session: {formatElapsed(elapsed)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
             <IconButton
               onClick={handleMenu}
               sx={{
@@ -365,6 +420,12 @@ export const Layout = ({ children }: LayoutProps) => {
         }}
       >
         {children}
+        {/* Global footer */ }
+        <Box component="footer" sx={{ mt: 4, py: 2, textAlign: 'center', color: 'text.secondary' }}>
+          <Typography variant="caption">
+            Built & Maintained by Refex AI Team @ {new Date().getFullYear()}
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

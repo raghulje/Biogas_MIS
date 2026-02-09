@@ -2,8 +2,10 @@ import { RouteObject, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import AdminRoute from '../components/AdminRoute';
 
 const LoginPage = lazy(() => import('../pages/login/page'));
+const ResetPasswordPage = lazy(() => import('../pages/reset-password/page'));
 const DashboardPage = lazy(() => import('../pages/dashboard/page'));
 const MISEntryPage = lazy(() => import('../pages/mis-entry/page'));
 const ConsolidatedMISViewPage = lazy(() => import('../pages/consolidated-mis-view/page'));
@@ -30,6 +32,14 @@ const routes: RouteObject[] = [
     element: (
       <Suspense fallback={<PageLoader />}>
         <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/reset-password',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <ResetPasswordPage />
       </Suspense>
     ),
   },
@@ -87,9 +97,11 @@ const routes: RouteObject[] = [
     path: '/admin',
     element: (
       <ProtectedRoute>
-        <Suspense fallback={<PageLoader />}>
-          <AdminPage />
-        </Suspense>
+        <AdminRoute>
+          <Suspense fallback={<PageLoader />}>
+            <AdminPage />
+          </Suspense>
+        </AdminRoute>
       </ProtectedRoute>
     ),
   },
@@ -107,9 +119,11 @@ const routes: RouteObject[] = [
     path: '/admin/notifications',
     element: (
       <ProtectedRoute>
-        <Suspense fallback={<PageLoader />}>
-          <NotificationConfigPage />
-        </Suspense>
+        <AdminRoute>
+          <Suspense fallback={<PageLoader />}>
+            <NotificationConfigPage />
+          </Suspense>
+        </AdminRoute>
       </ProtectedRoute>
     ),
   },

@@ -7,6 +7,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const permissionMiddleware = require('../middleware/permissionMiddleware');
 const adminController = require('../controllers/adminController');
 const misControllerExtensions = require('../controllers/misControllerExtensions');
+const appController = require('../controllers/appController');
 
 // Health check endpoint for Docker/monitoring
 router.get('/health', (req, res) => {
@@ -20,6 +21,9 @@ router.get('/health', (req, res) => {
 
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
+
+// Public app config (theme) - used on app load
+router.get('/app-config/theme', appController.getTheme);
 
 // MIS export & import-template at top level so they are never matched as /mis-entries/:id
 router.get('/mis-entries/export', authMiddleware, permissionMiddleware('mis_entry', 'read'), misControllerExtensions.exportEntries);

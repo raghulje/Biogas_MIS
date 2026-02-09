@@ -12,6 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  loginAt?: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [loginAt, setLoginAt] = useState<string | null>(localStorage.getItem('loginAt'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +33,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const userData = await authService.getProfile();
           setUser(userData);
+          const stored = localStorage.getItem('loginAt');
+          if (stored) setLoginAt(stored);
         } catch (error) {
           console.error('Auth sync failed', error);
           localStorage.removeItem('token');
@@ -50,6 +54,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('token', data.accessToken);
     setToken(data.accessToken);
     setUser(data.user);
+    const at = new Date().toISOString();
+    localStorage.setItem('loginAt', at);
+    setLoginAt(at);
   };
 
   const logout = async () => {
@@ -59,15 +66,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Logout error', e);
     }
     localStorage.removeItem('token');
+    localStorage.removeItem('loginAt');
     setToken(null);
     setUser(null);
   };
+
+  // Auto-logout after session duration (default: 1 hour)
+  useEffect(() => {
+    const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+    let to: ReturnType<typeof setTimeout> | null = null;
+    if (loginAt) {
+      const start = new Date(loginAt).getTime();
+      const expireAt = start + SESSION_TIMEOUT_MS;
+      const remaining = expireAt - Date.now();
+      if (remaining <= 0) {
+        logout();
+      } else {
+        to = setTimeout(() => {
+          // automatic logout when session expires
+          logout();
+        }, remaining);
+      }
+    }
+    return () => {
+      if (to) clearTimeout(to);
+    };
+  }, [loginAt]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
+        loginAt,
         login,
         logout,
         isAuthenticated: !!token,

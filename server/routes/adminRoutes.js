@@ -40,6 +40,9 @@ router.get('/final-mis-report-config', permissionMiddleware('config', 'read'), a
 router.put('/final-mis-report-config', permissionMiddleware('config', 'update'), adminController.saveFinalMISReportConfig);
 router.post('/final-mis-report-config/send-test', permissionMiddleware('config', 'update'), adminController.sendTestFinalMISReport);
 
+// App config (theme) - admin update
+router.put('/app-config/theme', permissionMiddleware('config', 'update'), adminController.saveAppTheme);
+
 // Email Schedulers
 router.get('/schedulers', permissionMiddleware('config', 'read'), adminController.getSchedulers);
 router.post('/schedulers', permissionMiddleware('config', 'create'), adminController.createScheduler);

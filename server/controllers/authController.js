@@ -1,4 +1,4 @@
-const { User, Role, UserActivityLog } = require('../models');
+const { User, Role, UserActivityLog, Permission } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
@@ -17,6 +17,76 @@ const generateTokens = (user) => {
 
     return { accessToken, refreshToken };
 };
+
+const crypto = require('crypto');
+const { PasswordResetToken } = require('../models');
+const emailService = require('../services/emailService');
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body || {};
+        if (!email) return res.status(400).json({ message: 'Email is required' });
+        const user = await User.findOne({ where: { email } });
+        if (!user) return res.status(200).json({ message: 'If an account exists for this email, a reset link has been sent.' });
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await PasswordResetToken.create({ user_id: user.id, token, expires_at: expiresAt });
+        const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
+        const subject = 'Password reset for BioGas MIS';
+        const body = `<p>Hello ${user.name || ''},</p>\n<p>We received a request to reset your password. Click the link below to reset it (valid for 1 hour):</p>\n<p><a href="${resetLink}">${resetLink}</a></p>\n<p>If you didn't request this, ignore this email.</p>`;
+        try { await emailService.sendEmail(user.email, subject, body); } catch (e) { console.warn('Forgot password email failed:', e.message); }
+        res.json({ message: 'If an account exists for this email, a reset link has been sent.' });
+    } catch (err) {
+        console.error('forgotPassword error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, password } = req.body || {};
+        if (!token || !password) return res.status(400).json({ message: 'Token and new password are required' });
+        const row = await PasswordResetToken.findOne({ where: { token } });
+        if (!row || row.used) return res.status(400).json({ message: 'Invalid or used token' });
+        if (new Date(row.expires_at) < new Date()) return res.status(400).json({ message: 'Token expired' });
+        const user = await User.findByPk(row.user_id);
+        if (!user) return res.status(400).json({ message: 'Invalid token' });
+        user.password = password;
+        await user.save();
+        row.used = true;
+        await row.save();
+        await UserActivityLog.create({ user_id: user.id, activity_type: 'PASSWORD_RESET', description: 'User reset password via token', ip_address: req.ip });
+        res.json({ message: 'Password reset successfully' });
+    } catch (err) {
+        console.error('resetPassword error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+function parseUserAgent(ua) {
+    if (!ua) return { userAgent: '', deviceType: 'Unknown', os: '', browser: '' };
+    const uaLower = ua.toLowerCase();
+    let deviceType = 'Desktop';
+    if (/mobile|android|iphone|ipad|ipod/.test(uaLower)) deviceType = 'Mobile';
+    if (/tablet/.test(uaLower)) deviceType = 'Tablet';
+
+    let os = '';
+    if (/android/.test(uaLower)) os = 'Android';
+    else if (/iphone|ipad|ipod/.test(uaLower)) os = 'iOS';
+    else if (/windows/.test(uaLower)) os = 'Windows';
+    else if (/mac os|macintosh/.test(uaLower)) os = 'macOS';
+    else if (/linux/.test(uaLower)) os = 'Linux';
+
+    let browser = '';
+    if (/chrome\/\d+/.test(uaLower) && !/edge\/\d+/.test(uaLower)) browser = 'Chrome';
+    else if (/safari\/\d+/.test(uaLower) && /version\/\d+/.test(uaLower)) browser = 'Safari';
+    else if (/firefox\/\d+/.test(uaLower)) browser = 'Firefox';
+    else if (/edge\/\d+/.test(uaLower)) browser = 'Edge';
+    else if (/opr\/\d+/.test(uaLower)) browser = 'Opera';
+
+    return { userAgent: ua, deviceType, os, browser };
+}
 
 exports.login = async (req, res) => {
     try {
@@ -38,12 +108,14 @@ exports.login = async (req, res) => {
         const isValid = await user.validatePassword(password);
         if (!isValid) {
             try {
-            await UserActivityLog.create({
-                user_id: user.id,
-                activity_type: 'LOGIN_FAILED',
-                description: 'Invalid password',
-                ip_address: req.ip
-            });
+                const uaInfo = parseUserAgent(req.get('user-agent') || '');
+                await UserActivityLog.create({
+                    user_id: user.id,
+                    activity_type: 'LOGIN_FAILED',
+                    description: 'Invalid password',
+                    ip_address: req.ip,
+                    metadata: uaInfo
+                });
             } catch (logErr) {
                 console.warn('Activity log failed:', logErr.message);
             }
@@ -57,12 +129,14 @@ exports.login = async (req, res) => {
         const tokens = generateTokens(user);
 
         try {
-        await UserActivityLog.create({
-            user_id: user.id,
-            activity_type: 'LOGIN',
-            description: 'User logged in successfully',
-            ip_address: req.ip
-        });
+            const uaInfo = parseUserAgent(req.get('user-agent') || '');
+            await UserActivityLog.create({
+                user_id: user.id,
+                activity_type: 'LOGIN',
+                description: 'User logged in successfully',
+                ip_address: req.ip,
+                metadata: uaInfo
+            });
         } catch (logErr) {
             console.warn('Activity log failed:', logErr.message);
         }
@@ -117,7 +191,10 @@ exports.logout = async (req, res) => {
 exports.getProfile = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id, {
-            include: [{ model: Role, as: 'role' }],
+            include: [
+                { model: Role, as: 'role' },
+                { model: Permission, as: 'permissions', through: { attributes: [] } },
+            ],
             attributes: { exclude: ['password'] }
         });
         res.json(user);

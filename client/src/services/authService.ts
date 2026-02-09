@@ -1,9 +1,10 @@
 import axios from 'axios';
 
 // In dev, use relative /api so Vite proxies to backend (no CORS, no port mismatch)
-const api = axios.create({
-    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:5001/api'),
-});
+const apiBase = import.meta.env.DEV
+  ? '/api'
+  : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5001/api'));
+const api = axios.create({ baseURL: apiBase });
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
@@ -29,6 +30,14 @@ api.interceptors.response.use(
 export const authService = {
     login: async (credentials: any) => {
         const response = await api.post('/auth/login', credentials);
+        return response.data;
+    },
+    forgotPassword: async (email: string) => {
+        const response = await api.post('/auth/forgot-password', { email });
+        return response.data;
+    },
+    resetPassword: async (token: string, password: string) => {
+        const response = await api.post('/auth/reset-password', { token, password });
         return response.data;
     },
     getProfile: async () => {

@@ -6,6 +6,7 @@ const {
 } = require('../models');
 const emailService = require('../services/emailService');
 const finalMISReportEmailService = require('../services/finalMISReportEmailService');
+const { AppConfig } = require('../models');
 const auditService = require('../services/auditService');
 const schedulerService = require('../services/schedulerService');
 
@@ -583,6 +584,19 @@ exports.sendTestFinalMISReport = async (req, res) => {
     }
 };
 
+exports.saveAppTheme = async (req, res) => {
+    try {
+        const { theme } = req.body;
+        if (!theme) return res.status(400).json({ message: 'theme is required' });
+        const [row] = await AppConfig.findOrCreate({ where: { key: 'theme' }, defaults: { value: theme } });
+        if (!row.isNewRecord) await row.update({ value: theme });
+        res.json({ theme });
+    } catch (e) {
+        console.error('saveAppTheme:', e);
+        res.status(500).json({ message: 'Failed to save theme' });
+    }
+};
+
 // --- Logs ---
 
 /** Build sessions (login + logout pairs) and last-login per user from UserActivityLog */
@@ -604,16 +618,22 @@ exports.getSessions = async (req, res) => {
             if (!byUser[uid]) byUser[uid] = [];
             byUser[uid].push({
                 type: row.activity_type,
-                at: row.created_at || row.createdAt
+                at: row.created_at || row.createdAt,
+                metadata: row.metadata || null,
+                ip: row.ip_address || null
             });
         }
         const sessions = [];
         const lastLogins = {};
         for (const [userId, events] of Object.entries(byUser)) {
             let loginTime = null;
+            let loginMeta = null;
+            let loginIp = null;
             for (const ev of events) {
                 if (ev.type === 'LOGIN') {
                     loginTime = ev.at;
+                    loginMeta = ev.metadata || null;
+                    loginIp = ev.ip || null;
                     lastLogins[userId] = ev.at;
                 } else if (ev.type === 'LOGOUT' && loginTime) {
                     const logoutTime = ev.at;
@@ -626,9 +646,14 @@ exports.getSessions = async (req, res) => {
                         lastLogin: loginTime,
                         loginTime,
                         logoutTime,
-                        sessionDurationMinutes: durationMinutes >= 0 ? durationMinutes : 0
+                        sessionDurationMinutes: durationMinutes >= 0 ? durationMinutes : 0,
+                        device: loginMeta && (loginMeta.deviceType || loginMeta.browser || loginMeta.os) ? `${loginMeta.deviceType || ''}${loginMeta.browser ? ' - ' + loginMeta.browser : ''}${loginMeta.os ? ' (' + loginMeta.os + ')' : ''}` : null,
+                        userAgent: loginMeta ? loginMeta.userAgent || null : null,
+                        ipAddress: loginIp || null
                     });
                     loginTime = null;
+                    loginMeta = null;
+                    loginIp = null;
                 }
             }
         }

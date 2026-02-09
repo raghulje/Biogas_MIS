@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import srelIcon from '../../assets/srel.png';
+// use public asset - put refex-logo.png into client/public/assets/
+import refexLogo from '../../assets/refex-logo.png';
+const SREL_LOGO = refexLogo;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -73,14 +75,33 @@ export default function LoginPage() {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <img
-                  src={srelIcon}
-                  alt="SREL Logo"
+                  src={SREL_LOGO}
+                  alt="Refex Logo"
                   className="h-16 w-auto object-contain"
                 />
               </div>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
             <p className="text-sm text-gray-600">Industrial Biogas Plant MIS</p>
+            <div className="mt-3 text-sm">
+              <a
+                href="#"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  const email = prompt('Enter your account email for password reset:');
+                  if (!email) return;
+                  try {
+                    await (await import('../../services/authService')).authService.forgotPassword(email);
+                    alert('If the email exists, a reset link has been sent.');
+                  } catch (err) {
+                    alert('Failed to send reset email. Please try again later.');
+                  }
+                }}
+                className="text-blue-600 hover:underline"
+              >
+                Forgot password?
+              </a>
+            </div>
           </div>
 
           {/* Login Form */}
@@ -174,7 +195,7 @@ export default function LoginPage() {
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="text-center">
               <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} Refex Group. All rights reserved.
+                Built and Maintained by Refex AI Team
               </p>
               <p className="text-xs text-gray-400 mt-1">Secure Admin Access</p>
             </div>

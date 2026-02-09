@@ -13,7 +13,15 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  useTheme,
+  useMediaQuery,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Card,
+  Stack,
 } from '@mui/material';
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
 import type { MISEntry } from '../../mocks/misEntries';
 import { misService } from '../../services/misService';
@@ -102,6 +110,8 @@ function getDateRangeForFilter(
 }
 
 const FinalMISPage = () => {
+  const theme = useTheme();
+  const isPhone = useMediaQuery('(max-width:768px)');
   const [filterType, setFilterType] = useState<FilterType>('single');
   const [singleDate, setSingleDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(() => {
@@ -1230,7 +1240,7 @@ const FinalMISPage = () => {
         <Box
           sx={{
             background:
-              'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
+            'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
             borderRadius: '16px',
             p: 3,
             mb: 3,
@@ -1319,6 +1329,65 @@ const FinalMISPage = () => {
           </Box>
         </Box>
 
+        {/* Mobile condensed accordion/cards view (phone only) */}
+        {isPhone && aggregatedData && (
+          <Box sx={{ mb: 2 }}>
+            <Accordion defaultExpanded>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Quick Summary</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={1}>
+                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="caption">Records</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.recordCount}</Typography>
+                  </Card>
+                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="caption">Total Raw Biogas</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.rawBiogas?.totalRawBiogas ?? aggregatedData.totalRawBiogas ?? 0} m³</Typography>
+                  </Card>
+                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="caption">CBG Produced</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.compressedBiogas?.produced ?? aggregatedData.totalCBGProduced ?? 0} kg</Typography>
+                  </Card>
+                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="caption">FOM Produced</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.fertilizer?.fomProduced ?? aggregatedData.totalFOMProduced ?? 0} kg</Typography>
+                  </Card>
+                  <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                    <Typography variant="caption">Avg Plant Availability</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700 }}>{aggregatedData.avgPlantAvailability ?? aggregatedData.plantAvailability ?? 0}%</Typography>
+                  </Card>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Digester Performance</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={1}>
+                  {['d01', 'd02', 'd03'].map((d, i) => {
+                    const perf = aggregatedData.digesterPerformance ? (aggregatedData.digesterPerformance as any)[`d0${i + 1}`] : null;
+                    return (
+                      <Card key={d} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Digester {i + 1}</Typography>
+                        <Stack spacing={0.5} sx={{ mt: 1 }}>
+                          <Box><Typography variant="caption">TS%</Typography><Typography variant="body2">{perf?.ts?.toFixed(1) ?? '-'}</Typography></Box>
+                          <Box><Typography variant="caption">VS%</Typography><Typography variant="body2">{perf?.vs?.toFixed(1) ?? '-'}</Typography></Box>
+                          <Box><Typography variant="caption">pH</Typography><Typography variant="body2">{perf?.ph?.toFixed(1) ?? '-'}</Typography></Box>
+                          <Box><Typography variant="caption">HRT</Typography><Typography variant="body2">{perf?.hrt?.toFixed(1) ?? '-'}</Typography></Box>
+                        </Stack>
+                      </Card>
+                    );
+                  })}
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+          </Box>
+        )}
+
         {/* Filter Section */}
         <Box
           sx={{
@@ -1357,14 +1426,14 @@ const FinalMISPage = () => {
               Date Filters
             </Typography>
             {aggregatedData && (
-              <Chip
+                <Chip
                 label={`${aggregatedData.recordCount} record${aggregatedData.recordCount !== 1 ? 's' : ''
                   } found`}
                 size="small"
                 sx={{
                   ml: 2,
                   background:
-                    'linear-gradient(135deg, #7dc244 0%, #139B49 100%)',
+                  'linear-gradient(135deg, #7dc244 0%, #139B49 100%)',
                   color: '#fff',
                   fontWeight: 500,
                 }}

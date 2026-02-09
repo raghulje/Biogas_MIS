@@ -12,6 +12,8 @@ import {
   AccordionDetails,
   Chip,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -32,6 +34,8 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { misService } from '../../services/misService';
 
 export default function DashboardPage() {
+  const theme = useTheme();
+  const isPhone = useMediaQuery('(max-width:768px)');
   const [filterType, setFilterType] = useState('month');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -134,9 +138,11 @@ export default function DashboardPage() {
                     key={btn.value}
                     onClick={() => setFilterType(btn.value)}
                     variant={filterType === btn.value ? 'contained' : 'outlined'}
+                    size={isPhone ? 'large' : 'medium'}
                     sx={{
                       textTransform: 'none',
                       minWidth: { xs: '70px', sm: '100px' },
+                      minHeight: isPhone ? 48 : undefined,
                       fontSize: { xs: '0.8rem', sm: '0.875rem' },
                       px: { xs: 1, sm: 2 },
                       backgroundColor: filterType === btn.value ? '#2879b6' : 'transparent',
@@ -191,7 +197,9 @@ export default function DashboardPage() {
                       variant="contained"
                       onClick={() => fetchDashboardData()}
                       disabled={!startDate || !endDate || startDate > endDate}
-                      sx={{ textTransform: 'none', borderRadius: '12px' }}
+                      fullWidth={isPhone}
+                      size={isPhone ? 'large' : 'medium'}
+                      sx={{ textTransform: 'none', borderRadius: '12px', minHeight: isPhone ? 48 : undefined }}
                     >
                       Apply
                     </Button>
@@ -208,7 +216,7 @@ export default function DashboardPage() {
               <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                 MIS Summary - {filterType.toUpperCase()}
               </Typography>
-              <Chip
+                <Chip
                 label="Aggregate"
                 size="small"
                 sx={{
@@ -238,7 +246,7 @@ export default function DashboardPage() {
                 },
               }}
             >
-              <Box
+                <Box
                 className="gradient-header"
                 sx={{
                   background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
@@ -336,20 +344,20 @@ export default function DashboardPage() {
               sx={{
                 mb: 1.5,
                 boxShadow: 'none',
-                border: '1px solid rgba(125, 194, 68, 0.2)',
+                border: '1px solid rgba(125, 194, 68, 0.36)',
                 borderRadius: '12px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 backgroundColor: '#fff',
                 '&:hover': {
-                  boxShadow: '0 4px 20px rgba(125, 194, 68, 0.15)',
+                  boxShadow: '0 6px 24px rgba(34,139,34,0.12)',
                   transform: 'translateY(-2px)',
                 },
               }}
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(135deg, #7dc244 0%, #139B49 100%)',
+                  background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
                   color: '#ffffff',
                   borderRadius: '12px 12px 0 0',
                   minHeight: '56px',

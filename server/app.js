@@ -115,9 +115,32 @@ db.sequelize.sync({ alter: true }).then(async () => {
         console.error('Failed to init scheduler:', e);
     }
 
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
-    });
+    // Attempt to listen; if port is in use, try next ports up to a limit
+    const tryListen = (port, retries = 5) => {
+        return new Promise((resolve, reject) => {
+            const srv = app.listen(port);
+            srv.on('listening', () => resolve(srv));
+            srv.on('error', (err) => {
+                if (err && err.code === 'EADDRINUSE' && retries > 0) {
+                    console.warn(`Port ${port} in use — retrying on port ${port + 1}...`);
+                    setTimeout(() => {
+                        tryListen(port + 1, retries - 1).then(resolve).catch(reject);
+                    }, 200);
+                } else {
+                    reject(err);
+                }
+            });
+        });
+    };
+
+    try {
+        const server = await tryListen(PORT, 10);
+        const actualPort = server.address().port;
+        console.log(`Server is running on port ${actualPort}`);
+    } catch (err) {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    }
 }).catch(err => {
     console.error('Failed to sync db:', err);
 });

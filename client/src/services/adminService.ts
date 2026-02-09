@@ -176,4 +176,8 @@ export const adminService = {
         const response = await api.post('/final-mis-report-config/send-test', { startDate, endDate });
         return response.data;
     },
+    saveAppTheme: async (theme: string) => {
+        const response = await api.put('/app-config/theme', { theme });
+        return response.data;
+    },
 };
