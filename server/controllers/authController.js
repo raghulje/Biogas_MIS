@@ -109,13 +109,13 @@ exports.login = async (req, res) => {
         if (!isValid) {
             try {
                 const uaInfo = parseUserAgent(req.get('user-agent') || '');
-                await UserActivityLog.create({
-                    user_id: user.id,
-                    activity_type: 'LOGIN_FAILED',
-                    description: 'Invalid password',
+            await UserActivityLog.create({
+                user_id: user.id,
+                activity_type: 'LOGIN_FAILED',
+                description: 'Invalid password',
                     ip_address: req.ip,
                     metadata: uaInfo
-                });
+            });
             } catch (logErr) {
                 console.warn('Activity log failed:', logErr.message);
             }
@@ -130,13 +130,13 @@ exports.login = async (req, res) => {
 
         try {
             const uaInfo = parseUserAgent(req.get('user-agent') || '');
-            await UserActivityLog.create({
-                user_id: user.id,
-                activity_type: 'LOGIN',
-                description: 'User logged in successfully',
+        await UserActivityLog.create({
+            user_id: user.id,
+            activity_type: 'LOGIN',
+            description: 'User logged in successfully',
                 ip_address: req.ip,
                 metadata: uaInfo
-            });
+        });
         } catch (logErr) {
             console.warn('Activity log failed:', logErr.message);
         }

@@ -112,15 +112,6 @@ function getDateRangeForFilter(
 const FinalMISPage = () => {
   const theme = useTheme();
   const isPhone = useMediaQuery('(max-width:768px)');
-  if (isPhone) {
-    // Lazy-load mobile component to keep bundle small
-    const Mobile = React.lazy(() => import('./FinalMISMobile'));
-    return (
-      <React.Suspense fallback={<Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress/></Box>}>
-        <Mobile />
-      </React.Suspense>
-    );
-  }
   const [filterType, setFilterType] = useState<FilterType>('single');
   const [singleDate, setSingleDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(() => {

@@ -33,7 +33,6 @@ import {
 import { useTheme, useMediaQuery } from '@mui/material';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { themePresets } from '../../themes';
-import AdminMobile from './AdminMobile';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -332,9 +331,6 @@ function FinalMISReportEmailPanel({
   useEffect(() => { loadConfig(); }, [loadConfig]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isPhone = useMediaQuery('(max-width:768px)');
-
-  if (isPhone) return <AdminMobile />;
 
   const addEmail = () => {
     const trimmed = newEmail.trim().toLowerCase();

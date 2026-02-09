@@ -308,28 +308,28 @@ export default function NotificationConfigPage() {
                             <Grid item xs={12} md={6}>
                                 <Typography variant="h6" gutterBottom>Site Users (Daily Alerts)</Typography>
                                 <Typography variant="caption" color="textSecondary">Select users to receive "Not Created" and "Not Submitted" alerts.</Typography>
-                                    <Paper variant="outlined" sx={{ height: 400, overflow: 'auto', mt: 1 }}>
-                                        <List dense>
-                                            {users.map(user => (
+                                <Paper variant="outlined" sx={{ height: 400, overflow: 'auto', mt: 1 }}>
+                                    <List dense>
+                                        {users.map(user => (
                                                 <ListItem
                                                     key={user.id}
                                                     button
                                                     onClick={() => handleToggleSiteUser(user.email)}
                                                     sx={{ minHeight: isPhone ? 56 : undefined, px: isPhone ? 2 : 1 }}
                                                 >
-                                                    <ListItemIcon>
-                                                        <Checkbox
-                                                            edge="start"
-                                                            checked={siteUserEmails.includes(user.email)}
-                                                            disableRipple
+                                                <ListItemIcon>
+                                                    <Checkbox
+                                                        edge="start"
+                                                        checked={siteUserEmails.includes(user.email)}
+                                                        disableRipple
                                                             size={isPhone ? 'medium' : 'small'}
-                                                        />
-                                                    </ListItemIcon>
-                                                    <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
-                                                </ListItem>
-                                            ))}
-                                        </List>
-                                    </Paper>
+                                                    />
+                                                </ListItemIcon>
+                                                <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </Paper>
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <Typography variant="h6" gutterBottom>Managers (Escalation Alerts)</Typography>
@@ -353,19 +353,19 @@ export default function NotificationConfigPage() {
                             </Grid>
                         </Grid>
                         <Box sx={{ mt: 3, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
-                        <Button
-                            variant="contained"
-                            onClick={handleSaveRecipients}
+                            <Button
+                                variant="contained"
+                                onClick={handleSaveRecipients}
                             fullWidth={isPhone}
-                            sx={{
-                                textTransform: 'none',
-                                borderRadius: '12px',
-                                py: 1.5,
-                                fontWeight: 600,
-                            }}
-                        >
-                            Save Recipients
-                        </Button>
+                                sx={{
+                                    textTransform: 'none',
+                                    borderRadius: '12px',
+                                    py: 1.5,
+                                    fontWeight: 600,
+                                }}
+                            >
+                                Save Recipients
+                            </Button>
                         </Box>
                     </TabPanel>
 
