@@ -13,6 +13,7 @@ require('dotenv').config();
 const app = express();
 // Default production port set to 3015; can be overridden via server/.env
 const PORT = process.env.PORT || 3015;
+const HOST = process.env.HOST || '0.0.0.0';
 
 const corsOptions = {
     origin: process.env.FRONTEND_URL || true,
@@ -117,15 +118,15 @@ db.sequelize.sync({ alter: true }).then(async () => {
     }
 
     // Attempt to listen; if port is in use, try next ports up to a limit
-    const tryListen = (port, retries = 5) => {
+    const tryListen = (port, host = HOST, retries = 5) => {
         return new Promise((resolve, reject) => {
-            const srv = app.listen(port);
+            const srv = app.listen(port, host);
             srv.on('listening', () => resolve(srv));
             srv.on('error', (err) => {
                 if (err && err.code === 'EADDRINUSE' && retries > 0) {
                     console.warn(`Port ${port} in use — retrying on port ${port + 1}...`);
                     setTimeout(() => {
-                        tryListen(port + 1, retries - 1).then(resolve).catch(reject);
+                        tryListen(port + 1, host, retries - 1).then(resolve).catch(reject);
                     }, 200);
                 } else {
                     reject(err);
@@ -135,9 +136,11 @@ db.sequelize.sync({ alter: true }).then(async () => {
     };
 
     try {
-        const server = await tryListen(PORT, 10);
-        const actualPort = server.address().port;
-        console.log(`Server is running on port ${actualPort}`);
+        const server = await tryListen(PORT, HOST, 10);
+        const address = server.address();
+        const actualPort = address.port;
+        const actualHost = address.address || HOST;
+        console.log(`Server is running on http://${actualHost}:${actualPort}`);
     } catch (err) {
         console.error('Failed to start server:', err);
         process.exit(1);
