@@ -352,34 +352,51 @@ exports.updateEntry = async (req, res) => {
 };
 
 // DELETE ENTRY - Soft delete recommended
+// DELETE ENTRY - Soft delete single entry (no explicit transaction to avoid pool exhaustion)
 exports.deleteEntry = async (req, res) => {
-    const t = await sequelize.transaction();
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
         const entry = await MISDailyEntry.findByPk(id);
-        if (!entry) {
-            await t.rollback();
-            return res.status(404).json({ message: 'Entry not found' });
-        }
+        if (!entry) return res.status(404).json({ message: 'Entry not found' });
 
-        // Store for audit
+        // Store for audit (snapshot)
         const oldValues = entry.toJSON();
 
-        await entry.update({ status: 'deleted' }, { transaction: t });
+        // Soft-delete without explicit transaction to reduce connection usage
+        await MISDailyEntry.update({ status: 'deleted' }, { where: { id } });
 
-        // Or hard delete if required:
-        // await entry.destroy({ transaction: t });
-
-        await t.commit();
         await auditService.log(userId, 'DELETE_MIS_ENTRY', 'MISDailyEntry', id, oldValues, null, req);
         res.json({ message: 'Entry deleted successfully' });
-
     } catch (error) {
-        await t.rollback();
         console.error('Delete Entry Error:', error);
         res.status(500).json({ message: 'Error deleting entry', error: error.message });
+    }
+};
+
+// BULK DELETE (soft) - accepts { ids: [1,2,3,...] } in request body
+exports.bulkDeleteEntries = async (req, res) => {
+    try {
+        const ids = Array.isArray(req.body.ids) ? req.body.ids.map(id => Number(id)).filter(Boolean) : [];
+        if (!ids.length) return res.status(400).json({ message: 'ids array is required' });
+
+        const userId = req.user.id;
+
+        // Process in chunks to avoid huge WHERE IN lists
+        const chunkSize = 200;
+        for (let i = 0; i < ids.length; i += chunkSize) {
+            const chunk = ids.slice(i, i + chunkSize);
+            await MISDailyEntry.update({ status: 'deleted' }, { where: { id: { [Op.in]: chunk } } });
+        }
+
+        // Log a single audit entry summarizing the bulk delete
+        await auditService.log(userId, 'DELETE_MIS_ENTRY_BULK', 'MISDailyEntry', null, null, { ids }, req);
+
+        res.json({ message: `Marked ${ids.length} entries as deleted` });
+    } catch (error) {
+        console.error('Bulk Delete Error:', error);
+        res.status(500).json({ message: 'Error bulk deleting entries', error: error.message });
     }
 };
 
