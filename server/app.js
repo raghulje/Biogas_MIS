@@ -16,7 +16,8 @@ const PORT = process.env.PORT || 3015;
 const HOST = process.env.HOST || '0.0.0.0';
 
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || true,
+    // Allow CLIENT_ORIGIN (preferred) or FRONTEND_URL for backward compatibility.
+    origin: process.env.CLIENT_ORIGIN || process.env.FRONTEND_URL || true,
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -29,6 +30,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
+// Health check (useful for load balancers / reverse proxies)
+app.get('/api/health', (_req, res) => {
+    return res.json({ status: 'ok', env: process.env.NODE_ENV || 'development' });
+});
+
 app.use('/api', routes);
 
 // Only serve built client files if SERVE_CLIENT is explicitly set to 'true'
