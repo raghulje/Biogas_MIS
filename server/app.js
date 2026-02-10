@@ -11,7 +11,8 @@ const schedulerService = require('./services/schedulerService');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Default production port set to 3015; can be overridden via server/.env
+const PORT = process.env.PORT || 3015;
 
 const corsOptions = {
     origin: process.env.FRONTEND_URL || true,
