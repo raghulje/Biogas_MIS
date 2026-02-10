@@ -112,8 +112,27 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server — DB sync, then scheduler (cron), then listen
-db.sequelize.sync({ alter: true }).then(async () => {
-    console.log('Database connected and synced');
+// Helper: attempt to authenticate to DB with retries (avoid immediate crash for transient DB outages)
+async function connectWithRetry(retries = 5, delayMs = 5000) {
+    for (let i = 0; i <= retries; i++) {
+        try {
+            await db.sequelize.authenticate();
+            console.log('Database connected (authenticate successful)');
+            return;
+        } catch (err) {
+            const attempt = i + 1;
+            console.warn(`Database connection attempt ${attempt} failed: ${err.message || err}.`);
+            if (attempt > retries) throw err;
+            console.log(`Retrying in ${delayMs}ms...`);
+            await new Promise((res) => setTimeout(res, delayMs));
+        }
+    }
+}
+
+connectWithRetry(5, 5000).then(async () => {
+    // After auth succeeded, sync models and start server
+    await db.sequelize.sync({ alter: true });
+    console.log('Database synced');
 
     // Ensure cron/scheduler starts — required for email reminders
     try {
@@ -152,5 +171,6 @@ db.sequelize.sync({ alter: true }).then(async () => {
         process.exit(1);
     }
 }).catch(err => {
-    console.error('Failed to sync db:', err);
+    console.error('Failed to connect or sync DB after retries:', err);
+    process.exit(1);
 });
