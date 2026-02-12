@@ -221,25 +221,20 @@ export default function NotificationConfigPage() {
             setError(null);
             setSuccess(null);
 
-            await adminService.saveMISEmailConfig({
+            // Fetch existing config and merge to avoid accidentally wiping fields
+            const existing = await adminService.getMISEmailConfig().catch(() => ({} as any));
+
+            const payload = {
                 entry_not_created_emails: siteUserEmails,
-                not_submitted_notify_emails: siteUserEmails, // Same recipients
-                submit_notify_emails: [], // Keep empty or preserve? Currently UI doesn't manage submission notify.
-                // Wait, saveMISEmailConfig overwrites ALL fields if not careful? 
-                // Backend implementation updates configured fields only if passed?
-                // No, backend implementation takes entire object in `req.body`.
-                // I should fetch existing config first to preserve `submit_notify_emails`.
-                // Actually `getMISEmailConfig` was called on mount. I should store `submit_notify_emails` in state too.
+                not_submitted_notify_emails: siteUserEmails,
+                submit_notify_emails: existing.submit_notify_emails || [],
                 escalation_notify_emails: managerEmails
-            });
-            // Ah wait, I need to preserve submit_notify_emails. Let's add it to state.
-            // Or just fetch and update.
-            // For now assume submit_notify_emails is managed elsewhere or empty.
-            // Better: Fetch current inside submit? No, I have state.
-            // Let's add `submitEmails` state.
-            // For this implementation I will focus on the requested features.
+            };
+
+            await adminService.saveMISEmailConfig(payload);
             setSuccess('Recipients updated successfully');
         } catch (err) {
+            console.error('saveRecipients error', err);
             setError('Failed to save recipients');
         }
     };
