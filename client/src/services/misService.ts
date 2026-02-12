@@ -42,6 +42,15 @@ export const misService = {
             return []; // graceful fallback for network errors
         }
     },
+    getDeletedEntries: async () => {
+        try {
+            const response = await api.get('/mis-entries/deleted');
+            return response.data;
+        } catch (err) {
+            console.error('misService.getDeletedEntries error:', err);
+            return [];
+        }
+    },
     getEntryById: async (id: number) => {
         const response = await api.get(`/mis-entries/${id}`);
         return response.data;
@@ -52,6 +61,16 @@ export const misService = {
     },
     deleteEntry: async (id: number) => {
         const response = await api.delete(`/mis-entries/${id}`);
+        return response.data;
+    },
+    // Hard delete (permanent)
+    permanentDeleteEntry: async (id: number) => {
+        const response = await api.delete(`/mis-entries/${id}/permanent`);
+        return response.data;
+    },
+    // Restore soft-deleted
+    restoreEntry: async (id: number) => {
+        const response = await api.post(`/mis-entries/${id}/restore`);
         return response.data;
     },
     submitEntry: async (id: number) => {
@@ -76,6 +95,11 @@ export const misService = {
         const response = await api.post('/mis-entries/import', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
+        return response.data;
+    },
+    // Bulk soft-delete
+    bulkDeleteEntries: async (ids: number[]) => {
+        const response = await api.post('/mis-entries/bulk-delete', { ids });
         return response.data;
     },
     getDashboardData: async (params: { period?: string; startDate?: string; endDate?: string } = {}) => {

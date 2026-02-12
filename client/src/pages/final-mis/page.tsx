@@ -1336,6 +1336,47 @@ const FinalMISPage = () => {
           </Box>
         </Box>
 
+      {/* Desktop summary cards (show before the table) */}
+      {aggregatedData && !isPhone && (
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+          <Card sx={{ flex: '1 1 220px', borderRadius: '12px', boxShadow: 1 }}>
+            <CardContent>
+              <Typography variant="caption" color="textSecondary">Total Feed Input</Typography>
+              <Typography variant="h6" fontWeight={700} color="#ee6a31">
+                {aggregatedData.feeding.totalFeedInput.total.toFixed(0)} m³
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ flex: '1 1 220px', borderRadius: '12px', boxShadow: 1 }}>
+            <CardContent>
+              <Typography variant="caption" color="textSecondary">RBG Produced</Typography>
+              <Typography variant="h6" fontWeight={700} color="#2879b6">
+                {aggregatedData.biogasProduction.rbgProduced.toFixed(0)} m³
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ flex: '1 1 220px', borderRadius: '12px', boxShadow: 1 }}>
+            <CardContent>
+              <Typography variant="caption" color="textSecondary">CBG Production</Typography>
+              <Typography variant="h6" fontWeight={700} color="#7dc244">
+                {aggregatedData.cbgProduction.production.toFixed(0)} kg
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ flex: '1 1 220px', borderRadius: '12px', boxShadow: 1 }}>
+            <CardContent>
+              <Typography variant="caption" color="textSecondary">Power Consumption</Typography>
+              <Typography variant="h6" fontWeight={700} color="#ee6a31">
+                {aggregatedData.powerConsumption.toFixed(0)} kWh
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
+      )}
+
         {/* Mobile comprehensive view (phone only) */}
         {isPhone && aggregatedData && (
           <Box sx={{ mb: 2 }}>

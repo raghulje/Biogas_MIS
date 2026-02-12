@@ -56,15 +56,15 @@ exports.getUserById = async (req, res) => {
 // Map UI page names to backend resources (shared for user permissions)
 const UI_PAGE_TO_RESOURCE = {
     'Dashboard': 'config',
-    'MIS Entry': 'mis_entry',
+        'MIS Entry': 'mis_entry',
     'Consolidated MIS View': 'mis_entry',
-    'User Management': 'user',
-    'Roles & Permissions': 'role',
-    'Configurations': 'config',
+        'User Management': 'user',
+        'Roles & Permissions': 'role',
+        'Configurations': 'config',
     'Admin Panel': 'config',
     'Audit Logs': 'audit',
     'Import Data': 'mis_entry'
-};
+    };
 
 /** Convert UI permission matrix to DB permission records and set on user (user_permissions). */
 const syncUserPermissions = async (userId, uiPermissions) => {

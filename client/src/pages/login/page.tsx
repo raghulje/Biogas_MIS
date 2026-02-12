@@ -74,7 +74,7 @@ export default function LoginPage() {
           <div className="text-center mb-10">
             <div className="flex justify-center mb-6">
               <div className="relative">
-                <img
+              <img
                   src={SREL_LOGO}
                   alt="Refex Logo"
                   className="h-16 w-auto object-contain"
@@ -189,7 +189,7 @@ export default function LoginPage() {
                 </>
               )}
             </button>
-          </form>
+            </form>
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200">

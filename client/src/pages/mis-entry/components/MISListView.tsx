@@ -26,6 +26,7 @@ import {
   CircularProgress,
   Checkbox,
   TablePagination,
+  Snackbar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -53,6 +54,7 @@ import { TransitionProps } from '@mui/material/transitions';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React from 'react';
+import { misService } from '../../../services/misService';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -96,6 +98,9 @@ export default function MISListView({
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [deletedEntries, setDeletedEntries] = useState<MISEntry[]>([]);
+  const [loadingDeleted, setLoadingDeleted] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<MISEntry | null>(null);
   const [importing, setImporting] = useState(false);
@@ -104,6 +109,10 @@ export default function MISListView({
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackMsg, setSnackMsg] = useState('');
+  const [snackUndoCallback, setSnackUndoCallback] = useState<(() => Promise<void>) | null>(null);
+  const [lastBulkDeletedIds, setLastBulkDeletedIds] = useState<number[] | null>(null);
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -163,7 +172,8 @@ export default function MISListView({
     }
   };
 
-  const filteredEntries = entries.filter((entry) => {
+  const sourceEntries = showDeleted ? deletedEntries : entries;
+  const filteredEntries = sourceEntries.filter((entry) => {
     const matchesSearch =
       String(entry.id).toLowerCase().includes(searchQuery.toLowerCase()) ||
       (entry.createdBy && String(entry.createdBy).toLowerCase().includes(searchQuery.toLowerCase()));
@@ -183,11 +193,30 @@ export default function MISListView({
   };
 
   const confirmDelete = () => {
-    if (entryToDelete) {
-      onDelete(entryToDelete);
+    (async () => {
+      if (!entryToDelete) return;
+      try {
+        await misService.deleteEntry(entryToDelete.id);
+        setSnackMsg(`Entry ${entryToDelete.id} deleted`);
+        // allow undo -> restore
+        setSnackUndoCallback(() => async () => {
+          try {
+            await misService.restoreEntry(entryToDelete.id);
+            onImportSuccess?.();
+          } catch (e) {
+            console.error('Undo restore failed', e);
+          }
+        });
+        setSnackOpen(true);
+        onImportSuccess?.();
+      } catch (err) {
+        console.error('Failed to delete entry', err);
+        alert('Failed to delete entry');
+      } finally {
       setDeleteDialogOpen(false);
       setEntryToDelete(null);
-    }
+      }
+    })();
   };
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,12 +243,68 @@ export default function MISListView({
   };
 
   const handleBulkDeleteConfirm = () => {
-    selectedIds.forEach(id => {
-      const entry = entries.find(e => e.id === id);
-      if (entry) onDelete(entry);
-    });
-    setSelectedIds(new Set());
-    setBulkDeleteDialogOpen(false);
+    (async () => {
+      try {
+        const ids = Array.from(selectedIds).map(id => Number(id)).filter(Boolean);
+        if (ids.length === 0) throw new Error('No entries selected');
+        await misService.bulkDeleteEntries(ids);
+        // allow undo: restore these ids
+        setLastBulkDeletedIds(ids);
+        setSnackMsg(`Marked ${ids.length} entries as deleted`);
+        setSnackUndoCallback(() => async () => {
+          try {
+            await Promise.all(ids.map((id) => misService.restoreEntry(id)));
+            onImportSuccess?.();
+          } catch (e) {
+            console.error('Bulk undo failed', e);
+          }
+        });
+        setSnackOpen(true);
+        setSelectedIds(new Set());
+        setBulkDeleteDialogOpen(false);
+        onImportSuccess?.();
+      } catch (err: any) {
+        console.error('Bulk delete failed', err);
+        alert('Bulk delete failed: ' + (err.response?.data?.message || err.message));
+      }
+    })();
+  };
+
+  const handleBulkPermanentDeleteConfirm = () => {
+    (async () => {
+      try {
+        const ids = Array.from(selectedIds).map(id => Number(id)).filter(Boolean);
+        if (ids.length === 0) throw new Error('No entries selected');
+        // perform permanent deletes in sequence to be safe
+        for (let i = 0; i < ids.length; i++) {
+          await misService.permanentDeleteEntry(ids[i]);
+        }
+        setSnackMsg(`Permanently deleted ${ids.length} entries`);
+        setSnackUndoCallback(null); // no undo for permanent delete
+        setSnackOpen(true);
+        setSelectedIds(new Set());
+        setBulkDeleteDialogOpen(false);
+        fetchDeleted();
+        onImportSuccess?.();
+      } catch (err: any) {
+        console.error('Bulk permanent delete failed', err);
+        alert('Bulk permanent delete failed: ' + (err.response?.data?.message || err.message));
+      }
+    })();
+  };
+
+  const fetchDeleted = async () => {
+    setLoadingDeleted(true);
+    try {
+      const data = await misService.getDeletedEntries();
+      setDeletedEntries(data || []);
+      setPage(0);
+    } catch (err) {
+      console.error('Failed to load deleted entries', err);
+      alert('Failed to load deleted entries');
+    } finally {
+      setLoadingDeleted(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -229,11 +314,34 @@ export default function MISListView({
     if (s === 'draft') return { bg: 'rgba(245, 158, 33, 0.1)', color: '#F59E21' };
     if (s === 'rejected') return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
     if (s === 'deleted') return { bg: 'rgba(88, 89, 91, 0.2)', color: '#58595B' };
-    return { bg: 'rgba(88, 89, 91, 0.1)', color: '#58595B' };
+        return { bg: 'rgba(88, 89, 91, 0.1)', color: '#58595B' };
   };
 
   return (
     <Box className="aos-fade-up">
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={8000}
+        onClose={() => setSnackOpen(false)}
+        message={snackMsg}
+        action={
+          snackUndoCallback ? (
+            <Button
+              color="inherit"
+              size="small"
+              onClick={async () => {
+                setSnackOpen(false);
+                if (snackUndoCallback) {
+                  await snackUndoCallback();
+                  onImportSuccess?.();
+                }
+              }}
+            >
+              Undo
+            </Button>
+          ) : undefined
+        }
+      />
       <Box
         sx={{
           mb: 3,
@@ -325,6 +433,24 @@ export default function MISListView({
           >
             Create New Entry
           </Button>
+          <Button
+            variant={showDeleted ? 'contained' : 'outlined'}
+            color={showDeleted ? 'secondary' : 'inherit'}
+            onClick={() => {
+              const next = !showDeleted;
+              setShowDeleted(next);
+              if (next) fetchDeleted();
+            }}
+            sx={{
+              textTransform: 'none',
+              borderRadius: '12px',
+              px: 2,
+              py: 1.2,
+              fontWeight: 600,
+            }}
+          >
+            {showDeleted ? 'Viewing Deleted' : 'Show Deleted'}
+          </Button>
         </Box>
       </Box>
 
@@ -358,21 +484,58 @@ export default function MISListView({
                 >
                   Clear Selection
                 </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<DeleteIcon />}
-                  onClick={handleBulkDelete}
-                  sx={{
-                    textTransform: 'none',
-                    borderRadius: '12px',
-                    backgroundColor: '#ee6a31',
-                    color: '#fff',
-                    fontWeight: 600,
-                    '&:hover': { backgroundColor: '#d45a21' },
-                  }}
-                >
-                  Delete Selected
-                </Button>
+                {!showDeleted ? (
+                  <Button
+                    variant="contained"
+                    startIcon={<DeleteIcon />}
+                    onClick={handleBulkDelete}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: '12px',
+                      backgroundColor: '#ee6a31',
+                      color: '#fff',
+                      fontWeight: 600,
+                      '&:hover': { backgroundColor: '#d45a21' },
+                    }}
+                  >
+                    Delete Selected
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    startIcon={<DeleteIcon />}
+                    onClick={handleBulkDelete}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: '12px',
+                      backgroundColor: '#bf1f1f',
+                      color: '#fff',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Mark Deleted (use "Permanently Delete" for hard delete)
+                  </Button>
+                )}
+                {showDeleted && (
+                  <Button
+                    variant="contained"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => {
+                      // confirm then call permanent delete
+                      if (!confirm(`Permanently delete ${selectedIds.size} selected entries? This cannot be undone.`)) return;
+                      handleBulkPermanentDeleteConfirm();
+                    }}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: '12px',
+                      backgroundColor: '#ef4444',
+                      color: '#fff',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Permanently Delete Selected
+                  </Button>
+                )}
               </Box>
             </Box>
           </CardContent>
@@ -520,11 +683,11 @@ export default function MISListView({
                     indeterminate={selectedIds.size > 0 && selectedIds.size < filteredEntries.length}
                     checked={filteredEntries.length > 0 && selectedIds.size === filteredEntries.length}
                     onChange={handleSelectAll}
-                    sx={{
+                sx={{
                       color: '#2879b6',
                       '&.Mui-checked': { color: '#2879b6' },
                       '&.MuiCheckbox-indeterminate': { color: '#2879b6' },
-                    }}
+                }}
                   />
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
@@ -615,6 +778,8 @@ export default function MISListView({
                             <ViewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        {!showDeleted ? (
+                          <>
                         <Tooltip title="Edit Entry">
                           <IconButton
                             size="small"
@@ -643,6 +808,58 @@ export default function MISListView({
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                          </>
+                        ) : (
+                          <>
+                            <Tooltip title="Restore Entry">
+                              <IconButton
+                                size="small"
+                                onClick={async () => {
+                                  try {
+                                    await misService.restoreEntry(entry.id);
+                                    alert('Entry restored');
+                                    fetchDeleted();
+                                    onImportSuccess?.();
+                                  } catch (err: any) {
+                                    console.error('Restore failed', err);
+                                    alert('Restore failed: ' + (err.response?.data?.message || err.message));
+                                  }
+                                }}
+                                sx={{
+                                  color: '#2879b6',
+                                  backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                                  borderRadius: '10px',
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Permanently Delete">
+                              <IconButton
+                                size="small"
+                                onClick={async () => {
+                                  if (!confirm(`Permanently delete entry ${entry.id}? This cannot be undone.`)) return;
+                                  try {
+                                    await misService.permanentDeleteEntry(entry.id);
+                                    alert('Entry permanently deleted');
+                                    fetchDeleted();
+                                    onImportSuccess?.();
+                                  } catch (err: any) {
+                                    console.error('Permanent delete failed', err);
+                                    alert('Permanent delete failed: ' + (err.response?.data?.message || err.message));
+                                  }
+                                }}
+                                sx={{
+                                  color: '#ef4444',
+                                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                                  borderRadius: '10px',
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -725,25 +942,72 @@ export default function MISListView({
                   >
                     View
                   </Button>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<EditIcon />}
-                    onClick={() => onEdit(entry)}
-                    sx={{ borderRadius: '10px', borderColor: '#7dc244', color: '#7dc244' }}
-                  >
-                    Edit
-                  </Button>
-                  <IconButton
-                    onClick={() => handleDeleteClick(entry)}
-                    sx={{
-                      borderRadius: '10px',
-                      color: '#ee6a31',
-                      border: '1px solid rgba(238, 106, 49, 0.5)'
-                    }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  {!showDeleted ? (
+                    <>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<EditIcon />}
+                        onClick={() => onEdit(entry)}
+                        sx={{ borderRadius: '10px', borderColor: '#7dc244', color: '#7dc244' }}
+                      >
+                        Edit
+                      </Button>
+                      <IconButton
+                        onClick={() => handleDeleteClick(entry)}
+                        sx={{
+                          borderRadius: '10px',
+                          color: '#ee6a31',
+                          border: '1px solid rgba(238, 106, 49, 0.5)'
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<EditIcon />}
+                        onClick={async () => {
+                          try {
+                            await misService.restoreEntry(entry.id);
+                            alert('Entry restored');
+                            fetchDeleted();
+                            onImportSuccess?.();
+                          } catch (err: any) {
+                            console.error('Restore failed', err);
+                            alert('Restore failed: ' + (err.response?.data?.message || err.message));
+                          }
+                        }}
+                        sx={{ borderRadius: '10px', borderColor: '#2879b6', color: '#2879b6' }}
+                      >
+                        Restore
+                      </Button>
+                      <IconButton
+                        onClick={async () => {
+                          if (!confirm(`Permanently delete entry ${entry.id}? This cannot be undone.`)) return;
+                          try {
+                            await misService.permanentDeleteEntry(entry.id);
+                            alert('Entry permanently deleted');
+                            fetchDeleted();
+                            onImportSuccess?.();
+                          } catch (err: any) {
+                            console.error('Permanent delete failed', err);
+                            alert('Permanent delete failed: ' + (err.response?.data?.message || err.message));
+                          }
+                        }}
+                        sx={{
+                          borderRadius: '10px',
+                          color: '#ef4444',
+                          border: '1px solid rgba(239, 68, 68, 0.2)'
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </>
+                  )}
                 </Box>
               </CardContent>
             </Card>

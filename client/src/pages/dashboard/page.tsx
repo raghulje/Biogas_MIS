@@ -224,7 +224,7 @@ export default function DashboardPage() {
               <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                 MIS Summary - {filterType.toUpperCase()}
               </Typography>
-                <Chip
+              <Chip
                 label="Aggregate"
                 size="small"
                 sx={{
@@ -283,12 +283,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
                             Total Raw Biogas
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
                             {formatNumber(summary.totalRawBiogas ?? 0)} m³
-                          </Typography>
+                      </Typography>
                         </Box>
                         <BiogasIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
                       </Box>
@@ -307,12 +307,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
                             CBG Produced
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
                             {formatNumber(summary.totalCBGProduced ?? 0)} kg
-                          </Typography>
+                      </Typography>
                         </Box>
                         <GasIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
                       </Box>
@@ -331,12 +331,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
                             CBG Sold
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
                             {formatNumber(summary.totalCBGSold ?? 0)} kg
-                          </Typography>
+                      </Typography>
                         </Box>
                         <SellIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
                       </Box>
@@ -391,12 +391,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            FOM Produced
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                        FOM Produced
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
                             {formatNumber(summary.totalFOMProduced ?? 0)} kg
-                          </Typography>
+                      </Typography>
                         </Box>
                         <FomIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
                       </Box>
@@ -415,12 +415,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            Avg Availability
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                        Avg Availability
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
                             {formatNumber(summary.avgPlantAvailability ?? 0)}%
-                          </Typography>
+                      </Typography>
                         </Box>
                         <AvgIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
                       </Box>
@@ -439,12 +439,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            FOM Sold
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                        FOM Sold
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
                             {formatNumber(summary.totalFOMSold ?? 0)} kg
-                          </Typography>
+                      </Typography>
                         </Box>
                         <StoreIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
                       </Box>
@@ -498,12 +498,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            Electricity Consumption
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                        Electricity Consumption
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
                             {formatNumber(summary.totalElectricityConsumption ?? 0)} kWh
-                          </Typography>
+                      </Typography>
                         </Box>
                         <BoltIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
                       </Box>
@@ -522,12 +522,12 @@ export default function DashboardPage() {
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            HSE Incidents
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                        HSE Incidents
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
                             {formatNumber(summary.totalHSEIncidents ?? 0)}
-                          </Typography>
+                      </Typography>
                         </Box>
                         <SafetyIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
                       </Box>

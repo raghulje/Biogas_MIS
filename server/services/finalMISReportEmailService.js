@@ -336,6 +336,29 @@ function buildReportHtml(startDate, endDate, a, customBody) {
 
   const intro = customBody && customBody.trim() ? `<div class="meta">${customBody}</div>` : '';
 
+  // Cards HTML (summary cards shown above the main table in emails)
+  const cards = `
+<table style="width: 100%; max-width: 1400px; margin-bottom: 20px; border-spacing: 15px; border-collapse: separate;">
+    <tr>
+        <td style="background: #e0f2fe; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Total Feed Input</div>
+            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.feeding.totalFeedInput.total)} m3</div>
+        </td>
+        <td style="background: #f0fdf4; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">RBG Produced</div>
+            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.biogasProduction.rbgProduced)} Nm3</div>
+        </td>
+        <td style="background: #fff7ed; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">CBG Production</div>
+            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.cbgProduction.production)} Kg</div>
+        </td>
+        <td style="background: #fffbeb; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Power Consumption</div>
+            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.powerConsumption)} kWh</div>
+        </td>
+    </tr>
+</table>`;
+
   const table = `
 <table class="fm-table">
   <thead>
@@ -508,31 +531,12 @@ function buildReportHtml(startDate, endDate, a, customBody) {
   </tbody>
 </table>
 
-<!-- Cards Section -->
-<table style="width: 100%; max-width: 1400px; margin-top: 20px; border-spacing: 15px; border-collapse: separate;">
-    <tr>
-        <td style="background: #e0f2fe; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Total Feed Input</div>
-            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.feeding.totalFeedInput.total)} m3</div>
-        </td>
-        <td style="background: #f0fdf4; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">RBG Produced</div>
-            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.biogasProduction.rbgProduced)} Nm3</div>
-        </td>
-        <td style="background: #fff7ed; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">CBG Production</div>
-            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.cbgProduction.production)} Kg</div>
-        </td>
-        <td style="background: #fffbeb; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Power Consumption</div>
-            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.powerConsumption)} kWh</div>
-        </td>
-    </tr>
-</table>`;
+    `;
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${tableStyles}</style></head><body>
   <div class="header">Final MIS Report</div>
   ${intro}
+  ${cards}
   ${table}
   <p class="meta" style="margin-top: 20px; font-style: italic;">This is an automated report from BioGas MIS.</p>
 </body></html>`;

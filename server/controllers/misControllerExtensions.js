@@ -400,6 +400,75 @@ exports.bulkDeleteEntries = async (req, res) => {
     }
 };
 
+// GET deleted entries (soft-deleted)
+exports.getDeletedEntries = async (req, res) => {
+    try {
+        const entries = await MISDailyEntry.findAll({
+            where: { status: 'deleted' },
+            attributes: ['id', 'date', 'status', 'created_by', 'created_at'],
+            include: [
+                { model: User, as: 'creator', attributes: ['name', 'email'] },
+                { model: MISCompressedBiogas, as: 'compressedBiogas', attributes: ['produced'] },
+                { model: MISRawBiogas, as: 'rawBiogas', attributes: ['total_raw_biogas'] }
+            ],
+            order: [['date', 'DESC']],
+            limit: 1000
+        });
+
+        const mapped = entries.map(e => {
+            const json = e.toJSON();
+            return {
+                ...json,
+                createdBy: json.creator ? json.creator.name : 'Unknown',
+                compressedBiogas: { produced: json.compressedBiogas?.produced || 0 },
+                rawBiogas: { totalRawBiogas: json.rawBiogas?.total_raw_biogas || 0 }
+            };
+        });
+
+        res.json(mapped);
+    } catch (error) {
+        console.error('getDeletedEntries error:', error);
+        res.status(500).json({ message: 'Error fetching deleted entries', error: error.message });
+    }
+};
+
+// Restore a soft-deleted entry back to draft
+exports.restoreEntry = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const entry = await MISDailyEntry.findByPk(id);
+        if (!entry) return res.status(404).json({ message: 'Entry not found' });
+
+        const oldValues = entry.toJSON();
+        await MISDailyEntry.update({ status: 'draft' }, { where: { id } });
+        await auditService.log(userId, 'RESTORE_MIS_ENTRY', 'MISDailyEntry', id, oldValues, { status: 'draft' }, req);
+        res.json({ message: 'Entry restored successfully' });
+    } catch (error) {
+        console.error('restoreEntry error:', error);
+        res.status(500).json({ message: 'Error restoring entry', error: error.message });
+    }
+};
+
+// Permanently delete an entry (hard delete)
+exports.permanentDeleteEntry = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const entry = await MISDailyEntry.findByPk(id);
+        if (!entry) return res.status(404).json({ message: 'Entry not found' });
+
+        const oldValues = entry.toJSON();
+        // Hard delete
+        await MISDailyEntry.destroy({ where: { id } });
+        await auditService.log(userId, 'PERMANENT_DELETE_MIS_ENTRY', 'MISDailyEntry', id, oldValues, null, req);
+        res.json({ message: 'Entry permanently deleted' });
+    } catch (error) {
+        console.error('permanentDeleteEntry error:', error);
+        res.status(500).json({ message: 'Error permanently deleting entry', error: error.message });
+    }
+};
+
 // GET IMPORT TEMPLATE - Excel with all section headers
 exports.getImportTemplate = async (req, res) => {
     try {
