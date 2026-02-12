@@ -32,7 +32,12 @@ fs.readdirSync(__dirname)
 
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
-    db[modelName].associate(db);
+    try {
+      db[modelName].associate(db);
+    } catch (e) {
+      console.warn(`Model associate failed for ${modelName}:`, e && e.message);
+      // continue - missing dependent models may cause associations to fail in partial repos
+    }
   }
 });
 
