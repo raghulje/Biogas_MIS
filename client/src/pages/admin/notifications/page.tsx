@@ -13,6 +13,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { parse, format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import Switch from '@mui/material/Switch';
 
 interface Scheduler {
     id: number;
@@ -57,6 +58,15 @@ export default function NotificationConfigPage() {
     const [schedulers, setSchedulers] = useState<Scheduler[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
+
+    // Reminder/Reminder recipients states
+    const [reminderEnabled, setReminderEnabled] = useState<boolean>(false);
+    const [fillStartTime, setFillStartTime] = useState<Date | null>(null);
+    const [fillEndTime, setFillEndTime] = useState<Date | null>(null);
+    const [reminderStartTime, setReminderStartTime] = useState<Date | null>(null);
+    const [reminderIntervalMinutes, setReminderIntervalMinutes] = useState<number>(60);
+    const [reminderCount, setReminderCount] = useState<number>(4);
+    const [reminderRecipientEmails, setReminderRecipientEmails] = useState<string[]>([]);
 
     // Recipient Config
     const [siteUserEmails, setSiteUserEmails] = useState<string[]>([]); // entry_not_created & not_submitted
@@ -109,7 +119,36 @@ export default function NotificationConfigPage() {
                 d.setHours(17, 30);
                 setEscalationCheckTime(d);
             }
-
+            // Try to load MIS reminder config (if backend supports it)
+            try {
+                const reminderCfg = await adminService.getMISReminderConfig();
+                if (reminderCfg) {
+                    setReminderEnabled(!!reminderCfg.enabled);
+                    if (reminderCfg.fill_start_time) {
+                        const [hh, mm] = reminderCfg.fill_start_time.split(':');
+                        const d1 = new Date();
+                        d1.setHours(parseInt(hh), parseInt(mm));
+                        setFillStartTime(d1);
+                    }
+                    if (reminderCfg.fill_end_time) {
+                        const [hh2, mm2] = reminderCfg.fill_end_time.split(':');
+                        const d2 = new Date();
+                        d2.setHours(parseInt(hh2), parseInt(mm2));
+                        setFillEndTime(d2);
+                    }
+                    if (reminderCfg.reminder_start_time) {
+                        const [hh3, mm3] = reminderCfg.reminder_start_time.split(':');
+                        const d3 = new Date();
+                        d3.setHours(parseInt(hh3), parseInt(mm3));
+                        setReminderStartTime(d3);
+                    }
+                    setReminderIntervalMinutes(reminderCfg.reminder_interval_minutes || 60);
+                    setReminderCount(reminderCfg.reminder_count || 4);
+                    setReminderRecipientEmails(reminderCfg.reminder_recipient_emails || []);
+                }
+            } catch (e) {
+                // ignore if endpoint not available
+            }
         } catch (err: any) {
             console.error(err);
             setError('Failed to load configuration');
@@ -152,6 +191,22 @@ export default function NotificationConfigPage() {
             } else if (escalationCheckTime && !escalationJob) {
                 const cron = `${escalationCheckTime.getMinutes()} ${escalationCheckTime.getHours()} * * *`;
                 await adminService.createScheduler({ name: 'MIS Escalation Check', cron_expression: cron, job_type: 'mis_escalation_check', is_active: true });
+            }
+
+            // Save reminder config (best-effort; backend may not support)
+            try {
+                await adminService.saveMISReminderConfig({
+                    enabled: reminderEnabled,
+                    fill_start_time: fillStartTime ? `${fillStartTime.getHours().toString().padStart(2,'0')}:${fillStartTime.getMinutes().toString().padStart(2,'0')}` : null,
+                    fill_end_time: fillEndTime ? `${fillEndTime.getHours().toString().padStart(2,'0')}:${fillEndTime.getMinutes().toString().padStart(2,'0')}` : null,
+                    reminder_start_time: reminderStartTime ? `${reminderStartTime.getHours().toString().padStart(2,'0')}:${reminderStartTime.getMinutes().toString().padStart(2,'0')}` : null,
+                    reminder_interval_minutes: reminderIntervalMinutes,
+                    reminder_count: reminderCount,
+                    reminder_recipient_emails: reminderRecipientEmails,
+                    timezone: 'Asia/Kolkata'
+                });
+            } catch (e) {
+                // ignore
             }
 
             setSuccess('Schedule updated successfully');
@@ -197,6 +252,10 @@ export default function NotificationConfigPage() {
     const handleToggleManager = (email: string) => {
         if (!email) return;
         setManagerEmails(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
+    };
+    const handleToggleReminderRecipient = (email: string) => {
+        if (!email) return;
+        setReminderRecipientEmails(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
     };
 
     const handleSaveTemplate = async (template: Template) => {
@@ -357,6 +416,75 @@ export default function NotificationConfigPage() {
                                                     }
                                                 }}
                                             />
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            </Grid>
+                            <Grid container spacing={4} sx={{ mt: 1 }}>
+                                <Grid item xs={12} md={6}>
+                                    <Card
+                                        variant="outlined"
+                                        sx={{
+                                            borderRadius: { xs: '16px', md: '4px' },
+                                            boxShadow: isPhone ? 1 : 0,
+                                        }}
+                                    >
+                                        <CardHeader
+                                            title="MIS Filling Window"
+                                            subheader="Allowed window for MIS filling (e.g. 11:00 - 12:00)"
+                                        />
+                                        <CardContent>
+                                            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                <Grid container spacing={2}>
+                                                    <Grid item xs={6}>
+                                                        <TimePicker label="Fill Start" value={fillStartTime} onChange={(val) => setFillStartTime(val)} slotProps={{ textField: { fullWidth: true } }} />
+                                                    </Grid>
+                                                    <Grid item xs={6}>
+                                                        <TimePicker label="Fill End" value={fillEndTime} onChange={(val) => setFillEndTime(val)} slotProps={{ textField: { fullWidth: true } }} />
+                                                    </Grid>
+                                                </Grid>
+                                            </LocalizationProvider>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Card variant="outlined" sx={{ borderRadius: { xs: '16px', md: '4px' } }}>
+                                        <CardHeader title="Reminders" subheader="Send repeated reminders between scheduled times" />
+                                        <CardContent>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                        <Typography>Enabled</Typography>
+                                                        <Switch checked={reminderEnabled} onChange={(e) => setReminderEnabled(e.target.checked)} />
+                                                    </Box>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                        <TimePicker label="Reminder Start Time" value={reminderStartTime} onChange={(val) => setReminderStartTime(val)} slotProps={{ textField: { fullWidth: true } }} />
+                                                    </LocalizationProvider>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <TextField label="Interval (minutes)" type="number" fullWidth value={reminderIntervalMinutes} onChange={(e) => setReminderIntervalMinutes(Number(e.target.value) || 0)} />
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <TextField label="Number of Reminders" type="number" fullWidth value={reminderCount} onChange={(e) => setReminderCount(Number(e.target.value) || 0)} />
+                                                </Grid>
+                                                <Grid item xs={12}>
+                                                    <Typography variant="caption" color="textSecondary">Select users to receive reminders</Typography>
+                                                    <Paper variant="outlined" sx={{ mt: 1, maxHeight: 240, overflow: 'auto' }}>
+                                                        <List dense>
+                                                            {users.map(user => (
+                                                                <ListItem key={user.id} button onClick={() => handleToggleReminderRecipient(user.email)}>
+                                                                    <ListItemIcon>
+                                                                        <Checkbox edge="start" checked={reminderRecipientEmails.includes(user.email)} disableRipple />
+                                                                    </ListItemIcon>
+                                                                    <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
+                                                                </ListItem>
+                                                            ))}
+                                                        </List>
+                                                    </Paper>
+                                                </Grid>
+                                            </Grid>
                                         </CardContent>
                                     </Card>
                                 </Grid>

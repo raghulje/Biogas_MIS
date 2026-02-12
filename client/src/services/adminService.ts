@@ -154,6 +154,24 @@ export const adminService = {
         const response = await api.put('/mis-email-config', data);
         return response.data;
     },
+    // MIS Reminder Settings (global)
+    getMISReminderConfig: async () => {
+        const response = await api.get('/mis-reminder-config');
+        return response.data;
+    },
+    saveMISReminderConfig: async (data: {
+        enabled: boolean;
+        fill_start_time: string | null; // e.g. "11:00"
+        fill_end_time: string | null; // e.g. "12:00"
+        reminder_start_time: string | null; // e.g. "13:00"
+        reminder_interval_minutes: number | null;
+        reminder_count: number | null;
+        reminder_recipient_emails: string[]; // selected user emails
+        timezone?: string;
+    }) => {
+        const response = await api.put('/mis-reminder-config', data);
+        return response.data;
+    },
 
     // Final MIS Report email (recipients, subject, body, schedule)
     getFinalMISReportConfig: async () => {
