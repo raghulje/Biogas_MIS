@@ -1,11 +1,10 @@
 // Main app bootstrap - initializes DB, models, routes, schedulers and starts the server.
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
-const path = require('path');
-
 const db = require('./models'); // loads models/index.js
 
 const app = express();
