@@ -1,74 +1,151 @@
-// Main app bootstrap - initializes DB, models, routes, schedulers and starts the server.
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
-const db = require('./models'); // loads models/index.js
+const bodyParser = require('body-parser');
+const path = require('path');
+const fs = require('fs');
+const db = require('./models');
+const routes = require('./routes');
+const schedulerService = require('./services/schedulerService');
+require('dotenv').config();
 
 const app = express();
-app.use(cors());
+// Default production port set to 3015; can be overridden via server/.env
+const PORT = process.env.PORT || 3015;
+const HOST = process.env.HOST || '0.0.0.0';
+
+const corsOptions = {
+    // Allow CLIENT_ORIGIN (preferred) or FRONTEND_URL for backward compatibility.
+    origin: process.env.CLIENT_ORIGIN || process.env.FRONTEND_URL || true,
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+
+// Middleware
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(morgan('dev'));
 
-// Mount admin routes if present
-try {
-  const adminRoutes = require('./routes/misReminderRoutes'); // mis reminder
-  app.use('/api/admin', adminRoutes);
-} catch (e) {
-  console.warn('misReminderRoutes not mounted:', e.message);
-}
+// Routes
+app.use('/api', routes);
 
-// Try mounting other admin-related route modules if they exist
-const tryMount = (relPath, mountPath) => {
-  try {
-    const r = require(relPath);
-    app.use(mountPath, r);
-  } catch (e) {
-    // ignore missing
-  }
-};
-tryMount('./routes/emailTemplateRoutes', '/api/admin');
-tryMount('./routes/adminRoutes', '/api/admin');
+// Only serve built client files if SERVE_CLIENT is explicitly set to 'true'
+// When running separately, client will be on port 3000 (Vite dev server)
+const shouldServeClient = process.env.SERVE_CLIENT === 'true';
+const clientPath = path.join(__dirname, "../client/out");
 
-// Health endpoint
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+if (shouldServeClient && fs.existsSync(clientPath)) {
+    console.log('📦 Serving production client from:', clientPath);
 
-const PORT = process.env.PORT || 5001;
+    // Production mode: serve built client files with caching
+    app.use(express.static(clientPath, {
+        maxAge: '1y', // Cache for 1 year
+        etag: true,
+        lastModified: true,
+        setHeaders: (res, filePath) => {
+            const ext = path.extname(filePath).toLowerCase();
+            const oneYear = 31536000; // 1 year in seconds
 
-async function start() {
-  try {
-    // Sync DB (non-destructive). In production it's recommended to run migrations instead.
-    await db.sequelize.authenticate();
-    console.log('Database connected.');
-    if (process.env.SKIP_DB_SYNC !== 'true') {
-      await db.sequelize.sync({ alter: true });
-      console.log('Database synced (alter).');
-    } else {
-      console.log('Skipping DB sync because SKIP_DB_SYNC=true');
-    }
+            // Cache static assets (JS, CSS, images, fonts) for 1 year
+            if (['.js', '.css', '.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot'].includes(ext)) {
+                res.setHeader('Cache-Control', `public, max-age=${oneYear}, immutable`);
+            }
+            // Don't cache HTML files (they might change)
+            else if (ext === '.html') {
+                res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+            }
+        }
+    }));
 
-    // Start schedulers (if available)
-    try {
-      const reminder = require('./services/misReminderScheduler');
-      if (reminder && typeof reminder.start === 'function') reminder.start();
-    } catch (e) {
-      console.warn('MIS reminder scheduler not started:', e.message);
-    }
-
-    // Start HTTP server
-    app.listen(PORT, () => {
-      console.log(`App listening on port ${PORT}`);
+    // Handle client-side routing - serve index.html for all non-API routes
+    app.get("*", (req, res) => {
+        if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
+            res.sendFile(path.join(clientPath, "index.html"));
+        }
     });
-  } catch (err) {
-    console.error('Failed to start app', err);
-    process.exit(1);
-  }
+} else {
+    // Development mode - don't serve client, just API
+    console.log('🔧 Development mode: Client should be running separately on port 5173 (Vite)');
+
+    // Base Route
+    app.get('/', (req, res) => {
+        res.json({
+            message: 'Biogas MIS API is running',
+            mode: 'development',
+            apiUrl: `http://localhost:${PORT}/api`,
+            clientUrl: 'http://localhost:5173',
+            note: 'Set SERVE_CLIENT=true in .env to serve built client files'
+        });
+    });
+
+    // Return helpful message for non-API routes
+    app.get("*", (req, res) => {
+        if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
+            res.json({
+                message: "API Server is running. Client should be running separately on port 5173.",
+                apiUrl: `http://localhost:${PORT}/api`,
+                clientUrl: "http://localhost:5173",
+                note: "Set SERVE_CLIENT=true in .env to serve built client files"
+            });
+        }
+    });
 }
 
-start();
+// 404
+app.use((req, res) => {
+    res.status(404).json({ message: 'Not found', path: req.path });
+});
 
-module.exports = app;
+// Error Handling
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ message: err.message || 'Something went wrong!', error: err.message });
+});
 
+// Start Server — DB sync, then scheduler (cron), then listen
+db.sequelize.sync({ alter: true }).then(async () => {
+    console.log('Database connected and synced');
+
+    // Ensure cron/scheduler starts — required for email reminders
+    try {
+        await schedulerService.init();
+        console.log('Scheduler (cron) initialized');
+    } catch (e) {
+        console.error('Failed to init scheduler:', e);
+    }
+
+    // Attempt to listen; if port is in use, try next ports up to a limit
+    const tryListen = (port, host = HOST, retries = 5) => {
+        return new Promise((resolve, reject) => {
+            const srv = app.listen(port, host);
+            srv.on('listening', () => resolve(srv));
+            srv.on('error', (err) => {
+                if (err && err.code === 'EADDRINUSE' && retries > 0) {
+                    console.warn(`Port ${port} in use — retrying on port ${port + 1}...`);
+                    setTimeout(() => {
+                        tryListen(port + 1, host, retries - 1).then(resolve).catch(reject);
+                    }, 200);
+                } else {
+                    reject(err);
+                }
+            });
+        });
+    };
+
+    try {
+        const server = await tryListen(PORT, HOST, 10);
+        const address = server.address();
+        const actualPort = address.port;
+        const actualHost = address.address || HOST;
+        console.log(`Server is running on http://${actualHost}:${actualPort}`);
+    } catch (err) {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    }
+}).catch(err => {
+    console.error('Failed to sync db:', err);
+});
