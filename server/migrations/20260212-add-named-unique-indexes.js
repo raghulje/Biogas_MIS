@@ -4,6 +4,9 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Helper to ensure unique index with stable name, removing conflicting duplicates
     async function ensureUniqueIndex(table, columns, desiredName) {
+      // Ensure we have a sequelize instance (some Umzug contexts only expose queryInterface)
+      const sequelizeInstance = (queryInterface && queryInterface.sequelize) ? queryInterface.sequelize : require('../models').sequelize;
+
       // Query INFORMATION_SCHEMA to list indexes and their columns for the current database
       const sql = `
         SELECT INDEX_NAME as index_name, GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) as cols
@@ -11,7 +14,7 @@ module.exports = {
         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table
         GROUP BY INDEX_NAME
       `;
-      const results = await queryInterface.sequelize.query(sql, { replacements: { table }, type: Sequelize.QueryTypes.SELECT });
+      const results = await sequelizeInstance.query(sql, { replacements: { table }, type: Sequelize.QueryTypes.SELECT });
       const indexes = Array.isArray(results) ? results : (results ? [results] : []);
 
       // Remove other indexes covering same columns but different name
@@ -34,7 +37,7 @@ module.exports = {
         FROM INFORMATION_SCHEMA.STATISTICS
         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND INDEX_NAME = :indexName
       `;
-      const existsRows = await queryInterface.sequelize.query(existsSql, { replacements: { table, indexName: desiredName }, type: Sequelize.QueryTypes.SELECT });
+      const existsRows = await sequelizeInstance.query(existsSql, { replacements: { table, indexName: desiredName }, type: Sequelize.QueryTypes.SELECT });
       const existsRow = Array.isArray(existsRows) ? existsRows[0] : existsRows;
       const exists = existsRow && (existsRow.cnt || existsRow.CNT || existsRow.count || existsRow['COUNT(1)']) > 0;
 
