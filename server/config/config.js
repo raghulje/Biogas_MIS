@@ -20,11 +20,12 @@ module.exports = {
     logging: false
   },
   production: {
-    use_env_variable: 'DATABASE_URL',
+    username: process.env.DB_USER || 'raghul',
+    password: process.env.DB_PASS || process.env.DB_PASSWORD || 'RefexAdmin@123',
+    database: process.env.DB_NAME || 'biogas_mis',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
     dialect: 'mysql',
-    dialectOptions: {
-      // Add SSL or other options if needed
-    },
     logging: false
   }
 };
