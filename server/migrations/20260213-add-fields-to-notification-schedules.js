@@ -7,17 +7,37 @@ module.exports = {
     const qi = sequelizeInstance.getQueryInterface();
     const Seq = sequelizeInstance.constructor || require('sequelize');
 
-    // Add name and target_role columns to support multiple schedules
-    await qi.addColumn('notification_schedules', 'name', {
-      type: Seq.STRING(100),
-      allowNull: false,
-      defaultValue: 'Reminder'
-    });
-    await qi.addColumn('notification_schedules', 'target_role', {
-      type: Seq.STRING(50),
-      allowNull: true,
-      defaultValue: null
-    });
+    // Add name and target_role columns to support multiple schedules (only if missing)
+    const colCheckSql = `
+      SELECT COLUMN_NAME
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :col
+    `;
+    const nameExistsRows = await sequelizeInstance.query(colCheckSql, { replacements: { table: 'notification_schedules', col: 'name' }, type: Seq.QueryTypes.SELECT });
+    const nameExists = Array.isArray(nameExistsRows) ? nameExistsRows.length > 0 : !!nameExistsRows;
+    if (!nameExists) {
+      await qi.addColumn('notification_schedules', 'name', {
+        type: Seq.STRING(100),
+        allowNull: false,
+        defaultValue: 'Reminder'
+      });
+      console.log('Added column notification_schedules.name');
+    } else {
+      console.log('Column notification_schedules.name already exists; skipping addColumn');
+    }
+
+    const targetRoleExistsRows = await sequelizeInstance.query(colCheckSql, { replacements: { table: 'notification_schedules', col: 'target_role' }, type: Seq.QueryTypes.SELECT });
+    const targetRoleExists = Array.isArray(targetRoleExistsRows) ? targetRoleExistsRows.length > 0 : !!targetRoleExistsRows;
+    if (!targetRoleExists) {
+      await qi.addColumn('notification_schedules', 'target_role', {
+        type: Seq.STRING(50),
+        allowNull: true,
+        defaultValue: null
+      });
+      console.log('Added column notification_schedules.target_role');
+    } else {
+      console.log('Column notification_schedules.target_role already exists; skipping addColumn');
+    }
 
     // Backfill existing rows with a friendly name if present
     try {
