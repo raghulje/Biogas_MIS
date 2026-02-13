@@ -180,4 +180,37 @@ export const adminService = {
         const response = await api.put('/app-config/theme', { theme });
         return response.data;
     },
+    // Notification Schedule
+    getNotificationSchedule: async () => {
+        const response = await api.get('/notification-schedule');
+        return response.data;
+    },
+    saveNotificationSchedule: async (data: {
+        mis_start_time: string;
+        mis_end_time: string;
+        reminder_start_time?: string;
+        reminder_interval_minutes: number;
+        reminder_count: number;
+        is_active?: boolean;
+    }) => {
+        const response = await api.put('/notification-schedule', data);
+        return response.data;
+    },
+    // Multi schedule CRUD
+    getNotificationSchedules: async () => {
+        const response = await api.get('/notification-schedules');
+        return response.data;
+    },
+    createNotificationSchedule: async (data: any) => {
+        const response = await api.post('/notification-schedules', data);
+        return response.data;
+    },
+    updateNotificationSchedule: async (id: number, data: any) => {
+        const response = await api.put(`/notification-schedules/${id}`, data);
+        return response.data;
+    },
+    deleteNotificationSchedule: async (id: number) => {
+        const response = await api.delete(`/notification-schedules/${id}`);
+        return response.data;
+    },
 };

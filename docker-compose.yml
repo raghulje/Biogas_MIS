@@ -1,32 +1,20 @@
 services:
   srel-uat:
-    image: node:23-alpine
+    image: node:18
     container_name: srel-uat
     working_dir: /app/server
     volumes:
       - ./server:/app/server
-      - ./client/out:/app/client/out
-      - /app/server/node_modules
-    command: sh -c "npm install --production && npm start"
+      - ./client:/app/client
+    command: npm start
     env_file:
       - ./server/.env
-    environment:
-      - NODE_ENV=production
-      - SERVE_CLIENT=true
     expose:
       - "3015"
-    ports:
-      - "3015:3015"
-    restart: unless-stopped
     networks:
       - proxy
-    healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3015/api/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 networks:
   proxy:
     external: true
+

@@ -48,6 +48,16 @@ router.get('/schedulers', permissionMiddleware('config', 'read'), adminControlle
 router.post('/schedulers', permissionMiddleware('config', 'create'), adminController.createScheduler);
 router.put('/schedulers/:id', permissionMiddleware('config', 'update'), adminController.updateScheduler);
 
+// Notification Schedule (MIS filling window + reminders)
+router.get('/notification-schedule', permissionMiddleware('config', 'read'), adminController.getNotificationSchedule);
+router.put('/notification-schedule', permissionMiddleware('config', 'update'), adminController.saveNotificationSchedule);
+
+// Multi-schedule CRUD
+router.get('/notification-schedules', permissionMiddleware('config', 'read'), adminController.getNotificationSchedulesList);
+router.post('/notification-schedules', permissionMiddleware('config', 'create'), adminController.createNotificationSchedule);
+router.put('/notification-schedules/:id', permissionMiddleware('config', 'update'), adminController.updateNotificationScheduleById);
+router.delete('/notification-schedules/:id', permissionMiddleware('config', 'delete'), adminController.deleteNotificationScheduleById);
+
 // Email Templates
 router.get('/email-templates', permissionMiddleware('config', 'read'), emailTemplateController.getTemplates);
 router.get('/email-templates/:id', permissionMiddleware('config', 'read'), emailTemplateController.getTemplateById);

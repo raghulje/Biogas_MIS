@@ -53,10 +53,10 @@ module.exports = (sequelize, DataTypes) => {
         tableName: 'mis_daily_entries',
         underscored: true,
         indexes: [
-            { unique: true, fields: ['date', 'shift'] },
-            { fields: ['date'] },
-            { fields: ['status'] },
-            { fields: ['created_by'] }
+            { name: 'ux_mis_daily_entries_date_shift', unique: true, fields: ['date', 'shift'] },
+            { name: 'idx_mis_daily_entries_date', fields: ['date'] },
+            { name: 'idx_mis_daily_entries_status', fields: ['status'] },
+            { name: 'idx_mis_daily_entries_created_by', fields: ['created_by'] }
         ]
     });
     return MISDailyEntry;

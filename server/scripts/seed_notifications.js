@@ -1,12 +1,14 @@
 require('dotenv').config();
 const { EmailScheduler, EmailTemplate, Role, MISEmailConfig, sequelize } = require('../models');
+const migrationRunner = require('../services/migrationRunner');
 
 async function seed() {
     try {
         await sequelize.authenticate();
         console.log('Database connected.');
-        await sequelize.sync({ alter: true });
-        console.log('Database synced.');
+        // Run pending migrations instead of sync in production
+        await migrationRunner.runPendingMigrations();
+        console.log('Migrations checked/applied (if any).');
 
         // 1. Ensure Roles
         const [siteUserRole] = await Role.findOrCreate({ where: { name: 'Site User' } });

@@ -28,7 +28,6 @@ module.exports = (sequelize, DataTypes) => {
         email: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
             validate: {
                 isEmail: true
             }
@@ -54,7 +53,10 @@ module.exports = (sequelize, DataTypes) => {
         modelName: 'User',
         tableName: 'users',
         underscored: true,
-        indexes: [{ fields: ['role_id'] }],
+        indexes: [
+            { name: 'ux_users_email', unique: true, fields: ['email'] },
+            { name: 'idx_users_role_id', fields: ['role_id'] }
+        ],
         hooks: {
             beforeCreate: async (user) => {
                 if (user.password) {

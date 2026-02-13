@@ -80,7 +80,7 @@ if (shouldServeClient && fs.existsSync(clientPath)) {
         res.json({
             message: 'Biogas MIS API is running',
             mode: 'development',
-            apiUrl: `http://localhost:${PORT}/api`,
+            apiUrl: `http://localhost:3015/api`,
             clientUrl: 'http://localhost:5173',
             note: 'Set SERVE_CLIENT=true in .env to serve built client files'
         });
@@ -91,7 +91,7 @@ if (shouldServeClient && fs.existsSync(clientPath)) {
         if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
             res.json({
                 message: "API Server is running. Client should be running separately on port 5173.",
-                apiUrl: `http://localhost:${PORT}/api`,
+                apiUrl: `https://srel.refex.group:/api`,
                 clientUrl: "http://localhost:5173",
                 note: "Set SERVE_CLIENT=true in .env to serve built client files"
             });
@@ -111,46 +111,59 @@ app.use((err, req, res, next) => {
     res.status(status).json({ message: err.message || 'Something went wrong!', error: err.message });
 });
 
-// Start Server — DB sync, then scheduler (cron), then listen
-db.sequelize.sync({ alter: true }).then(async () => {
-    console.log('Database connected and synced');
+// Start Server — safe production-ready startup
+const migrationRunner = require('./services/migrationRunner');
 
-    // Ensure cron/scheduler starts — required for email reminders
+async function startServer() {
     try {
-        await schedulerService.init();
-        console.log('Scheduler (cron) initialized');
-    } catch (e) {
-        console.error('Failed to init scheduler:', e);
-    }
+        // Authenticate DB connection first
+        await db.sequelize.authenticate();
+        console.log('Database connection authenticated');
 
-    // Attempt to listen; if port is in use, try next ports up to a limit
-    const tryListen = (port, host = HOST, retries = 5) => {
-        return new Promise((resolve, reject) => {
-            const srv = app.listen(port, host);
-            srv.on('listening', () => resolve(srv));
-            srv.on('error', (err) => {
-                if (err && err.code === 'EADDRINUSE' && retries > 0) {
-                    console.warn(`Port ${port} in use — retrying on port ${port + 1}...`);
-                    setTimeout(() => {
-                        tryListen(port + 1, host, retries - 1).then(resolve).catch(reject);
-                    }, 200);
-                } else {
-                    reject(err);
-                }
+        // Run migrations (programmatic, idempotent). In production CI/CD you may run migrations separately.
+        await migrationRunner.runPendingMigrations();
+        console.log('Migrations checked/applied (if any)');
+
+        // Ensure cron/scheduler starts — required for email reminders
+        try {
+            await schedulerService.init();
+            console.log('Scheduler (cron) initialized');
+        } catch (e) {
+            console.error('Failed to init scheduler:', e);
+        }
+
+        // Attempt to listen; if port is in use, try next ports up to a limit
+        const tryListen = (port, host = HOST, retries = 5) => {
+            return new Promise((resolve, reject) => {
+                const srv = app.listen(port, host);
+                srv.on('listening', () => resolve(srv));
+                srv.on('error', (err) => {
+                    if (err && err.code === 'EADDRINUSE' && retries > 0) {
+                        console.warn(`Port ${port} in use — retrying on port ${port + 1}...`);
+                        setTimeout(() => {
+                            tryListen(port + 1, host, retries - 1).then(resolve).catch(reject);
+                        }, 200);
+                    } else {
+                        reject(err);
+                    }
+                });
             });
-        });
-    };
+        };
 
-    try {
-        const server = await tryListen(PORT, HOST, 10);
-        const address = server.address();
-        const actualPort = address.port;
-        const actualHost = address.address || HOST;
-        console.log(`Server is running on http://${actualHost}:${actualPort}`);
+        try {
+            const server = await tryListen(PORT, HOST, 10);
+            const address = server.address();
+            const actualPort = address.port;
+            const actualHost = address.address || HOST;
+            console.log(`Server is running on http://${actualHost}:${actualPort}`);
+        } catch (err) {
+            console.error('Failed to start server:', err);
+            process.exit(1);
+        }
     } catch (err) {
-        console.error('Failed to start server:', err);
+        console.error('Failed to initialize DB/migrations:', err);
         process.exit(1);
     }
-}).catch(err => {
-    console.error('Failed to sync db:', err);
-});
+}
+
+startServer();

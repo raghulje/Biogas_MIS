@@ -32,7 +32,10 @@ module.exports = (sequelize, DataTypes) => {
         tableName: 'user_permissions',
         underscored: true,
         timestamps: false,
-        indexes: [{ unique: true, fields: ['user_id', 'permission_id'] }, { fields: ['user_id'] }]
+        indexes: [
+            { name: 'ux_user_permissions_user_id_permission_id', unique: true, fields: ['user_id', 'permission_id'] },
+            { name: 'idx_user_permissions_user_id', fields: ['user_id'] }
+        ]
     });
     return UserPermission;
 };

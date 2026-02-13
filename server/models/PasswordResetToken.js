@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
   PasswordResetToken.init(
     {
       user_id: { type: DataTypes.INTEGER, allowNull: false },
-      token: { type: DataTypes.STRING, allowNull: false, unique: true },
+      token: { type: DataTypes.STRING, allowNull: false },
       expires_at: { type: DataTypes.DATE, allowNull: false },
       used: { type: DataTypes.BOOLEAN, defaultValue: false },
     },
@@ -19,6 +19,9 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'PasswordResetToken',
       tableName: 'password_reset_tokens',
       underscored: true,
+      indexes: [
+        { name: 'ux_password_reset_tokens_token', unique: true, fields: ['token'] }
+      ],
     }
   );
   return PasswordResetToken;

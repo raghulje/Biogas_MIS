@@ -21,7 +21,6 @@ module.exports = (sequelize, DataTypes) => {
         name: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
             comment: 'e.g., mis_entry:create, report:view'
         },
         description: DataTypes.STRING,
@@ -37,7 +36,10 @@ module.exports = (sequelize, DataTypes) => {
         sequelize,
         modelName: 'Permission',
         tableName: 'permissions',
-        underscored: true
+        underscored: true,
+        indexes: [
+            { name: 'ux_permissions_name', unique: true, fields: ['name'] }
+        ]
     });
     return Permission;
 };

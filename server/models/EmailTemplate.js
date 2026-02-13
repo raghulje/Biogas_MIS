@@ -8,8 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     EmailTemplate.init({
         name: {
             type: DataTypes.STRING,
-            allowNull: false,
-            unique: true
+            allowNull: false
         },
         subject: {
             type: DataTypes.STRING,
@@ -24,7 +23,10 @@ module.exports = (sequelize, DataTypes) => {
         sequelize,
         modelName: 'EmailTemplate',
         tableName: 'email_templates',
-        underscored: true
+        underscored: true,
+        indexes: [
+            { name: 'ux_email_templates_name', unique: true, fields: ['name'] }
+        ]
     });
     return EmailTemplate;
 };

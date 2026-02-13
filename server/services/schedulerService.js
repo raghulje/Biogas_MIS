@@ -3,6 +3,7 @@ const { EmailScheduler, MISDailyEntry, User, Role, MISEmailConfig, FinalMISRepor
 const emailService = require('./emailService');
 const finalMISReportEmailService = require('./finalMISReportEmailService');
 const { Op } = require('sequelize');
+const reminderScheduler = require('./reminderScheduler');
 
 function parseReportEmails(val) {
     if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
@@ -29,6 +30,13 @@ class SchedulerService {
         schedulers.forEach(scheduler => {
             this.scheduleJob(scheduler);
         });
+        // Initialize reminder scheduler (dynamic MIS reminders)
+        try {
+            await reminderScheduler.init();
+            console.log('Reminder Scheduler initialized.');
+        } catch (e) {
+            console.error('Reminder Scheduler init failed:', e);
+        }
         // Final MIS Report: run every hour and send if config is due
         this.finalMISReportHourlyJob = cron.schedule('0 * * * *', () => this.runFinalMISReportCheck());
         console.log('Final MIS Report hourly check scheduled.');
@@ -206,6 +214,12 @@ class SchedulerService {
         if (this.finalMISReportHourlyJob) {
             this.finalMISReportHourlyJob.stop();
             this.finalMISReportHourlyJob = null;
+        }
+        // Refresh reminder scheduler too
+        try {
+            await reminderScheduler.refresh();
+        } catch (e) {
+            console.error('Failed to refresh reminder scheduler:', e);
         }
         await this.init();
     }

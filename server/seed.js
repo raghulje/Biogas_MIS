@@ -3,11 +3,17 @@ const bcrypt = require('bcrypt');
 
 const seed = async () => {
     try {
+        // Safety: force sync is destructive. Require explicit env var to run.
+        if (process.env.ALLOW_FORCE_SYNC !== 'true') {
+            console.error('Refusing to run force sync. Set ALLOW_FORCE_SYNC=true in environment to allow destructive operations.');
+            process.exit(1);
+        }
+
         // Disable foreign key checks to allow dropping tables
         await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true });
 
         await db.sequelize.sync({ force: true });
-        console.log('Database cleared and synced');
+        console.log('Database cleared and synced (force)');
 
         // Re-enable foreign key checks
         await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { raw: true });

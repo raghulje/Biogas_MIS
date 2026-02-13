@@ -15,15 +15,17 @@ module.exports = (sequelize, DataTypes) => {
     Role.init({
         name: {
             type: DataTypes.STRING,
-            allowNull: false,
-            unique: true
+            allowNull: false
         },
         description: DataTypes.STRING
     }, {
         sequelize,
         modelName: 'Role',
         tableName: 'roles',
-        underscored: true
+        underscored: true,
+        indexes: [
+            { name: 'ux_roles_name', unique: true, fields: ['name'] }
+        ]
     });
     return Role;
 };

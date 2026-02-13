@@ -1,6 +1,6 @@
 const {
     User, Role, Permission, RolePermission,
-    SMTPConfig, EmailScheduler, AuditLog, EmailTemplate,
+    SMTPConfig, EmailScheduler, AuditLog, EmailTemplate, NotificationSchedule,
     UserActivityLog, MISEmailConfig, FinalMISReportConfig,
     sequelize
 } = require('../models');
@@ -9,6 +9,7 @@ const finalMISReportEmailService = require('../services/finalMISReportEmailServi
 const { AppConfig } = require('../models');
 const auditService = require('../services/auditService');
 const schedulerService = require('../services/schedulerService');
+const reminderScheduler = require('../services/reminderScheduler');
 
 // --- User Management ---
 
@@ -305,6 +306,91 @@ exports.updateScheduler = async (req, res) => {
     } catch (err) { res.status(500).json(err); }
 };
 
+// NotificationSchedule CRUD (multiple schedules)
+exports.getNotificationSchedulesList = async (req, res) => {
+    try {
+        const list = await NotificationSchedule.findAll({ order: [['id', 'ASC']] });
+        return res.json(list);
+    } catch (e) {
+        console.error('getNotificationSchedulesList:', e);
+        res.status(500).json({ message: 'Failed to load notification schedules' });
+    }
+};
+
+exports.createNotificationSchedule = async (req, res) => {
+    try {
+        const body = req.body || {};
+        const misStart = body.mis_start_time;
+        const misEnd = body.mis_end_time;
+        const interval = Number(body.reminder_interval_minutes);
+        const count = Number(body.reminder_count);
+        const name = String(body.name || 'Reminder').substring(0,100);
+        const target_role = body.target_role || null;
+        if (!misStart || !misEnd) return res.status(400).json({ message: 'mis_start_time and mis_end_time are required' });
+        const toMinutes = (t) => {
+            const parts = String(t).split(':').map(s => Number(s));
+            return parts[0]*60 + (parts[1]||0);
+        };
+        if (toMinutes(misStart) >= toMinutes(misEnd)) return res.status(400).json({ message: 'mis_start_time must be before mis_end_time' });
+        if (!Number.isInteger(interval) || interval <= 0) return res.status(400).json({ message: 'reminder_interval_minutes must be > 0' });
+        if (!Number.isInteger(count) || count <= 0) return res.status(400).json({ message: 'reminder_count must be > 0' });
+
+        const row = await NotificationSchedule.create({
+            name, mis_start_time: misStart, mis_end_time: misEnd,
+            reminder_start_time: body.reminder_start_time || misEnd,
+            reminder_interval_minutes: interval, reminder_count: count,
+            is_active: body.is_active !== false, target_role
+        });
+        // Refresh only this schedule
+        try { await reminderScheduler.refreshSchedule(row.id); } catch (e) { console.error('refreshSchedule error:', e); }
+        return res.status(201).json(row);
+    } catch (e) {
+        console.error('createNotificationSchedule:', e);
+        res.status(500).json({ message: 'Failed to create schedule' });
+    }
+};
+
+exports.updateNotificationScheduleById = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const body = req.body || {};
+        const row = await NotificationSchedule.findByPk(id);
+        if (!row) return res.status(404).json({ message: 'Schedule not found' });
+        const updates = {
+            name: body.name != null ? String(body.name).substring(0,100) : row.name,
+            mis_start_time: body.mis_start_time != null ? body.mis_start_time : row.mis_start_time,
+            mis_end_time: body.mis_end_time != null ? body.mis_end_time : row.mis_end_time,
+            reminder_start_time: body.reminder_start_time != null ? body.reminder_start_time : row.reminder_start_time,
+            reminder_interval_minutes: body.reminder_interval_minutes != null ? Number(body.reminder_interval_minutes) : row.reminder_interval_minutes,
+            reminder_count: body.reminder_count != null ? Number(body.reminder_count) : row.reminder_count,
+            is_active: body.is_active != null ? Boolean(body.is_active) : row.is_active,
+            target_role: body.target_role != null ? body.target_role : row.target_role
+        };
+        await row.update(updates);
+        // Refresh only this schedule
+        try { await reminderScheduler.refreshSchedule(row.id); } catch (e) { console.error('refreshSchedule error:', e); }
+        return res.json(row);
+    } catch (e) {
+        console.error('updateNotificationScheduleById:', e);
+        res.status(500).json({ message: 'Failed to update schedule' });
+    }
+};
+
+exports.deleteNotificationScheduleById = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const row = await NotificationSchedule.findByPk(id);
+        if (!row) return res.status(404).json({ message: 'Schedule not found' });
+        await row.destroy();
+        // Clear jobs for schedule
+        try { await reminderScheduler.refreshSchedule(id); } catch (e) { console.error('refreshSchedule error:', e); }
+        return res.json({ message: 'Deleted' });
+    } catch (e) {
+        console.error('deleteNotificationScheduleById:', e);
+        res.status(500).json({ message: 'Failed to delete schedule' });
+    }
+};
+
 // --- Form config (single endpoint: roles, permissions, smtp, schedulers) ---
 
 exports.getFormConfig = async (req, res) => {
@@ -430,6 +516,82 @@ exports.saveMISEmailConfig = async (req, res) => {
     } catch (e) {
         console.error('saveMISEmailConfig:', e);
         res.status(500).json({ message: 'Failed to save MIS email config' });
+    }
+};
+
+// --- Notification Schedule (MIS filling window + reminders) ---
+exports.getNotificationSchedule = async (req, res) => {
+    try {
+        const row = await NotificationSchedule.findOne({ order: [['id', 'ASC']] });
+        if (!row) {
+            return res.json(null);
+        }
+        return res.json({
+            id: row.id,
+            mis_start_time: row.mis_start_time,
+            mis_end_time: row.mis_end_time,
+            reminder_start_time: row.reminder_start_time,
+            reminder_interval_minutes: row.reminder_interval_minutes,
+            reminder_count: row.reminder_count,
+            is_active: row.is_active
+        });
+    } catch (e) {
+        console.error('getNotificationSchedule:', e);
+        res.status(500).json({ message: 'Failed to load notification schedule' });
+    }
+};
+
+exports.saveNotificationSchedule = async (req, res) => {
+    try {
+        const body = req.body || {};
+        const misStart = body.mis_start_time;
+        const misEnd = body.mis_end_time;
+        const reminderStart = body.reminder_start_time || misEnd;
+        const interval = Number(body.reminder_interval_minutes);
+        const count = Number(body.reminder_count);
+
+        // Validation
+        if (!misStart || !misEnd) return res.status(400).json({ message: 'mis_start_time and mis_end_time are required' });
+        const toMinutes = (t) => {
+            const parts = String(t).split(':').map(s => Number(s));
+            return parts[0]*60 + (parts[1]||0);
+        };
+        if (toMinutes(misStart) >= toMinutes(misEnd)) return res.status(400).json({ message: 'mis_start_time must be before mis_end_time' });
+        if (!Number.isInteger(interval) || interval <= 0) return res.status(400).json({ message: 'reminder_interval_minutes must be > 0' });
+        if (!Number.isInteger(count) || count <= 0) return res.status(400).json({ message: 'reminder_count must be > 0' });
+
+        const [row] = await NotificationSchedule.findOrCreate({ where: { id: 1 }, defaults: {
+            mis_start_time: misStart,
+            mis_end_time: misEnd,
+            reminder_start_time: reminderStart,
+            reminder_interval_minutes: interval,
+            reminder_count: count,
+            is_active: body.is_active !== false
+        }});
+        await row.update({
+            mis_start_time: misStart,
+            mis_end_time: misEnd,
+            reminder_start_time: reminderStart,
+            reminder_interval_minutes: interval,
+            reminder_count: count,
+            is_active: body.is_active !== false
+        });
+
+        // Refresh schedulers
+        try { await schedulerService.refresh(); } catch (e) { console.error('Failed to refresh schedulers after notification schedule update', e); }
+
+        return res.json({
+            id: row.id,
+            mis_start_time: row.mis_start_time,
+            mis_end_time: row.mis_end_time,
+            reminder_start_time: row.reminder_start_time,
+            reminder_interval_minutes: row.reminder_interval_minutes,
+            reminder_count: row.reminder_count,
+            is_active: row.is_active
+        });
+    } catch (e) {
+        console.error('saveNotificationSchedule:', e);
+        res.status(500).json({ message: 'Failed to save notification schedule' });
     }
 };
 

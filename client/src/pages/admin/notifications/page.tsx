@@ -64,15 +64,22 @@ export default function NotificationConfigPage() {
 
     const [creationCheckTime, setCreationCheckTime] = useState<Date | null>(null);
     const [escalationCheckTime, setEscalationCheckTime] = useState<Date | null>(null);
+    // Notification schedule state
+    const [misStartTime, setMisStartTime] = useState<Date | null>(null);
+    const [misEndTime, setMisEndTime] = useState<Date | null>(null);
+    const [reminderStartTime, setReminderStartTime] = useState<Date | null>(null);
+    const [reminderInterval, setReminderInterval] = useState<number>(60);
+    const [reminderCount, setReminderCount] = useState<number>(4);
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [schedList, userList, templateList, misConfig] = await Promise.all([
+            const [schedList, userList, templateList, misConfig, nsched] = await Promise.all([
                 adminService.getSchedulers(),
                 adminService.getUsers(),
                 adminService.getTemplates(),
-                adminService.getMISEmailConfig()
+                adminService.getMISEmailConfig(),
+                adminService.getNotificationSchedule()
             ]);
 
             setSchedulers(schedList);
@@ -82,6 +89,20 @@ export default function NotificationConfigPage() {
             // Parse Config Emails
             setSiteUserEmails(misConfig.entry_not_created_emails || []);
             setManagerEmails(misConfig.escalation_notify_emails || []);
+            // Notification schedule
+            if (nsched) {
+                const parseTime = (t: string) => {
+                    const [h, m] = (t || '00:00').split(':').map(s => Number(s));
+                    const d = new Date();
+                    d.setHours(h, m || 0, 0, 0);
+                    return d;
+                };
+                setMisStartTime(nsched.mis_start_time ? parseTime(nsched.mis_start_time) : null);
+                setMisEndTime(nsched.mis_end_time ? parseTime(nsched.mis_end_time) : null);
+                setReminderStartTime(nsched.reminder_start_time ? parseTime(nsched.reminder_start_time) : (nsched.mis_end_time ? parseTime(nsched.mis_end_time) : null));
+                setReminderInterval(nsched.reminder_interval_minutes || 60);
+                setReminderCount(nsched.reminder_count || 4);
+            }
 
             // Parse Times from Cron
             const creationJob = schedList.find((s: Scheduler) => s.job_type === 'mis_creation_check');
@@ -152,6 +173,17 @@ export default function NotificationConfigPage() {
             } else if (escalationCheckTime && !escalationJob) {
                 const cron = `${escalationCheckTime.getMinutes()} ${escalationCheckTime.getHours()} * * *`;
                 await adminService.createScheduler({ name: 'MIS Escalation Check', cron_expression: cron, job_type: 'mis_escalation_check', is_active: true });
+            }
+            // Save NotificationSchedule
+            if (misStartTime && misEndTime) {
+                const fmt = (d: Date) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                await adminService.saveNotificationSchedule({
+                    mis_start_time: fmt(misStartTime),
+                    mis_end_time: fmt(misEndTime),
+                    reminder_start_time: reminderStartTime ? fmt(reminderStartTime) : fmt(misEndTime),
+                    reminder_interval_minutes: Number(reminderInterval),
+                    reminder_count: Number(reminderCount)
+                });
             }
 
             setSuccess('Schedule updated successfully');
@@ -360,6 +392,30 @@ export default function NotificationConfigPage() {
                                         </CardContent>
                                     </Card>
                                 </Grid>
+                            <Grid item xs={12}>
+                                <Card variant="outlined" sx={{ mt: 2 }}>
+                                    <CardHeader title="MIS Filling Window & Reminders" subheader="Configure MIS window and reminder rules" />
+                                    <CardContent>
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={12} sm={6}>
+                                                <TimePicker label="MIS Start Time" value={misStartTime} onChange={(v) => setMisStartTime(v)} />
+                                            </Grid>
+                                            <Grid item xs={12} sm={6}>
+                                                <TimePicker label="MIS End Time" value={misEndTime} onChange={(v) => setMisEndTime(v)} />
+                                            </Grid>
+                                            <Grid item xs={12} sm={6}>
+                                                <TimePicker label="Reminder Start Time" value={reminderStartTime} onChange={(v) => setReminderStartTime(v)} />
+                                            </Grid>
+                                            <Grid item xs={6} sm={3}>
+                                                <TextField label="Interval (minutes)" type="number" fullWidth value={reminderInterval} onChange={(e) => setReminderInterval(Number(e.target.value || 0))} />
+                                            </Grid>
+                                            <Grid item xs={6} sm={3}>
+                                                <TextField label="Reminder Count" type="number" fullWidth value={reminderCount} onChange={(e) => setReminderCount(Number(e.target.value || 0))} />
+                                            </Grid>
+                                        </Grid>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
                             </Grid>
                             <Box sx={{ mt: 3, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
                                 <Button

@@ -7,7 +7,10 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "seed": "node seed.js",
-    "init-db": "node create_db.js && node seed.js"
+    "init-db": "node create_db.js && node seed.js",
+    "migrate": "node services/migrationRunner.js",
+    "migrate:up": "node -e \"require('./services/migrationRunner').runPendingMigrations().catch(e=>{console.error(e);process.exit(1)})\"",
+    "migrate:down": "node -e \"require('./services/migrationRunner').revertLast().catch(e=>{console.error(e);process.exit(1)})\""
   },
   "keywords": [],
   "author": "",
@@ -26,7 +29,9 @@
     "mysql2": "^3.9.7",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
+    "pm2": "^6.0.14",
     "sequelize": "^6.37.3",
+    "umzug": "^3.8.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
