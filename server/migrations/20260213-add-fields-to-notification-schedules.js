@@ -2,15 +2,18 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Resolve Sequelize constructor for types (Umzug context may not pass Sequelize)
-    const Seq = (Sequelize && Sequelize.STRING) ? Sequelize : (queryInterface && queryInterface.sequelize && queryInterface.sequelize.constructor) ? queryInterface.sequelize.constructor : require('sequelize');
+    // Use the connected sequelize instance and its QueryInterface directly to be robust
+    const sequelizeInstance = require('../models').sequelize;
+    const qi = sequelizeInstance.getQueryInterface();
+    const Seq = sequelizeInstance.constructor || require('sequelize');
+
     // Add name and target_role columns to support multiple schedules
-    await (queryInterface && typeof queryInterface.addColumn === 'function' ? queryInterface : queryInterface.sequelize.getQueryInterface()).addColumn('notification_schedules', 'name', {
+    await qi.addColumn('notification_schedules', 'name', {
       type: Seq.STRING(100),
       allowNull: false,
       defaultValue: 'Reminder'
     });
-    await (queryInterface && typeof queryInterface.addColumn === 'function' ? queryInterface : queryInterface.sequelize.getQueryInterface()).addColumn('notification_schedules', 'target_role', {
+    await qi.addColumn('notification_schedules', 'target_role', {
       type: Seq.STRING(50),
       allowNull: true,
       defaultValue: null
