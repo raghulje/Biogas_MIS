@@ -328,7 +328,8 @@ export default function MISListView({
         </Box>
       </Box>
 
-      {/* Bulk Actions Toolbar */}
+      {/* Bulk Actions Toolbar (disabled) */}
+      {/* 
       {selectedIds.size > 0 && (
         <Card
           className="glass-card aos-fade-down"
@@ -378,6 +379,7 @@ export default function MISListView({
           </CardContent>
         </Card>
       )}
+      */}
 
       {/* Filter Section */}
       <Card
@@ -515,7 +517,8 @@ export default function MISListView({
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox" sx={{ bgcolor: '#f8f9fa' }}>
+              {/* Multi-select header checkbox hidden for now */}
+              {/* <TableCell padding="checkbox" sx={{ bgcolor: '#f8f9fa' }}>
                   <Checkbox
                     indeterminate={selectedIds.size > 0 && selectedIds.size < filteredEntries.length}
                     checked={filteredEntries.length > 0 && selectedIds.size === filteredEntries.length}
@@ -526,7 +529,7 @@ export default function MISListView({
                       '&.MuiCheckbox-indeterminate': { color: '#2879b6' },
                     }}
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Entry ID
                 </TableCell>
@@ -568,7 +571,8 @@ export default function MISListView({
                       },
                     }}
                   >
-                    <TableCell padding="checkbox">
+                    {/* Row multi-select checkbox hidden for now */}
+                    {/* <TableCell padding="checkbox">
                       <Checkbox
                         checked={selectedIds.has(entry.id)}
                         onChange={() => handleSelectOne(entry.id)}
@@ -577,7 +581,7 @@ export default function MISListView({
                           '&.Mui-checked': { color: '#2879b6' },
                         }}
                       />
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell sx={{ fontWeight: 600, color: '#333842' }}>{entry.id}</TableCell>
                     <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
                     <TableCell>{entry.createdBy}</TableCell>
@@ -629,6 +633,8 @@ export default function MISListView({
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        {/* Delete Entry button hidden for now */}
+                        {/*
                         <Tooltip title="Delete Entry">
                           <IconButton
                             size="small"
@@ -643,6 +649,7 @@ export default function MISListView({
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        */}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -734,6 +741,8 @@ export default function MISListView({
                   >
                     Edit
                   </Button>
+                  {/* Mobile delete button hidden for now */}
+                  {/*
                   <IconButton
                     onClick={() => handleDeleteClick(entry)}
                     sx={{
@@ -744,6 +753,7 @@ export default function MISListView({
                   >
                     <DeleteIcon />
                   </IconButton>
+                  */}
                 </Box>
               </CardContent>
             </Card>
