@@ -4,7 +4,7 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
     class MISBiogasData extends Model {
         static associate(models) {
-            MISBiogasData.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id' });
+            MISBiogasData.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });
         }
     }
     MISBiogasData.init({

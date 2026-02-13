@@ -91,52 +91,58 @@ class ReminderScheduler {
   }
 
   async runReminder(scheduleRow, reminderIndex) {
-    const today = new Date().toISOString().split('T')[0];
-    const entries = await MISDailyEntry.findAll({ where: { date: today } });
-    const entryCreated = entries.length > 0;
-    const entrySubmitted = entries.some(e => ['submitted', 'approved', 'under_review'].includes(e.status));
-
-    // Only send reminder if entry exists and not submitted OR entry not exists (depending on desired behavior)
-    if (entrySubmitted) {
-      console.log(`Reminder skipped (already submitted) [schedule ${scheduleRow.id} reminder ${reminderIndex}]`);
-      return;
-    }
-
-    // Determine recipients: use MISEmailConfig or fallback to Operators
-    const { MISEmailConfig } = require('../models');
-    let toList = [];
     try {
-      const cfg = await MISEmailConfig.findByPk(1);
-      if (cfg) {
-        const parse = s => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
-        toList = parse(cfg.not_submitted_notify_emails || '[]');
+      const today = new Date().toISOString().split('T')[0];
+      console.log(`Reminder check for schedule ${scheduleRow.id} (reminder #${reminderIndex}) on ${today}`);
+      const entries = await MISDailyEntry.findAll({ where: { date: today } });
+      const entryCreated = Array.isArray(entries) && entries.length > 0;
+      console.log('Checking MIS entry existence...', { entryCount: entries.length });
+      const entrySubmitted = entryCreated && entries.some(e => ['submitted', 'approved', 'under_review'].includes(e && e.status));
+
+      // If entry exists and is already submitted -> skip
+      if (entrySubmitted) {
+        console.log(`Reminder skipped (already submitted) [schedule ${scheduleRow.id} reminder ${reminderIndex}]`);
+        return;
       }
-    } catch (e) { /* ignore */ }
 
-    if (!toList || toList.length === 0) {
-      const opRole = await Role.findOne({ where: { name: 'Operator' } });
-      if (opRole) {
-        const users = await User.findAll({ where: { role_id: opRole.id, is_active: true } });
-        toList = users.map(u => u.email).filter(Boolean);
-      }
-    }
-
-    if (!toList || toList.length === 0) {
-      console.warn('No recipients for reminder');
-      return;
-    }
-
-    const { EmailTemplate } = require('../models');
-    const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
-    const subject = template?.subject || `MIS Entry Reminder for ${today}`;
-    for (const to of toList) {
+      // Determine recipients: use MISEmailConfig or fallback to Operators
+      const { MISEmailConfig } = require('../models');
+      let toList = [];
       try {
-        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today }) : `<p>Please submit MIS for ${today}</p>`;
-        await emailService.sendEmail(to, subject, body);
-        console.log(`Reminder email sent to ${to} [schedule ${scheduleRow.id} #${reminderIndex}]`);
-      } catch (e) {
-        console.error('Failed to send reminder to', to, e.message);
+        const cfg = await MISEmailConfig.findByPk(1);
+        if (cfg) {
+          const parse = s => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+          toList = parse(cfg.not_submitted_notify_emails || '[]');
+        }
+      } catch (e) { /* ignore */ }
+
+      if (!toList || toList.length === 0) {
+        const opRole = await Role.findOne({ where: { name: 'Operator' } });
+        if (opRole) {
+          const users = await User.findAll({ where: { role_id: opRole.id, is_active: true } });
+          toList = users.map(u => u.email).filter(Boolean);
+        }
       }
+
+      if (!toList || toList.length === 0) {
+        console.warn('No recipients for reminder');
+        return;
+      }
+
+      const { EmailTemplate } = require('../models');
+      const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
+      const subject = template?.subject || `MIS Entry Reminder for ${today}`;
+      for (const to of toList) {
+        try {
+          const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today }) : `<p>Please submit MIS for ${today}</p>`;
+          await emailService.sendEmail(to, subject, body);
+          console.log(`Reminder email sent to ${to} [schedule ${scheduleRow.id} #${reminderIndex}]`);
+        } catch (e) {
+          console.error('Failed to send reminder to', to, e.message);
+        }
+      }
+    } catch (err) {
+      console.error('runReminder error:', err);
     }
   }
 

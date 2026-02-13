@@ -38,7 +38,13 @@ class SchedulerService {
             console.error('Reminder Scheduler init failed:', e);
         }
         // Final MIS Report: run every hour and send if config is due
-        this.finalMISReportHourlyJob = cron.schedule('0 * * * *', () => this.runFinalMISReportCheck());
+        this.finalMISReportHourlyJob = cron.schedule('0 * * * *', async () => {
+            try {
+                await this.runFinalMISReportCheck();
+            } catch (e) {
+                console.error('Final MIS Report scheduled job failed:', e);
+            }
+        });
         console.log('Final MIS Report hourly check scheduled.');
     }
 
@@ -57,7 +63,11 @@ class SchedulerService {
 
         const job = cron.schedule(scheduler.cron_expression, async () => {
             console.log(`Running scheduled job: ${scheduler.name}`);
-            await this.executeJob(scheduler);
+            try {
+                await this.executeJob(scheduler);
+            } catch (err) {
+                console.error(`Scheduled job '${scheduler.name}' failed:`, err);
+            }
         });
 
         this.jobs.set(scheduler.id, job);
@@ -65,6 +75,7 @@ class SchedulerService {
 
     async executeJob(scheduler) {
         const today = new Date().toISOString().split('T')[0];
+        console.log(`Executing scheduler job_type='${scheduler.job_type}' for date=${today}`);
         const { EmailTemplate } = require('../models');
 
         try {

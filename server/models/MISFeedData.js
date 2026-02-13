@@ -4,7 +4,7 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
     class MISFeedData extends Model {
         static associate(models) {
-            MISFeedData.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id' });
+            MISFeedData.belongsTo(models.MISDailyEntry, { foreignKey: 'entry_id', onDelete: 'CASCADE' });
         }
     }
     MISFeedData.init({
