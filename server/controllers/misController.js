@@ -408,10 +408,12 @@ exports.submitEntry = async (req, res) => {
             (process.env.MIS_NOTIFY_EMAILS || '').split(',').forEach(e => { const x = e.trim().toLowerCase(); if (x) toEmails.add(x); });
         }
 
+        const FE_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3000';
         const subject = `MIS Entry Submitted - ${entry.date}`;
+        const reviewLink = `${FE_URL.replace(/\/$/, '')}/mis-entry`;
         const html = `<p>Hello,</p>
                  <p>An MIS entry for <b>${entry.date}</b> has been submitted by ${entry.creator?.name || 'an operator'} and is awaiting your review.</p>
-                 <p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/mis-entry">Click here to review</a></p>`;
+                 <p><a href="${reviewLink}">${reviewLink}</a></p>`;
 
         // Send emails in parallel to avoid blocking the response
         const emailPromises = Array.from(toEmails).map(async (email) => {

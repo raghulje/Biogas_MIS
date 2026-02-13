@@ -21,7 +21,8 @@ const generateTokens = (user) => {
 const crypto = require('crypto');
 const { PasswordResetToken } = require('../models');
 const emailService = require('../services/emailService');
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+// Prefer explicit FRONTEND_URL, then CLIENT_ORIGIN (legacy), else localhost for dev
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3000';
 
 exports.forgotPassword = async (req, res) => {
     try {
