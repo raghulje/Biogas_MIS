@@ -1,5 +1,7 @@
 'use strict';
 
+const { QueryTypes } = require('sequelize');
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Helper to ensure unique index with stable name, removing conflicting duplicates
@@ -14,7 +16,7 @@ module.exports = {
         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table
         GROUP BY INDEX_NAME
       `;
-      const results = await sequelizeInstance.query(sql, { replacements: { table }, type: Sequelize.QueryTypes.SELECT });
+      const results = await sequelizeInstance.query(sql, { replacements: { table }, type: QueryTypes.SELECT });
       const indexes = Array.isArray(results) ? results : (results ? [results] : []);
 
       // Remove other indexes covering same columns but different name
@@ -37,7 +39,7 @@ module.exports = {
         FROM INFORMATION_SCHEMA.STATISTICS
         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND INDEX_NAME = :indexName
       `;
-      const existsRows = await sequelizeInstance.query(existsSql, { replacements: { table, indexName: desiredName }, type: Sequelize.QueryTypes.SELECT });
+      const existsRows = await sequelizeInstance.query(existsSql, { replacements: { table, indexName: desiredName }, type: QueryTypes.SELECT });
       const existsRow = Array.isArray(existsRows) ? existsRows[0] : existsRows;
       const exists = existsRow && (existsRow.cnt || existsRow.CNT || existsRow.count || existsRow['COUNT(1)']) > 0;
 
