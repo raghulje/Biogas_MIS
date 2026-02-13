@@ -10,6 +10,23 @@ const routes = require('./routes');
 const schedulerService = require('./services/schedulerService');
 require('dotenv').config();
 
+// Global crash protection: log unhandled rejections and uncaught exceptions (do not exit)
+process.on('unhandledRejection', (reason, promise) => {
+    try {
+        console.error('UNHANDLED REJECTION:', reason);
+    } catch (e) {
+        // swallow
+    }
+});
+
+process.on('uncaughtException', (error) => {
+    try {
+        console.error('UNCAUGHT EXCEPTION:', error);
+    } catch (e) {
+        // swallow
+    }
+});
+
 const app = express();
 // Default production port set to 3015; can be overridden via server/.env
 const PORT = process.env.PORT || 3015;
