@@ -53,6 +53,7 @@ import { TransitionProps } from '@mui/material/transitions';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React from 'react';
+import { useSnackbar } from 'notistack';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -91,6 +92,7 @@ export default function MISListView({
   onImportSuccess,
 }: MISListViewProps) {
   const theme = useTheme();
+  const { enqueueSnackbar } = useSnackbar();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -113,11 +115,11 @@ export default function MISListView({
     try {
       const { misService } = await import('../../../services/misService');
       await misService.importEntries(file);
-      alert('Data imported successfully!');
+      enqueueSnackbar('Data imported successfully!', { variant: 'success' });
       onImportSuccess?.();
     } catch (error: any) {
       console.error(error);
-      alert('Import failed: ' + (error.response?.data?.message || error.message));
+      enqueueSnackbar('Import failed: ' + (error.response?.data?.message || error.message), { variant: 'error' });
     } finally {
       setImporting(false);
       event.target.value = '';
@@ -141,7 +143,7 @@ export default function MISListView({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error(error);
-      alert('Export failed: ' + (error.response?.data?.message || error.message));
+      enqueueSnackbar('Export failed: ' + (error.response?.data?.message || error.message), { variant: 'error' });
     } finally {
       setExporting(false);
     }
@@ -159,7 +161,7 @@ export default function MISListView({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error(error);
-      alert('Failed to download template: ' + (error.response?.data?.message || error.message));
+      enqueueSnackbar('Failed to download template: ' + (error.response?.data?.message || error.message), { variant: 'error' });
     }
   };
 

@@ -3,6 +3,7 @@ import { Layout } from '../../components/Layout';
 import MISListView from './components/MISListView';
 import { misService } from '../../services/misService';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useSnackbar } from 'notistack';
 
 const MISFormView = lazy(() => import('./components/MISFormView'));
 
@@ -66,6 +67,7 @@ const defaultDigesters: Digester[] = [
 ];
 
 export default function MISEntryPage() {
+  const { enqueueSnackbar } = useSnackbar();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [entries, setEntries] = useState<MISEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<MISEntry | null>(null);
@@ -95,7 +97,7 @@ export default function MISEntryPage() {
       setViewMode('edit');
     } catch (e) {
       console.error(e);
-      alert('Failed to load entry details');
+      enqueueSnackbar('Failed to load entry details', { variant: 'error' });
     } finally {
       setLoadingDetails(false);
     }
@@ -109,7 +111,7 @@ export default function MISEntryPage() {
       setViewMode('view');
     } catch (e) {
       console.error(e);
-      alert('Failed to load entry details');
+      enqueueSnackbar('Failed to load entry details', { variant: 'error' });
     } finally {
       setLoadingDetails(false);
     }
@@ -121,7 +123,7 @@ export default function MISEntryPage() {
       fetchEntries();
     } catch (error) {
       console.error('Failed to delete entry', error);
-      alert('Failed to delete entry');
+      enqueueSnackbar('Failed to delete entry', { variant: 'error' });
     }
   };
 

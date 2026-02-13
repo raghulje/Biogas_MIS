@@ -3,9 +3,11 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 // use public asset - put refex-logo.png into client/public/assets/
 import refexLogo from '../../assets/refex-logo.png';
+import { useSnackbar } from 'notistack';
 const SREL_LOGO = refexLogo;
 
 export default function LoginPage() {
+  const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
@@ -92,9 +94,9 @@ export default function LoginPage() {
                   if (!email) return;
                   try {
                     await (await import('../../services/authService')).authService.forgotPassword(email);
-                    alert('If the email exists, a reset link has been sent.');
+                    enqueueSnackbar('If the email exists, a reset link has been sent.', { variant: 'info' });
                   } catch (err) {
-                    alert('Failed to send reset email. Please try again later.');
+                    enqueueSnackbar('Failed to send reset email. Please try again later.', { variant: 'error' });
                   }
                 }}
                 className="text-blue-600 hover:underline"

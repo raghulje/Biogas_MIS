@@ -23,6 +23,7 @@ import SLSMachineSection from './sections/SLSMachineSection';
 import BiogasSection from './sections/BiogasSection';
 import OtherSections from './sections/OtherSections';
 import { misService } from '../../../services/misService';
+import { useSnackbar } from 'notistack';
 
 interface Digester {
   id: number;
@@ -81,6 +82,7 @@ export default function MISFormView({
   const isReadOnly = viewMode === 'view';
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { enqueueSnackbar } = useSnackbar();
 
   const defaultCreateValues = {
     date: new Date().toISOString().split('T')[0],
@@ -126,11 +128,11 @@ export default function MISFormView({
       if (viewMode === 'edit' && selectedEntry) {
         await misService.updateEntry(Number(selectedEntry.id), payload);
         await misService.submitEntry(Number(selectedEntry.id));
-        alert('Entry updated and submitted successfully!');
+        enqueueSnackbar('Entry updated and submitted successfully!', { variant: 'success' });
       } else {
         const res = await misService.createEntry(payload);
         await misService.submitEntry(Number(res.id));
-        alert('Entry created and submitted successfully!');
+        enqueueSnackbar('Entry created and submitted successfully!', { variant: 'success' });
       }
       onBackToList();
     } catch (err: any) {
@@ -148,10 +150,10 @@ export default function MISFormView({
       const payload = { ...data, status: 'draft' };
       if (viewMode === 'edit' && selectedEntry) {
         await misService.updateEntry(Number(selectedEntry.id), payload);
-        alert('Draft updated successfully!');
+        enqueueSnackbar('Draft updated successfully!', { variant: 'success' });
       } else {
         await misService.createEntry(payload);
-        alert('Draft saved successfully!');
+        enqueueSnackbar('Draft saved successfully!', { variant: 'success' });
       }
       onBackToList();
     } catch (err: any) {
@@ -166,7 +168,7 @@ export default function MISFormView({
     setSubmitting(true);
     try {
       await misService.approveEntry(Number(selectedEntry.id));
-      alert('Entry approved!');
+      enqueueSnackbar('Entry approved!', { variant: 'success' });
       onBackToList();
     } catch (err: any) {
       setError('Failed to approve entry');
@@ -182,7 +184,7 @@ export default function MISFormView({
     setSubmitting(true);
     try {
       await misService.rejectEntry(Number(selectedEntry.id), reason);
-      alert('Entry rejected!');
+      enqueueSnackbar('Entry rejected!', { variant: 'info' });
       onBackToList();
     } catch (err: any) {
       setError('Failed to reject entry');
