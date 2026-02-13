@@ -23,8 +23,15 @@ module.exports = {
       return;
     }
     console.log(`Applying ${pending.length} pending migrations...`);
-    await umzug.up();
-    console.log('Migrations applied');
+    // Only run migrations when explicitly enabled via environment variable.
+    // This protects production from accidental schema changes during deploy.
+    if (process.env.RUN_MIGRATIONS === 'true') {
+      console.log('RUN_MIGRATIONS=true — running pending migrations now.');
+      await umzug.up();
+      console.log('Migrations applied');
+    } else {
+      console.log('RUN_MIGRATIONS is not set to "true" — skipping pending migrations.');
+    }
   },
   async list() {
     return await umzug.pending();
