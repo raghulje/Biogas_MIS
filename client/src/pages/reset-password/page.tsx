@@ -41,7 +41,8 @@ export default function ResetPasswordPage() {
         </Alert>
       )}
       <form onSubmit={handleSubmit}>
-        <TextField fullWidth label="Token" value={token} onChange={(e) => setToken(e.target.value)} sx={{ mb: 2 }} />
+        {/* Token is kept for functionality but hidden from users */}
+        <input type="hidden" value={token} onChange={(e) => setToken(e.target.value)} aria-hidden="true" />
         <TextField fullWidth label="New password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} sx={{ mb: 2 }} />
         <TextField fullWidth label="Confirm password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} sx={{ mb: 2 }} />
         <Button type="submit" variant="contained" disabled={loading}>
