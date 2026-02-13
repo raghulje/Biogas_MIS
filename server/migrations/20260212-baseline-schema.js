@@ -16,6 +16,9 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const path = require('path');
     const db = require(path.join('..', 'models'));
+    // Ensure we have a sequelize instance and a real QueryInterface
+    const sequelizeInstance = (queryInterface && queryInterface.sequelize) ? queryInterface.sequelize : db.sequelize;
+    const qi = sequelizeInstance.getQueryInterface();
 
     const createdTables = [];
 
@@ -52,7 +55,7 @@ module.exports = {
       }
 
       // Create table if not exists
-      await queryInterface.createTable(tableName, columns, { charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' });
+      await qi.createTable(tableName, columns, { charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' });
       createdTables.push(tableName);
       console.log(`Created table ${tableName}`);
     }
@@ -70,8 +73,8 @@ module.exports = {
           const refField = attr.references.key || attr.references.key || 'id';
           const constraintName = `fk_${tableName}_${field}`;
           // Add FK constraint
-          try {
-            await queryInterface.addConstraint(tableName, {
+            try {
+            await qi.addConstraint(tableName, {
               fields: [field],
               type: 'foreign key',
               name: constraintName,
@@ -100,7 +103,7 @@ module.exports = {
           unique: !!idx.unique
         };
         try {
-          await queryInterface.addIndex(tableName, fields, opts);
+          await qi.addIndex(tableName, fields, opts);
           console.log(`Added index ${opts.name} on ${tableName}(${fields.join(',')})`);
         } catch (e) {
           console.warn(`Failed to add index ${opts.name} on ${tableName}:`, e.message || e);
@@ -112,6 +115,8 @@ module.exports = {
   down: async (queryInterface, Sequelize) => {
     const path = require('path');
     const db = require(path.join('..', 'models'));
+    const sequelizeInstance = (queryInterface && queryInterface.sequelize) ? queryInterface.sequelize : db.sequelize;
+    const qi = sequelizeInstance.getQueryInterface();
     // Drop tables in reverse order
     const tables = Object.keys(db)
       .filter(n => n !== 'sequelize' && n !== 'Sequelize')
@@ -119,7 +124,7 @@ module.exports = {
       .reverse();
     for (const t of tables) {
       try {
-        await queryInterface.dropTable(t);
+        await qi.dropTable(t);
         console.log(`Dropped table ${t}`);
       } catch (e) {
         console.warn(`Could not drop table ${t}:`, e.message || e);
