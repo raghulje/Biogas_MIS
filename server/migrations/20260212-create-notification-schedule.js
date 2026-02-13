@@ -2,9 +2,12 @@
 
 module.exports = {
   up: async (queryInterface /*, Sequelize */) => {
-    // Prefer using the connected sequelize instance or the library types
-    const Seq = (queryInterface && queryInterface.sequelize && queryInterface.sequelize.constructor) ? queryInterface.sequelize.constructor : require('sequelize');
-    await queryInterface.createTable('notification_schedules', {
+    // Resolve a usable QueryInterface implementation
+    const sequelizeInstance = (queryInterface && queryInterface.sequelize) ? queryInterface.sequelize : (require('../models').sequelize);
+    const qi = (queryInterface && typeof queryInterface.createTable === 'function') ? queryInterface : sequelizeInstance.getQueryInterface();
+    const Seq = sequelizeInstance.constructor || require('sequelize');
+
+    await qi.createTable('notification_schedules', {
       id: {
         type: Seq.INTEGER,
         primaryKey: true,
@@ -22,7 +25,9 @@ module.exports = {
     });
   },
   down: async (queryInterface /*, Sequelize */) => {
-    await queryInterface.dropTable('notification_schedules');
+    const sequelizeInstance = (queryInterface && queryInterface.sequelize) ? queryInterface.sequelize : (require('../models').sequelize);
+    const qi = (queryInterface && typeof queryInterface.dropTable === 'function') ? queryInterface : sequelizeInstance.getQueryInterface();
+    await qi.dropTable('notification_schedules');
   }
 };
 
