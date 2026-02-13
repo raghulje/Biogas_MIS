@@ -26,7 +26,7 @@ module.exports = {
         if (sameCols && idx.index_name !== desiredName) {
           try {
             // Use raw ALTER TABLE DROP INDEX for compatibility with QueryInterface-less contexts
-            await sequelizeInstance.query(`ALTER TABLE \\\`${table}\\\` DROP INDEX \\\`${idx.index_name}\\\``);
+            await sequelizeInstance.query('ALTER TABLE `' + table + '` DROP INDEX `' + idx.index_name + '`');
             console.log(`Removed duplicate index ${idx.index_name} on ${table}`);
           } catch (e) {
             console.warn(`Failed to remove index ${idx.index_name} on ${table}:`, e.message || e);
@@ -46,8 +46,8 @@ module.exports = {
 
       if (!exists) {
         try {
-          const colsSql = columns.map(c => `\\\`${c}\\\``).join(',');
-          await sequelizeInstance.query(`ALTER TABLE \\\`${table}\\\` ADD UNIQUE INDEX \\\`${desiredName}\\\` (${colsSql})`);
+          const colsSql = columns.map(c => '`' + c + '`').join(',');
+          await sequelizeInstance.query('ALTER TABLE `' + table + '` ADD UNIQUE INDEX `' + desiredName + '` (' + colsSql + ')');
           console.log(`Created index ${desiredName} on ${table}(${columns.join(',')})`);
         } catch (e) {
           console.error(`Failed to create index ${desiredName} on ${table}:`, e.message || e);
