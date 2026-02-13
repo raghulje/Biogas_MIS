@@ -4,7 +4,9 @@ const db = require('../models');
 
 const umzug = new Umzug({
   migrations: {
-    glob: path.join(__dirname, '..', 'migrations', '*.js')
+    glob: path.join(__dirname, '..', 'migrations', '*.js'),
+    // Provide the classic sequelize-cli params (queryInterface, Sequelize) to migration functions
+    params: [db.sequelize.getQueryInterface(), db.Sequelize]
   },
   context: db.sequelize.getQueryInterface(),
   storage: new SequelizeStorage({ sequelize: db.sequelize }),
