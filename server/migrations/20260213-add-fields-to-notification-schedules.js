@@ -2,14 +2,16 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Resolve Sequelize constructor for types (Umzug context may not pass Sequelize)
+    const Seq = (Sequelize && Sequelize.STRING) ? Sequelize : (queryInterface && queryInterface.sequelize && queryInterface.sequelize.constructor) ? queryInterface.sequelize.constructor : require('sequelize');
     // Add name and target_role columns to support multiple schedules
-    await queryInterface.addColumn('notification_schedules', 'name', {
-      type: Sequelize.STRING(100),
+    await (queryInterface && typeof queryInterface.addColumn === 'function' ? queryInterface : queryInterface.sequelize.getQueryInterface()).addColumn('notification_schedules', 'name', {
+      type: Seq.STRING(100),
       allowNull: false,
       defaultValue: 'Reminder'
     });
-    await queryInterface.addColumn('notification_schedules', 'target_role', {
-      type: Sequelize.STRING(50),
+    await (queryInterface && typeof queryInterface.addColumn === 'function' ? queryInterface : queryInterface.sequelize.getQueryInterface()).addColumn('notification_schedules', 'target_role', {
+      type: Seq.STRING(50),
       allowNull: true,
       defaultValue: null
     });
@@ -26,8 +28,9 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('notification_schedules', 'target_role');
-    await queryInterface.removeColumn('notification_schedules', 'name');
+    const qi = (queryInterface && typeof queryInterface.removeColumn === 'function') ? queryInterface : (queryInterface && queryInterface.sequelize ? queryInterface.sequelize.getQueryInterface() : require('../models').sequelize.getQueryInterface());
+    await qi.removeColumn('notification_schedules', 'target_role');
+    await qi.removeColumn('notification_schedules', 'name');
   }
 };
 
