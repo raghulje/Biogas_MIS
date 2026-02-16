@@ -43,22 +43,22 @@ export default function BiogasSection({ isReadOnly }: Props) {
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="Digester 01 Gas" type="number" {...register('rawBiogas.digester01Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Digester 01 Gas" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogas.digester01Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="Digester 02 Gas" type="number" {...register('rawBiogas.digester02Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Digester 02 Gas" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogas.digester02Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="Digester 03 Gas" type="number" {...register('rawBiogas.digester03Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Digester 03 Gas" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogas.digester03Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="Total Raw Biogas" type="number" {...register('rawBiogas.totalRawBiogas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Total Raw Biogas" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogas.totalRawBiogas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="RBG Flared" type="number" {...register('rawBiogas.rbgFlared')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="RBG Flared" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogas.rbgFlared')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="Gas Yield" type="number" {...register('rawBiogas.gasYield')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Gas Yield" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogas.gasYield')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
         </Box>
@@ -74,19 +74,19 @@ export default function BiogasSection({ isReadOnly }: Props) {
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CH4 %" type="number" {...register('rawBiogasQuality.ch4')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CH4 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogasQuality.ch4')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CO2 %" type="number" {...register('rawBiogasQuality.co2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CO2 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogasQuality.co2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="H2S ppm" type="number" {...register('rawBiogasQuality.h2s')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="H2S ppm" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogasQuality.h2s')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="O2 %" type="number" {...register('rawBiogasQuality.o2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="O2 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogasQuality.o2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="N2 %" type="number" {...register('rawBiogasQuality.n2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="N2 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogasQuality.n2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
         </Box>
@@ -102,34 +102,34 @@ export default function BiogasSection({ isReadOnly }: Props) {
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="Produced (kg)" type="number" {...register('compressedBiogas.produced')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Produced (kg)" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.produced')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CH4 %" type="number" {...register('compressedBiogas.ch4')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CH4 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.ch4')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CO2 %" type="number" {...register('compressedBiogas.co2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CO2 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.co2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="H2S ppm" type="number" {...register('compressedBiogas.h2s')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="H2S ppm" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.h2s')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="O2 %" type="number" {...register('compressedBiogas.o2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="O2 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.o2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="N2 %" type="number" {...register('compressedBiogas.n2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="N2 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.n2')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="Conversion Ratio" type="number" {...register('compressedBiogas.conversionRatio')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Conversion Ratio" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.conversionRatio')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CH4 Slippage" type="number" {...register('compressedBiogas.ch4Slippage')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CH4 Slippage" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.ch4Slippage')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CBG Stock" type="number" {...register('compressedBiogas.cbgStock')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CBG Stock" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.cbgStock')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CBG Sold" type="number" {...register('compressedBiogas.cbgSold')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CBG Sold" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.cbgSold')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
         </Box>
@@ -145,13 +145,13 @@ export default function BiogasSection({ isReadOnly }: Props) {
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
-              <TextField fullWidth label="Compressor 1 Hours" type="number" {...register('compressors.compressor1Hours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Compressor 1 Hours" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressors.compressor1Hours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <TextField fullWidth label="Compressor 2 Hours" type="number" {...register('compressors.compressor2Hours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Compressor 2 Hours" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressors.compressor2Hours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <TextField fullWidth label="Total Hours" type="number" {...register('compressors.totalHours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="Total Hours" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressors.totalHours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
           </Grid>
         </Box>

@@ -45,6 +45,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Cow Dung Purchased"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.cowDungPurchased')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -56,6 +57,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Cow Dung in Stock"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.cowDungStock')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -67,6 +69,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Old Press Mud Opening Balance"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.oldPressMudOpeningBalance')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -78,6 +81,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Old Press Mud Purchased"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.oldPressMudPurchased')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -89,6 +93,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Old Press Mud Degradation Loss"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.oldPressMudDegradationLoss')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -100,6 +105,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Old Press Mud Closing Stock"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.oldPressMudClosingStock')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -111,6 +117,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="New Press Mud Purchased"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.newPressMudPurchased')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -122,6 +129,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Press Mud Used"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.pressMudUsed')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -133,6 +141,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
               fullWidth
               label="Total Press Mud Stock"
               type="number"
+              inputProps={{ step: 'any', inputMode: 'decimal' }}
               {...register('rawMaterials.totalPressMudStock')}
               disabled={isReadOnly}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}

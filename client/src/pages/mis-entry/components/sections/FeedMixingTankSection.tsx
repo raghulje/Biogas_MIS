@@ -47,13 +47,13 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Qty" type="number" {...register('feedMixingTank.cowDungFeed.qty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Qty" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.cowDungFeed.qty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="TS %" type="number" {...register('feedMixingTank.cowDungFeed.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="TS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.cowDungFeed.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="VS %" type="number" {...register('feedMixingTank.cowDungFeed.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="VS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.cowDungFeed.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
 
@@ -63,13 +63,13 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Qty" type="number" {...register('feedMixingTank.pressmudFeed.qty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Qty" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.pressmudFeed.qty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="TS %" type="number" {...register('feedMixingTank.pressmudFeed.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="TS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.pressmudFeed.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="VS %" type="number" {...register('feedMixingTank.pressmudFeed.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="VS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.pressmudFeed.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
 
@@ -79,13 +79,13 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Qty" type="number" {...register('feedMixingTank.permeateFeed.qty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Qty" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.permeateFeed.qty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="TS %" type="number" {...register('feedMixingTank.permeateFeed.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="TS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.permeateFeed.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="VS %" type="number" {...register('feedMixingTank.permeateFeed.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="VS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.permeateFeed.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
 
@@ -95,7 +95,7 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Water Qty" type="number" {...register('feedMixingTank.waterQty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Water Qty" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.waterQty')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
 
@@ -105,16 +105,16 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
-            <TextField fullWidth label="Total Slurry" type="number" {...register('feedMixingTank.slurry.total')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Total Slurry" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.slurry.total')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <TextField fullWidth label="Slurry TS %" type="number" {...register('feedMixingTank.slurry.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Slurry TS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.slurry.ts')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <TextField fullWidth label="Slurry VS %" type="number" {...register('feedMixingTank.slurry.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Slurry VS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.slurry.vs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <TextField fullWidth label="pH" type="number" {...register('feedMixingTank.slurry.ph')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="pH" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('feedMixingTank.slurry.ph')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
       </Box>

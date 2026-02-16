@@ -42,47 +42,47 @@ export default function SLSMachineSection({ isReadOnly }: Props) {
       <Box sx={{ p: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Water Consumption" type="number" {...register('slsMachine.waterConsumption')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Water Consumption" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.waterConsumption')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Poly Electrolyte" type="number" {...register('slsMachine.polyElectrolyte')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Poly Electrolyte" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.polyElectrolyte')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Solution" type="number" {...register('slsMachine.solution')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Solution" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.solution')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Slurry Feed" type="number" {...register('slsMachine.slurryFeed')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Slurry Feed" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.slurryFeed')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Wet Cake Production" type="number" {...register('slsMachine.wetCakeProduction')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Wet Cake Production" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.wetCakeProduction')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Wet Cake TS %" type="number" {...register('slsMachine.wetCakeTs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Wet Cake TS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.wetCakeTs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Wet Cake VS %" type="number" {...register('slsMachine.wetCakeVs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Wet Cake VS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.wetCakeVs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Liquid Produced" type="number" {...register('slsMachine.liquidProduced')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Liquid Produced" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.liquidProduced')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Liquid TS %" type="number" {...register('slsMachine.liquidTs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Liquid TS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.liquidTs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Liquid VS %" type="number" {...register('slsMachine.liquidVs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Liquid VS %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.liquidVs')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={4}>
-            <TextField fullWidth label="Liquid Sent to Lagoon" type="number" {...register('slsMachine.liquidSentToLagoon')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+            <TextField fullWidth label="Liquid Sent to Lagoon" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.liquidSentToLagoon')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
           </Grid>
         </Grid>
       </Box>

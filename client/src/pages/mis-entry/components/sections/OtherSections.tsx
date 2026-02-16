@@ -42,15 +42,15 @@ export default function OtherSections({ isReadOnly }: Props) {
         </Box>
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="FOM Produced" type="number" {...register('fertilizer.fomProduced')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Inventory" type="number" {...register('fertilizer.inventory')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Sold" type="number" {...register('fertilizer.sold')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Weighted Average" type="number" {...register('fertilizer.weightedAverage')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Revenue" type="number" {...register('fertilizer.revenue1')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Lagoon Liquid Sold" type="number" {...register('fertilizer.lagoonLiquidSold')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Revenue (Liquid)" type="number" {...register('fertilizer.revenue2')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Loose FOM Sold" type="number" {...register('fertilizer.looseFomSold')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Revenue (Loose)" type="number" {...register('fertilizer.revenue3')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="FOM Produced" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.fomProduced')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Inventory" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.inventory')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Sold" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.sold')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Weighted Average" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.weightedAverage')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Revenue" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.revenue1')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Lagoon Liquid Sold" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.lagoonLiquidSold')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Revenue (Liquid)" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.revenue2')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Loose FOM Sold" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.looseFomSold')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Revenue (Loose)" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.revenue3')} disabled={isReadOnly} /></Grid>
           </Grid>
         </Box>
       </Box>
@@ -62,8 +62,8 @@ export default function OtherSections({ isReadOnly }: Props) {
         </Box>
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Electricity Consumption (KWH)" type="number" {...register('utilities.electricityConsumption')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Specific Power Consumption" type="number" {...register('utilities.specificPowerConsumption')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="Electricity Consumption (KWH)" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('utilities.electricityConsumption')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="Specific Power Consumption" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('utilities.specificPowerConsumption')} disabled={isReadOnly} /></Grid>
           </Grid>
         </Box>
       </Box>
@@ -75,8 +75,8 @@ export default function OtherSections({ isReadOnly }: Props) {
         </Box>
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Refex SREL" type="number" {...register('manpower.refexSrelStaff')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Third Party" type="number" {...register('manpower.thirdPartyStaff')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="Refex SREL" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('manpower.refexSrelStaff')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="Third Party" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('manpower.thirdPartyStaff')} disabled={isReadOnly} /></Grid>
           </Grid>
         </Box>
       </Box>
@@ -88,10 +88,10 @@ export default function OtherSections({ isReadOnly }: Props) {
         </Box>
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Working Hours" type="number" {...register('plantAvailability.workingHours')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Scheduled Downtime" type="number" {...register('plantAvailability.scheduledDowntime')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Unscheduled Downtime" type="number" {...register('plantAvailability.unscheduledDowntime')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Total Availability" type="number" {...register('plantAvailability.totalAvailability')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Working Hours" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('plantAvailability.workingHours')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Scheduled Downtime" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('plantAvailability.scheduledDowntime')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Unscheduled Downtime" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('plantAvailability.unscheduledDowntime')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Total Availability" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('plantAvailability.totalAvailability')} disabled={isReadOnly} /></Grid>
           </Grid>
         </Box>
       </Box>
@@ -103,13 +103,13 @@ export default function OtherSections({ isReadOnly }: Props) {
         </Box>
         <Box sx={{ p: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Safety LTI" type="number" {...register('hse.safetyLti')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Near Misses" type="number" {...register('hse.nearMisses')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="First Aid" type="number" {...register('hse.firstAid')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Reportable Incidents" type="number" {...register('hse.reportableIncidents')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="MTI" type="number" {...register('hse.mti')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Other Incidents" type="number" {...register('hse.otherIncidents')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Fatalities" type="number" {...register('hse.fatalities')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Safety LTI" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.safetyLti')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Near Misses" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.nearMisses')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="First Aid" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.firstAid')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Reportable Incidents" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.reportableIncidents')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="MTI" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.mti')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Other Incidents" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.otherIncidents')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Fatalities" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.fatalities')} disabled={isReadOnly} /></Grid>
           </Grid>
         </Box>
       </Box>
