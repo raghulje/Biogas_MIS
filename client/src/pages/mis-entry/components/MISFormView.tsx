@@ -24,6 +24,7 @@ import BiogasSection from './sections/BiogasSection';
 import OtherSections from './sections/OtherSections';
 import { misService } from '../../../services/misService';
 import { useSnackbar } from 'notistack';
+import { useAuth } from '../../../context/AuthContext';
 
 interface Digester {
   id: number;
@@ -98,6 +99,7 @@ export default function MISFormView({
     rawBiogas: {},
     rawBiogasQuality: {},
     compressedBiogas: {},
+    cbgSales: [],
     compressors: {},
     fertilizer: {},
     utilities: {},
@@ -120,7 +122,16 @@ export default function MISFormView({
     }
   }, [viewMode, selectedEntry]);
 
+  const { hasPermission } = useAuth();
+  const canSave = (viewMode === 'create' && hasPermission('mis_entry', 'create')) ||
+    (viewMode === 'edit' && hasPermission('mis_entry', 'update'));
+  const canApprove = hasPermission('mis_entry', 'approve');
+
   const onSubmit: SubmitHandler<any> = async (data) => {
+    if (!canSave) {
+      setError('You do not have permission to save.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -143,6 +154,10 @@ export default function MISFormView({
   };
 
   const handleSaveDraft = async () => {
+    if (!canSave) {
+      setError('You do not have permission to save draft.');
+      return;
+    }
     const data = methods.getValues();
     setSubmitting(true);
     setError(null);
@@ -164,7 +179,7 @@ export default function MISFormView({
   };
 
   const handleApprove = async () => {
-    if (!selectedEntry) return;
+    if (!selectedEntry || !canApprove) return;
     setSubmitting(true);
     try {
       await misService.approveEntry(Number(selectedEntry.id));
@@ -178,7 +193,7 @@ export default function MISFormView({
   };
 
   const handleReject = async () => {
-    if (!selectedEntry) return;
+    if (!selectedEntry || !canApprove) return;
     const reason = prompt('Please enter rejection reason:');
     if (reason === null) return;
     setSubmitting(true);
@@ -291,42 +306,46 @@ export default function MISFormView({
           </Box>
           {!isReadOnly ? (
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, flexWrap: 'wrap' }}>
-              <Button
-                variant="outlined"
-                startIcon={<SaveIcon />}
-                className="btn-gradient-warning"
-                onClick={handleSaveDraft}
-                disabled={submitting}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: '12px',
-                  border: 'none',
-                  color: '#fff',
-                  px: 3,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Save Draft
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={submitting ? <CircularProgress size={20} /> : <SendIcon />}
-                type="submit"
-                disabled={submitting}
-                className="btn-gradient-success"
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: '12px',
-                  color: '#fff',
-                  px: 3,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Submit
-              </Button>
+              {canSave && (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<SaveIcon />}
+                    className="btn-gradient-warning"
+                    onClick={handleSaveDraft}
+                    disabled={submitting}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: '12px',
+                      border: 'none',
+                      color: '#fff',
+                      px: 3,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Save Draft
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={submitting ? <CircularProgress size={20} /> : <SendIcon />}
+                    type="submit"
+                    disabled={submitting}
+                    className="btn-gradient-success"
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: '12px',
+                      color: '#fff',
+                      px: 3,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Submit
+                  </Button>
+                </>
+              )}
             </Box>
           ) : (
-            selectedEntry && selectedEntry.status === 'Submitted' && (
+            selectedEntry && String(selectedEntry.status || '').toLowerCase() === 'submitted' && canApprove && (
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
@@ -395,43 +414,47 @@ export default function MISFormView({
               py: { xs: 2, md: 0 },
             }}
           >
-            <Button
-              variant="outlined"
-              startIcon={<SaveIcon />}
-              className="btn-gradient-warning"
-              onClick={handleSaveDraft}
-              disabled={submitting}
-              sx={{
-                textTransform: 'none',
-                borderRadius: '12px',
-                border: 'none',
-                color: '#fff',
-                px: 3,
-                whiteSpace: 'nowrap',
-                flex: { xs: 1, md: 'initial' },
-                display: { xs: 'flex', md: 'none' } // Only show at bottom on mobile (since top hidden)
-              }}
-            >
-              Save Draft
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={submitting ? <CircularProgress size={20} /> : <SendIcon />}
-              type="submit"
-              disabled={submitting}
-              className="btn-gradient-success"
-              size="large"
-              sx={{
-                textTransform: 'none',
-                borderRadius: '12px',
-                px: 4,
-                color: '#fff',
-                whiteSpace: 'nowrap',
-                flex: { xs: 1, md: 'initial' },
-              }}
-            >
-              Submit
-            </Button>
+            {canSave && (
+              <>
+                <Button
+                  variant="outlined"
+                  startIcon={<SaveIcon />}
+                  className="btn-gradient-warning"
+                  onClick={handleSaveDraft}
+                  disabled={submitting}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    border: 'none',
+                    color: '#fff',
+                    px: 3,
+                    whiteSpace: 'nowrap',
+                    flex: { xs: 1, md: 'initial' },
+                    display: { xs: 'flex', md: 'none' } // Only show at bottom on mobile (since top hidden)
+                  }}
+                >
+                  Save Draft
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={submitting ? <CircularProgress size={20} /> : <SendIcon />}
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-gradient-success"
+                  size="large"
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    px: 4,
+                    color: '#fff',
+                    whiteSpace: 'nowrap',
+                    flex: { xs: 1, md: 'initial' },
+                  }}
+                >
+                  Submit
+                </Button>
+              </>
+            )}
           </Box>
         )}
       </Box>

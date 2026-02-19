@@ -5,7 +5,8 @@ async function fetchEntriesForReport(startDate, endDate) {
   const entries = await MISDailyEntry.findAll({
     where: {
       date: { [Op.between]: [startDate, endDate] },
-      status: { [Op.ne]: 'deleted' }
+      // Only include approved entries in final MIS reports
+      status: 'approved'
     },
     include: [
       { model: MISRawMaterials, as: 'rawMaterials' },
