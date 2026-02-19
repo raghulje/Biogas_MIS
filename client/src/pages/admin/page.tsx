@@ -649,7 +649,7 @@ const defaultPermissions: Permission[] = [
   { page: 'MIS Entry', read: true, create: true, update: true, delete: false },
   { page: 'Consolidated MIS View', read: true, create: false, update: false, delete: false },
   { page: 'User Management', read: false, create: false, update: false, delete: false },
-  { page: 'Roles & Permissions', read: false, create: false, update: false, delete: false },
+  // Roles & Permissions removed — system now uses user-level permissions only
   { page: 'Admin Panel', read: false, create: false, update: false, delete: false },
   { page: 'Audit Logs', read: false, create: false, update: false, delete: false },
   { page: 'Import Data', read: false, create: false, update: false, delete: false },
@@ -661,7 +661,7 @@ const adminPermissions: Permission[] = [
   { page: 'MIS Entry', read: true, create: true, update: true, delete: true },
   { page: 'Consolidated MIS View', read: true, create: true, update: true, delete: true },
   { page: 'User Management', read: true, create: true, update: true, delete: true },
-  { page: 'Roles & Permissions', read: true, create: true, update: true, delete: true },
+  // Roles & Permissions removed — no role-based management
   { page: 'Admin Panel', read: true, create: true, update: true, delete: true },
   { page: 'Audit Logs', read: true, create: true, update: true, delete: true },
   { page: 'Import Data', read: true, create: true, update: true, delete: true },
@@ -902,7 +902,6 @@ export default function AdminPage() {
     'MIS Entry': 'mis_entry',
     'Consolidated MIS View': 'consolidated_mis',
     'User Management': 'user',
-    'Roles & Permissions': 'role',
     'Admin Panel': 'config',
     'Audit Logs': 'audit',
     'Import Data': 'import_data',

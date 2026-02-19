@@ -19,11 +19,15 @@ router.post('/users/:id/change-password', permissionMiddleware('user', 'update')
 router.post('/users/bulk-update', permissionMiddleware('user', 'update'), userController.bulkUpdateUsers);
 router.get('/users/:id/activity-logs', permissionMiddleware('user', 'read'), userController.getUserActivityLogs);
 
-// Role Management
+// Role Management - DISABLED
+// Role-based permissions are deprecated in favor of user-level permissions only.
+// The following routes are intentionally disabled to enforce user-based permission model.
+/*
 router.get('/roles', permissionMiddleware('role', 'read'), adminController.getRoles);
 router.post('/roles', permissionMiddleware('role', 'create'), adminController.createRole);
 router.post('/roles/assign-permissions', permissionMiddleware('role', 'update'), adminController.assignPermissions);
 router.put('/roles/:id/permissions', permissionMiddleware('role', 'update'), adminController.updateRolePermissions);
+*/
 
 // SMTP Configuration
 router.get('/smtp-config', permissionMiddleware('config', 'read'), adminController.getSMTPConfig);
