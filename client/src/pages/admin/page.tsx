@@ -648,6 +648,7 @@ const defaultPermissions: Permission[] = [
   { page: 'Dashboard', read: true, create: false, update: false, delete: false },
   { page: 'MIS Entry', read: true, create: true, update: true, delete: false },
   { page: 'Consolidated MIS View', read: true, create: false, update: false, delete: false },
+  { page: 'Final MIS Report', read: false, create: false, update: false, delete: false },
   { page: 'User Management', read: false, create: false, update: false, delete: false },
   // Roles & Permissions removed — system now uses user-level permissions only
   { page: 'Admin Panel', read: false, create: false, update: false, delete: false },
@@ -905,6 +906,7 @@ export default function AdminPage() {
     'Consolidated MIS View': 'consolidated_mis',
     'User Management': 'user',
     'Admin Panel': 'config',
+    'Final MIS Report': 'config',
     'Audit Logs': 'audit',
     'Import Data': 'import_data',
     'Customer': 'customer'
