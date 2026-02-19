@@ -32,6 +32,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Zoom,
 } from '@mui/material';
 import { useTheme, useMediaQuery } from '@mui/material';
 import ErrorBoundary from '../../components/ErrorBoundary';
@@ -68,6 +69,7 @@ interface User {
   email: string;
   role: string | { name: string };
   permissions: Permission[];
+  is_custom_perm?: boolean;
 }
 
 interface ActivityLog {
@@ -130,35 +132,51 @@ function MISEntryEmailPanel({
   formConfig,
   message,
   setMessage,
+  onRefresh,
 }: {
   formConfig: any;
   message: { type: string; text: string } | null;
   setMessage: (m: { type: 'success' | 'error'; text: string } | null) => void;
+  onRefresh?: () => void;
 }) {
   const [submitNotifyEmails, setSubmitNotifyEmails] = useState<string[]>([]);
   const [entryNotCreatedEmails, setEntryNotCreatedEmails] = useState<string[]>([]);
+  const [notSubmittedNotifyEmails, setNotSubmittedNotifyEmails] = useState<string[]>([]);
+  const [escalationNotifyEmails, setEscalationNotifyEmails] = useState<string[]>([]);
   const [newSubmitEmail, setNewSubmitEmail] = useState('');
   const [newNoEntryEmail, setNewNoEntryEmail] = useState('');
+  const [newNotSubmittedEmail, setNewNotSubmittedEmail] = useState('');
+  const [newEscalationEmail, setNewEscalationEmail] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
-    const config = formConfig?.mis_email_config;
-    if (config) {
+    // Only initialize from props if not yet initialized
+    if (!initialized && formConfig?.mis_email_config) {
+      const config = formConfig.mis_email_config;
       setSubmitNotifyEmails(Array.isArray(config.submit_notify_emails) ? config.submit_notify_emails : []);
       setEntryNotCreatedEmails(Array.isArray(config.entry_not_created_emails) ? config.entry_not_created_emails : []);
+      setNotSubmittedNotifyEmails(Array.isArray(config.not_submitted_notify_emails) ? config.not_submitted_notify_emails : []);
+      setEscalationNotifyEmails(Array.isArray(config.escalation_notify_emails) ? config.escalation_notify_emails : []);
+      setInitialized(true);
     }
-  }, [formConfig?.mis_email_config]);
+  }, [formConfig?.mis_email_config, initialized]);
 
-  // When panel is shown, fetch latest in case formConfig was loaded before config existed
-  const loadConfig = () => {
-    adminService.getMISEmailConfig().then((data: any) => {
-      if (data) {
-        setSubmitNotifyEmails(Array.isArray(data.submit_notify_emails) ? data.submit_notify_emails : []);
-        setEntryNotCreatedEmails(Array.isArray(data.entry_not_created_emails) ? data.entry_not_created_emails : []);
-      }
-    }).catch(() => { });
-  };
-  useEffect(() => { loadConfig(); }, []);
+  // Fallback: if formConfig is not available but we need to load (e.g. direct access/refresh)
+  useEffect(() => {
+    if (!initialized && !formConfig) {
+      adminService.getMISEmailConfig().then((data: any) => {
+        if (data) {
+          setSubmitNotifyEmails(Array.isArray(data.submit_notify_emails) ? data.submit_notify_emails : []);
+          setEntryNotCreatedEmails(Array.isArray(data.entry_not_created_emails) ? data.entry_not_created_emails : []);
+          setNotSubmittedNotifyEmails(Array.isArray(data.not_submitted_notify_emails) ? data.not_submitted_notify_emails : []);
+          setEscalationNotifyEmails(Array.isArray(data.escalation_notify_emails) ? data.escalation_notify_emails : []);
+          setInitialized(true);
+        }
+      }).catch(() => { });
+    }
+  }, [initialized, formConfig]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -167,10 +185,11 @@ function MISEntryEmailPanel({
       await adminService.saveMISEmailConfig({
         submit_notify_emails: submitNotifyEmails,
         entry_not_created_emails: entryNotCreatedEmails,
-        not_submitted_notify_emails: [],
-        escalation_notify_emails: [],
+        not_submitted_notify_emails: notSubmittedNotifyEmails,
+        escalation_notify_emails: escalationNotifyEmails,
       });
       setMessage({ type: 'success', text: 'MIS Entry email settings saved.' });
+      if (onRefresh) onRefresh();
     } catch (e: any) {
       setMessage({ type: 'error', text: e?.response?.data?.message || 'Failed to save.' });
     } finally {
@@ -178,21 +197,29 @@ function MISEntryEmailPanel({
     }
   };
 
-  const addEmail = (which: 'submit' | 'noEntry', email: string) => {
+  const addEmail = (which: 'submit' | 'noEntry' | 'notSubmitted' | 'escalation', email: string) => {
     const trimmed = email.trim().toLowerCase();
     if (!trimmed) return;
     if (which === 'submit') {
       if (!submitNotifyEmails.includes(trimmed)) setSubmitNotifyEmails([...submitNotifyEmails, trimmed]);
       setNewSubmitEmail('');
-    } else {
+    } else if (which === 'noEntry') {
       if (!entryNotCreatedEmails.includes(trimmed)) setEntryNotCreatedEmails([...entryNotCreatedEmails, trimmed]);
       setNewNoEntryEmail('');
+    } else if (which === 'notSubmitted') {
+      if (!notSubmittedNotifyEmails.includes(trimmed)) setNotSubmittedNotifyEmails([...notSubmittedNotifyEmails, trimmed]);
+      setNewNotSubmittedEmail('');
+    } else if (which === 'escalation') {
+      if (!escalationNotifyEmails.includes(trimmed)) setEscalationNotifyEmails([...escalationNotifyEmails, trimmed]);
+      setNewEscalationEmail('');
     }
   };
 
-  const removeEmail = (which: 'submit' | 'noEntry', email: string) => {
+  const removeEmail = (which: 'submit' | 'noEntry' | 'notSubmitted' | 'escalation', email: string) => {
     if (which === 'submit') setSubmitNotifyEmails(submitNotifyEmails.filter(e => e !== email));
-    else setEntryNotCreatedEmails(entryNotCreatedEmails.filter(e => e !== email));
+    else if (which === 'noEntry') setEntryNotCreatedEmails(entryNotCreatedEmails.filter(e => e !== email));
+    else if (which === 'notSubmitted') setNotSubmittedNotifyEmails(notSubmittedNotifyEmails.filter(e => e !== email));
+    else if (which === 'escalation') setEscalationNotifyEmails(escalationNotifyEmails.filter(e => e !== email));
   };
 
   return (
@@ -275,6 +302,74 @@ function MISEntryEmailPanel({
               ))}
               {entryNotCreatedEmails.length === 0 && (
                 <Typography variant="body2" color="text.secondary">No emails. Add above or leave empty to use Operator users.</Typography>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              Pending submission (scheduled reminders) – send to:
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="email@example.com"
+                value={newNotSubmittedEmail}
+                onChange={(e) => setNewNotSubmittedEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addEmail('notSubmitted', newNotSubmittedEmail)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+              <Button variant="contained" onClick={() => addEmail('notSubmitted', newNotSubmittedEmail)} sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                Add
+              </Button>
+            </Box>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {notSubmittedNotifyEmails.map((email) => (
+                <li key={email} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Typography variant="body2">{email}</Typography>
+                  <IconButton size="small" onClick={() => removeEmail('notSubmitted', email)} sx={{ color: '#ee6a31', p: 0.25 }}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </li>
+              ))}
+              {notSubmittedNotifyEmails.length === 0 && (
+                <Typography variant="body2" color="text.secondary">No emails. Falling back to Operator users.</Typography>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+              Escalation (entry missing at EOD) – send to:
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="email@example.com"
+                value={newEscalationEmail}
+                onChange={(e) => setNewEscalationEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addEmail('escalation', newEscalationEmail)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+              <Button variant="contained" onClick={() => addEmail('escalation', newEscalationEmail)} sx={{ borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                Add
+              </Button>
+            </Box>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {escalationNotifyEmails.map((email) => (
+                <li key={email} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Typography variant="body2">{email}</Typography>
+                  <IconButton size="small" onClick={() => removeEmail('escalation', email)} sx={{ color: '#ee6a31', p: 0.25 }}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </li>
+              ))}
+              {escalationNotifyEmails.length === 0 && (
+                <Typography variant="body2" color="text.secondary">No emails. Falling back to Manager users.</Typography>
               )}
             </Box>
           </Card>
@@ -556,8 +651,9 @@ const defaultPermissions: Permission[] = [
   { page: 'User Management', read: false, create: false, update: false, delete: false },
   { page: 'Roles & Permissions', read: false, create: false, update: false, delete: false },
   { page: 'Admin Panel', read: false, create: false, update: false, delete: false },
-  { page: 'Audit Logs', read: true, create: false, update: false, delete: false },
-  { page: 'Import Data', read: true, create: true, update: false, delete: false },
+  { page: 'Audit Logs', read: false, create: false, update: false, delete: false },
+  { page: 'Import Data', read: false, create: false, update: false, delete: false },
+  { page: 'Customer', read: false, create: false, update: false, delete: false },
 ];
 
 const adminPermissions: Permission[] = [
@@ -569,6 +665,7 @@ const adminPermissions: Permission[] = [
   { page: 'Admin Panel', read: true, create: true, update: true, delete: true },
   { page: 'Audit Logs', read: true, create: true, update: true, delete: true },
   { page: 'Import Data', read: true, create: true, update: true, delete: true },
+  { page: 'Customer', read: true, create: true, update: true, delete: true },
 ];
 
 // Mock activity logs data
@@ -715,7 +812,7 @@ const Transition = React.forwardRef(function Transition(
   },
   ref: React.Ref<unknown>,
 ) {
-  return <Slide direction="up" ref={ref} {...props} />;
+  return <Zoom ref={ref} {...props} />;
 });
 
 
@@ -799,52 +896,76 @@ export default function AdminPage() {
   const [smtpTestTo, setSmtpTestTo] = useState('');
   const [smtpTesting, setSmtpTesting] = useState(false);
 
-  // Backend resources map to one or more UI rows so Admin/Manager see all relevant boxes checked
-  const mapBackendPermissionsToUI = (backendPerms: any[]) => {
-    if (!backendPerms || !Array.isArray(backendPerms)) return defaultPermissions;
-    const uiPerms = JSON.parse(JSON.stringify(defaultPermissions));
-    const resourceToUIPages: Record<string, string[]> = {
-      mis_entry: ['MIS Entry', 'Consolidated MIS View', 'Import Data'],
-      user: ['User Management'],
-      role: ['Roles & Permissions'],
-      config: ['Dashboard', 'Admin Panel'],
-      audit: ['Audit Logs']
-    };
-    backendPerms.forEach((bp: { resource?: string; action?: string }) => {
-      const uiPages = bp.resource ? resourceToUIPages[bp.resource] : null;
-      if (!uiPages?.length) return;
-      uiPages.forEach((uiName) => {
-        const permIndex = uiPerms.findIndex((p: { page: string }) => p.page === uiName);
-        if (permIndex > -1) {
-          if (bp.action === 'read') uiPerms[permIndex].read = true;
-          if (bp.action === 'create') uiPerms[permIndex].create = true;
-          if (bp.action === 'update') uiPerms[permIndex].update = true;
-          if (bp.action === 'delete') uiPerms[permIndex].delete = true;
-        }
-      });
+  // EACH PAGE HAS A UNIQUE RESOURCE — prevents cross-page permission bleed
+  const pageToResource: Record<string, string> = {
+    'Dashboard': 'dashboard',
+    'MIS Entry': 'mis_entry',
+    'Consolidated MIS View': 'consolidated_mis',
+    'User Management': 'user',
+    'Roles & Permissions': 'role',
+    'Admin Panel': 'config',
+    'Audit Logs': 'audit',
+    'Import Data': 'import_data',
+    'Customer': 'customer'
+  };
+
+  const mapBackendPermissionsToUI = (backendPerms: any[]): Permission[] => {
+    // Start with a clean slate based on defaultPermissions structure (all false)
+    const uiPerms = defaultPermissions.map(p => ({
+      ...p,
+      read: false,
+      create: false,
+      update: false,
+      delete: false
+    }));
+
+    if (!backendPerms || !Array.isArray(backendPerms)) return uiPerms;
+
+    // Build a reverse map: resource -> page name (1:1, no collisions)
+    const resourceToPage: Record<string, string> = {};
+    for (const [page, res] of Object.entries(pageToResource)) {
+      resourceToPage[res] = page;
+    }
+
+    backendPerms.forEach(bp => {
+      const { resource, action } = bp;
+      // Find the EXACT page that owns this resource (1:1 mapping)
+      const targetPage = resourceToPage[resource];
+      if (!targetPage) return; // skip legacy/derived permissions like mis_entry:submit
+
+      const uiPerm = uiPerms.find(up => up.page === targetPage);
+      if (!uiPerm) return;
+
+      if (action === 'read' || action === '*') (uiPerm as any).read = true;
+      if (action === 'create' || action === '*') (uiPerm as any).create = true;
+      if (action === 'update' || action === '*') (uiPerm as any).update = true;
+      if (action === 'delete' || action === '*') (uiPerm as any).delete = true;
     });
+
     return uiPerms;
   };
 
+
   // Load form-config once (roles, permissions, smtp_config, scheduler_config) - single API
-  useEffect(() => {
-    const loadFormConfig = async () => {
-      try {
-        const data = await adminService.getFormConfig();
-        setFormConfig(data);
-        if (tabValue === 3) {
-          setSchedulerConfigs(Array.isArray(data?.scheduler_config) ? data.scheduler_config : []);
-        }
-        if (data?.roles?.length && selectedRoleIdForPerms == null) {
-          setSelectedRoleIdForPerms(data.roles[0].id);
-        }
-      } catch (e) {
-        console.error('Failed to load form config', e);
-        setFormConfig(null);
+  const loadFormConfig = useCallback(async () => {
+    try {
+      const data = await adminService.getFormConfig();
+      setFormConfig(data);
+      if (tabValue === 3) {
+        setSchedulerConfigs(Array.isArray(data?.scheduler_config) ? data.scheduler_config : []);
       }
-    };
+      if (data?.roles?.length && selectedRoleIdForPerms == null) {
+        setSelectedRoleIdForPerms(data.roles[0].id);
+      }
+    } catch (e) {
+      console.error('Failed to load form config', e);
+      setFormConfig(null);
+    }
+  }, [tabValue, selectedRoleIdForPerms]);
+
+  useEffect(() => {
     loadFormConfig();
-  }, []);
+  }, [loadFormConfig]);
 
   // When selected role for permissions changes, load that role's permissions from formConfig
   useEffect(() => {
@@ -1006,14 +1127,22 @@ export default function AdminPage() {
         const data = await adminService.getUsers();
         setUsers((data || [])
           .filter((u: any) => u.is_active !== false)
-          .map((u: any) => ({
-            ...u,
-            role: u.role?.name || u.role || 'Operator',
-            // User-level permissions (primary); fallback to role permissions for backward compat
-            permissions: (u.permissions && Array.isArray(u.permissions) && u.permissions.length > 0)
+          .map((u: any) => {
+            const roleName = u.role?.name || u.role || 'Operator';
+            const hasCustom = u.is_custom_perm || (u.permissions && Array.isArray(u.permissions) && u.permissions.length > 0);
+            const perms = hasCustom
               ? mapBackendPermissionsToUI(u.permissions)
-              : (u.role?.permissions && Array.isArray(u.role.permissions)) ? mapBackendPermissionsToUI(u.role.permissions) : defaultPermissions
-          })));
+              : (roleName === 'Admin' || roleName === 'SuperAdmin')
+                ? adminPermissions // Give Admins the full admin matrix in UI
+                : defaultPermissions; // Everyone else starts empty if no custom perms
+
+            return {
+              ...u,
+              role: roleName,
+              permissions: perms,
+              is_custom_perm: hasCustom
+            };
+          }));
       } else if (tabValue === 1) {
         const [auditData, sessionsData] = await Promise.all([
           adminService.getAuditLogs(),
@@ -1072,12 +1201,16 @@ export default function AdminPage() {
 
   const handlePermissionChange = (pageIndex: number, permissionType: keyof Permission) => {
     if (permissionType === 'page') return;
+    const pageName = userPermissions[pageIndex].page;
+
+    const newValue = !userPermissions[pageIndex][permissionType];
     setUserPermissions(prev =>
-      prev.map((perm, index) =>
-        index === pageIndex ? { ...perm, [permissionType]: !perm[permissionType] } : perm
+      prev.map((perm, idx) =>
+        idx === pageIndex ? { ...perm, [permissionType]: newValue } : perm
       )
     );
   };
+
 
   const handleOpenCreateUser = () => {
     setMessage(null);
@@ -1090,7 +1223,7 @@ export default function AdminPage() {
     setOpenUserDialog(true);
   };
 
-  const handleOpenEditUser = (user: User) => {
+  const handleOpenEditUser = (user: any) => {
     setMessage(null);
     setEditingUser(user);
     setUserName(user.name);
@@ -1098,10 +1231,9 @@ export default function AdminPage() {
     setUserPassword('');
     const roleName = typeof user.role === 'string' ? user.role : (user.role?.name || 'Operator');
     setSelectedRole(roleName);
-    const perms = Array.isArray(user.permissions) && user.permissions.length > 0
-      ? user.permissions
-      : (roleName === 'Admin' ? adminPermissions : roleName === 'Manager' ? adminPermissions.map(p => ({ ...p, delete: false })) : defaultPermissions);
-    setUserPermissions(perms);
+
+    // Use the permissions already mapped in loadData (which are now Permission[] structure)
+    setUserPermissions(user.permissions || defaultPermissions);
     setOpenUserDialog(true);
   };
 
@@ -1114,12 +1246,16 @@ export default function AdminPage() {
 
     try {
       setSaving(true);
+      // Find actual role ID from formConfig to avoid hardcoding
+      const roleObj = formConfig?.roles?.find((r: any) => r.name === selectedRole);
+      const role_id = roleObj ? roleObj.id : (selectedRole === 'Admin' ? 1 : (selectedRole === 'Manager' ? 2 : 3));
+
       const userData = {
         name: userName,
         email: userEmail,
         password: userPassword || undefined,
         role: selectedRole,
-        role_id: selectedRole === 'Admin' ? 1 : (selectedRole === 'Manager' ? 2 : 3),
+        role_id,
         permissions: userPermissions
       };
 
@@ -1151,17 +1287,6 @@ export default function AdminPage() {
     }
   };
 
-  const pageToResource: Record<string, string> = {
-    'Dashboard': 'config',
-    'MIS Entry': 'mis_entry',
-    'Consolidated MIS View': 'mis_entry',
-    'Consolidated MIS v2': 'mis_entry',
-    'Admin Panel': 'config',
-    'User Management': 'user',
-    'Roles & Permissions': 'role',
-    'Audit Logs': 'audit',
-    'Import Data': 'mis_entry',
-  };
 
   const handleSavePermissions = async () => {
     if (selectedRoleIdForPerms == null || !formConfig?.permissions) {
@@ -1663,11 +1788,11 @@ export default function AdminPage() {
   return (
     <Layout>
       <Box className="aos-fade-up">
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6', mb: 3 }}>
+        <Typography variant="h4" className="aos-fade-down aos-delay-100" sx={{ fontWeight: 700, color: '#2879b6', mb: 3 }}>
           Admin Panel
         </Typography>
 
-        <Card className="glass-card-strong" sx={{ borderRadius: '20px', overflow: 'hidden' }}>
+        <Card className="glass-card-strong aos-fade-up aos-delay-200" sx={{ borderRadius: '20px', overflow: 'hidden' }}>
           <Box
             sx={{
               borderBottom: 1,
@@ -3041,6 +3166,7 @@ export default function AdminPage() {
                 formConfig={formConfig}
                 message={message}
                 setMessage={setMessage}
+                onRefresh={loadFormConfig}
               />
             </CardContent>
           </TabPanel>
@@ -3071,7 +3197,7 @@ export default function AdminPage() {
         >
           {editingUser ? 'Edit User' : 'Create New User'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent sx={{ pt: 3 }} className="aos-fade-up">
           {message && (
             <Alert
               severity={message.type}
@@ -3282,7 +3408,7 @@ export default function AdminPage() {
         >
           {editingTemplate ? 'Edit Email Template' : 'Create Email Template'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent sx={{ pt: 3 }} className="aos-fade-up">
           <Box sx={{ pt: 2 }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -3415,6 +3541,7 @@ export default function AdminPage() {
         onClose={() => setOpenSchedulerDialog(false)}
         maxWidth="sm"
         fullWidth
+        TransitionComponent={Transition}
         PaperProps={{ sx: { borderRadius: '20px' } }}
       >
         <DialogTitle
@@ -3426,7 +3553,7 @@ export default function AdminPage() {
         >
           Configure Notification Scheduler
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent sx={{ pt: 3 }} className="aos-fade-up">
           <Box sx={{ pt: 2 }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
