@@ -194,9 +194,15 @@ export default function MISListView({
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (entryToDelete) {
-      onDelete(entryToDelete);
+  const confirmDelete = async () => {
+    if (!entryToDelete) return;
+    try {
+      await Promise.resolve(onDelete(entryToDelete));
+      enqueueSnackbar('Entry deleted successfully', { variant: 'success' });
+    } catch (error: any) {
+      console.error('Delete failed:', error);
+      enqueueSnackbar('Failed to delete entry: ' + (error?.response?.data?.message || error?.message || ''), { variant: 'error' });
+    } finally {
       setDeleteDialogOpen(false);
       setEntryToDelete(null);
     }
@@ -226,12 +232,23 @@ export default function MISListView({
   };
 
   const handleBulkDeleteConfirm = () => {
-    selectedIds.forEach(id => {
-      const entry = entries.find(e => e.id === id);
-      if (entry) onDelete(entry);
-    });
-    setSelectedIds(new Set());
-    setBulkDeleteDialogOpen(false);
+    (async () => {
+      const ids = Array.from(selectedIds);
+      let deleted = 0;
+      for (const id of ids) {
+        const entry = entries.find(e => e.id === id);
+        if (!entry) continue;
+        try {
+          await Promise.resolve(onDelete(entry));
+          deleted++;
+        } catch (err) {
+          console.error('Bulk delete failed for', id, err);
+        }
+      }
+      setSelectedIds(new Set());
+      setBulkDeleteDialogOpen(false);
+      if (deleted > 0) enqueueSnackbar(`Deleted ${deleted} entries`, { variant: 'success' });
+    })();
   };
 
   const getStatusColor = (status: string) => {
