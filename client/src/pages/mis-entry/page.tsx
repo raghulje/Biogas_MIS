@@ -70,7 +70,6 @@ const defaultDigesters: Digester[] = [
 
 export default function MISEntryPage() {
   const { enqueueSnackbar } = useSnackbar();
-  const { hasPermission } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [entries, setEntries] = useState<MISEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<MISEntry | null>(null);

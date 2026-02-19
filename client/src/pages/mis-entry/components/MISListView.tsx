@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -54,7 +54,6 @@ import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import React from 'react';
 import MESSAGES from '../../../utils/messages';
 
 import { useAuth } from '../../../context/AuthContext';
@@ -89,6 +88,7 @@ interface MISListViewProps {
   onImportError?: (err: any) => void;
   isAdmin?: boolean;
   onHardDelete?: (entryId: number) => void;
+  showDeleted?: boolean;
 }
 
 export default function MISListView({
@@ -141,6 +141,15 @@ export default function MISListView({
       event.target.value = '';
     }
   };
+
+  // If parent asked to show deleted entries, ensure status filter includes them
+  // (so admins who toggle "Show deleted entries" see the results even if a filter was active)
+  useEffect(() => {
+    if ((props as any)?.showDeleted) {
+      setStatusFilter('All');
+    }
+  }, [(props as any)?.showDeleted]);
+
 
   const handleExport = async () => {
     setExporting(true);
