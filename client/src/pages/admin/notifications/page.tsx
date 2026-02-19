@@ -62,6 +62,7 @@ export default function NotificationConfigPage() {
     const [siteUserEmails, setSiteUserEmails] = useState<string[]>([]); // entry_not_created & not_submitted
     const [managerEmails, setManagerEmails] = useState<string[]>([]); // escalation
     const [submitEmails, setSubmitEmails] = useState<string[]>([]); // approvers (submit notifications)
+    const [approvedEditors, setApprovedEditors] = useState<string[]>([]); // users allowed to edit approved entries
 
     const [creationCheckTime, setCreationCheckTime] = useState<Date | null>(null);
     const [escalationCheckTime, setEscalationCheckTime] = useState<Date | null>(null);
@@ -91,6 +92,7 @@ export default function NotificationConfigPage() {
             setSiteUserEmails(misConfig.entry_not_created_emails || []);
             setManagerEmails(misConfig.escalation_notify_emails || []);
             setSubmitEmails(misConfig.submit_notify_emails || []);
+            setApprovedEditors(misConfig.approved_editor_emails || []);
             // Notification schedule
             if (nsched) {
                 const parseTime = (t: string) => {
@@ -204,7 +206,8 @@ export default function NotificationConfigPage() {
                 entry_not_created_emails: siteUserEmails,
                 not_submitted_notify_emails: siteUserEmails, // Same recipients
                 submit_notify_emails: submitEmails,
-                escalation_notify_emails: managerEmails
+                escalation_notify_emails: managerEmails,
+                approved_editor_emails: approvedEditors
             });
             // Ah wait, I need to preserve submit_notify_emails. Let's add it to state.
             // Or just fetch and update.
@@ -231,6 +234,11 @@ export default function NotificationConfigPage() {
     const handleToggleSubmitNotify = (email: string) => {
         if (!email) return;
         setSubmitEmails(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
+    };
+
+    const handleToggleApprovedEditor = (email: string) => {
+        if (!email) return;
+        setApprovedEditors(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
     };
 
     const handleSaveTemplate = async (template: Template) => {
@@ -453,7 +461,7 @@ export default function NotificationConfigPage() {
                                 <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
                                     Select users to receive "Not Created" and "Not Submitted" alerts.
                                 </Typography>
-                                <Paper
+                                    <Paper
                                     variant="outlined"
                                     sx={{
                                         maxHeight: { xs: '50vh', sm: '60vh', md: 400 },
@@ -546,14 +554,6 @@ export default function NotificationConfigPage() {
                                                 key={user.id}
                                                 button
                                                 onClick={() => handleToggleManager(user.email)}
-                                                sx={{
-                                                    minHeight: isPhone ? 56 : undefined,
-                                                    px: isPhone ? 2 : 1,
-                                                    py: isPhone ? 1.5 : undefined,
-                                                    '&:active': isPhone ? {
-                                                        backgroundColor: 'rgba(125, 194, 68, 0.08)'
-                                                    } : undefined
-                                                }}
                                             >
                                                 <ListItemIcon>
                                                     <Checkbox
@@ -561,22 +561,30 @@ export default function NotificationConfigPage() {
                                                         checked={managerEmails.includes(user.email)}
                                                         disableRipple
                                                         size={isPhone ? 'medium' : 'small'}
-                                                        sx={{
-                                                            color: '#7dc244',
-                                                            '&.Mui-checked': { color: '#7dc244' }
-                                                        }}
+                                                        sx={{ color: '#7dc244', '&.Mui-checked': { color: '#7dc244' } }}
                                                     />
                                                 </ListItemIcon>
-                                                <ListItemText
-                                                    primary={user.name}
-                                                    secondary={`${user.email} (${user.role?.name})`}
-                                                    primaryTypographyProps={{
-                                                        sx: { fontSize: isPhone ? '1rem' : '0.875rem', fontWeight: 500 }
-                                                    }}
-                                                    secondaryTypographyProps={{
-                                                        sx: { fontSize: isPhone ? '0.875rem' : '0.75rem' }
-                                                    }}
-                                                />
+                                                <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
+                                    Approved Editors (Can edit approved entries)
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
+                                    Select users who are allowed to edit MIS entries after they are approved.
+                                </Typography>
+                                <Paper variant="outlined" sx={{ maxHeight: { xs: '50vh', sm: '60vh', md: 400 }, overflow: 'auto', mt: 1, borderRadius: { xs: '12px', md: '4px' } }}>
+                                    <List dense={!isPhone}>
+                                        {users.map(user => (
+                                            <ListItem key={user.id} button onClick={() => handleToggleApprovedEditor(user.email)}>
+                                                <ListItemIcon>
+                                                    <Checkbox edge="start" checked={approvedEditors.includes(user.email)} disableRipple size={isPhone ? 'medium' : 'small'} sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }} />
+                                                </ListItemIcon>
+                                                <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
                                             </ListItem>
                                         ))}
                                     </List>

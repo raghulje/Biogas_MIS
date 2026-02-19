@@ -324,12 +324,12 @@ exports.createNotificationSchedule = async (req, res) => {
         const misEnd = body.mis_end_time;
         const interval = Number(body.reminder_interval_minutes);
         const count = Number(body.reminder_count);
-        const name = String(body.name || 'Reminder').substring(0,100);
+        const name = String(body.name || 'Reminder').substring(0, 100);
         const target_role = body.target_role || null;
         if (!misStart || !misEnd) return res.status(400).json({ message: 'mis_start_time and mis_end_time are required' });
         const toMinutes = (t) => {
             const parts = String(t).split(':').map(s => Number(s));
-            return parts[0]*60 + (parts[1]||0);
+            return parts[0] * 60 + (parts[1] || 0);
         };
         if (toMinutes(misStart) >= toMinutes(misEnd)) return res.status(400).json({ message: 'mis_start_time must be before mis_end_time' });
         if (!Number.isInteger(interval) || interval <= 0) return res.status(400).json({ message: 'reminder_interval_minutes must be > 0' });
@@ -357,7 +357,7 @@ exports.updateNotificationScheduleById = async (req, res) => {
         const row = await NotificationSchedule.findByPk(id);
         if (!row) return res.status(404).json({ message: 'Schedule not found' });
         const updates = {
-            name: body.name != null ? String(body.name).substring(0,100) : row.name,
+            name: body.name != null ? String(body.name).substring(0, 100) : row.name,
             mis_start_time: body.mis_start_time != null ? body.mis_start_time : row.mis_start_time,
             mis_end_time: body.mis_end_time != null ? body.mis_end_time : row.mis_end_time,
             reminder_start_time: body.reminder_start_time != null ? body.reminder_start_time : row.reminder_start_time,
@@ -435,11 +435,20 @@ exports.getFormConfig = async (req, res) => {
         } catch (e) {
             console.error('Form config: scheduler_config load failed', e.message);
         }
-        let mis_email_config = { submit_notify_emails: [], entry_not_created_emails: [] };
+
+        let mis_email_config = { submit_notify_emails: [], entry_not_created_emails: [], not_submitted_notify_emails: [], escalation_notify_emails: [] };
         try {
-            const row = await MISEmailConfig.findByPk(1);
+            const row = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
             if (row) {
-                const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+                const parse = (s) => {
+                    if (!s) return [];
+                    try {
+                        const a = JSON.parse(s);
+                        return Array.isArray(a) ? a : [s];
+                    } catch {
+                        return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+                    }
+                };
                 mis_email_config = {
                     submit_notify_emails: parse(row.submit_notify_emails),
                     entry_not_created_emails: parse(row.entry_not_created_emails),
@@ -450,7 +459,6 @@ exports.getFormConfig = async (req, res) => {
         } catch (e) {
             console.error('Form config: mis_email_config load failed', e.message);
         }
-
         const payload = {
             roles: Array.isArray(roles) ? roles : [],
             permissions: Array.isArray(permissions) ? permissions : [],
@@ -468,13 +476,22 @@ exports.getFormConfig = async (req, res) => {
 // --- MIS Email Config (who receives submit + no-entry reminders) ---
 exports.getMISEmailConfig = async (req, res) => {
     try {
-        const row = await MISEmailConfig.findByPk(1);
-        const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+        const row = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
+        const parse = (s) => {
+            if (!s) return [];
+            try {
+                const a = JSON.parse(s);
+                return Array.isArray(a) ? a : [s];
+            } catch {
+                return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+            }
+        };
         const mis_email_config = row ? {
             submit_notify_emails: parse(row.submit_notify_emails),
             entry_not_created_emails: parse(row.entry_not_created_emails),
             not_submitted_notify_emails: parse(row.not_submitted_notify_emails),
-            escalation_notify_emails: parse(row.escalation_notify_emails)
+            escalation_notify_emails: parse(row.escalation_notify_emails),
+            approved_editor_emails: parse(row.approved_editor_emails)
         } : {
             submit_notify_emails: [],
             entry_not_created_emails: [],
@@ -490,29 +507,39 @@ exports.getMISEmailConfig = async (req, res) => {
 
 exports.saveMISEmailConfig = async (req, res) => {
     try {
-        const { submit_notify_emails, entry_not_created_emails, not_submitted_notify_emails, escalation_notify_emails } = req.body;
+        const { submit_notify_emails, entry_not_created_emails, not_submitted_notify_emails, escalation_notify_emails, approved_editor_emails } = req.body;
         const toJson = (arr) => (Array.isArray(arr) ? JSON.stringify(arr) : '[]');
-        const defaults = {
+        const data = {
             submit_notify_emails: toJson(submit_notify_emails),
             entry_not_created_emails: toJson(entry_not_created_emails),
             not_submitted_notify_emails: toJson(not_submitted_notify_emails),
-            escalation_notify_emails: toJson(escalation_notify_emails)
+            escalation_notify_emails: toJson(escalation_notify_emails),
+            approved_editor_emails: toJson(approved_editor_emails)
         };
-        const [row] = await MISEmailConfig.findOrCreate({
-            where: { id: 1 },
-            defaults: defaults
-        });
-        if (row && !row.isNewRecord) {
-            await row.update(defaults);
+
+        // Find existing or create ID 1
+        let row = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
+        if (row) {
+            await row.update(data);
+        } else {
+            row = await MISEmailConfig.create({ id: 1, ...data });
         }
-        const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
-        const updated = await MISEmailConfig.findByPk(1);
-        return res.json(updated ? {
-            submit_notify_emails: parse(updated.submit_notify_emails),
-            entry_not_created_emails: parse(updated.entry_not_created_emails),
-            not_submitted_notify_emails: parse(updated.not_submitted_notify_emails),
-            escalation_notify_emails: parse(updated.escalation_notify_emails)
-        } : { submit_notify_emails: [], entry_not_created_emails: [], not_submitted_notify_emails: [], escalation_notify_emails: [] });
+
+        const parse = (s) => {
+            if (!s) return [];
+            try {
+                const a = JSON.parse(s);
+                return Array.isArray(a) ? a : [s];
+            } catch {
+                return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+            }
+        };
+        return res.json({
+            submit_notify_emails: parse(row.submit_notify_emails),
+            entry_not_created_emails: parse(row.entry_not_created_emails),
+            not_submitted_notify_emails: parse(row.not_submitted_notify_emails),
+            escalation_notify_emails: parse(row.escalation_notify_emails)
+        });
     } catch (e) {
         console.error('saveMISEmailConfig:', e);
         res.status(500).json({ message: 'Failed to save MIS email config' });
@@ -554,20 +581,22 @@ exports.saveNotificationSchedule = async (req, res) => {
         if (!misStart || !misEnd) return res.status(400).json({ message: 'mis_start_time and mis_end_time are required' });
         const toMinutes = (t) => {
             const parts = String(t).split(':').map(s => Number(s));
-            return parts[0]*60 + (parts[1]||0);
+            return parts[0] * 60 + (parts[1] || 0);
         };
         if (toMinutes(misStart) >= toMinutes(misEnd)) return res.status(400).json({ message: 'mis_start_time must be before mis_end_time' });
         if (!Number.isInteger(interval) || interval <= 0) return res.status(400).json({ message: 'reminder_interval_minutes must be > 0' });
         if (!Number.isInteger(count) || count <= 0) return res.status(400).json({ message: 'reminder_count must be > 0' });
 
-        const [row] = await NotificationSchedule.findOrCreate({ where: { id: 1 }, defaults: {
-            mis_start_time: misStart,
-            mis_end_time: misEnd,
-            reminder_start_time: reminderStart,
-            reminder_interval_minutes: interval,
-            reminder_count: count,
-            is_active: body.is_active !== false
-        }});
+        const [row] = await NotificationSchedule.findOrCreate({
+            where: { id: 1 }, defaults: {
+                mis_start_time: misStart,
+                mis_end_time: misEnd,
+                reminder_start_time: reminderStart,
+                reminder_interval_minutes: interval,
+                reminder_count: count,
+                is_active: body.is_active !== false
+            }
+        });
         await row.update({
             mis_start_time: misStart,
             mis_end_time: misEnd,

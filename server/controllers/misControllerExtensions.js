@@ -18,6 +18,9 @@ const {
     MISPowerData,
     ImportLog,
     User,
+    MISCBGSale,
+    MISEmailConfig,
+    Customer,
     sequelize
 } = require('../models');
 const auditService = require('../services/auditService');
@@ -31,7 +34,7 @@ exports.updateEntry = async (req, res) => {
     const t = await sequelize.transaction();
     try {
         const { id } = req.params;
-        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, compressors, fertilizer, utilities, manpower, plantAvailability, hse } = req.body;
+        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, compressors, fertilizer, utilities, manpower, plantAvailability, hse, cbgSales } = req.body;
         const userId = req.user.id;
 
         // Find existing entry
@@ -49,13 +52,43 @@ exports.updateEntry = async (req, res) => {
                 { model: MISUtilities, as: 'utilities' },
                 { model: MISManpowerData, as: 'manpower' },
                 { model: MISPlantAvailability, as: 'plantAvailability' },
-                { model: MISHSEData, as: 'hse' }
+                { model: MISHSEData, as: 'hse' },
+                { model: MISCBGSale, as: 'cbgSales' }
             ]
         });
 
         if (!entry) {
             await t.rollback();
             return res.status(404).json({ message: 'Entry not found' });
+        }
+
+        // If entry is already approved, restrict edits to Admin/SuperAdmin or configured approved editors
+        if (String(entry.status || '').toLowerCase() === 'approved') {
+            // Load current user and their role
+            const currentUser = await User.findByPk(userId, { include: [{ association: 'role' }] });
+            const isAdmin = currentUser && currentUser.role && (currentUser.role.name === 'Admin' || currentUser.role.name === 'SuperAdmin');
+            if (!isAdmin) {
+                // Load approved editor emails from MISEmailConfig (if present)
+                let approvedEditors = [];
+                try {
+                    const cfg = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
+                    if (cfg && cfg.approved_editor_emails) {
+                        try {
+                            approvedEditors = JSON.parse(cfg.approved_editor_emails);
+                        } catch {
+                            approvedEditors = String(cfg.approved_editor_emails || '').split(/[,;]/).map(s => s.trim()).filter(Boolean);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Could not load approved editor emails:', e.message || e);
+                }
+                const userEmail = currentUser ? (currentUser.email || '').toLowerCase() : '';
+                const allowed = approvedEditors.map(s => String(s).toLowerCase()).includes(userEmail);
+                if (!allowed) {
+                    await t.rollback();
+                    return res.status(403).json({ message: 'Entry is approved — only Admin or configured approved editors can modify it' });
+                }
+            }
         }
 
         // Store old values for audit
@@ -315,8 +348,12 @@ exports.updateEntry = async (req, res) => {
                 unscheduled_downtime: n(plantAvailability.unscheduledDowntime),
                 total_availability: n(plantAvailability.totalAvailability)
             };
-            if (entry.plantAvailability) {
-                await entry.plantAvailability.update(data, { transaction: t });
+
+            // Resilience: Handle case where it might be an array or a single object
+            const paInstance = Array.isArray(entry.plantAvailability) ? entry.plantAvailability[0] : entry.plantAvailability;
+
+            if (paInstance) {
+                await paInstance.update(data, { transaction: t });
             } else {
                 await MISPlantAvailability.create({ entry_id: id, ...data }, { transaction: t });
             }
@@ -338,6 +375,19 @@ exports.updateEntry = async (req, res) => {
             } else {
                 await MISHSEData.create({ entry_id: id, ...data }, { transaction: t });
             }
+        }
+
+        // CBG Sales - delete existing and recreate
+        if (cbgSales && Array.isArray(cbgSales)) {
+            await MISCBGSale.destroy({ where: { entry_id: id }, transaction: t });
+            const salesPromises = cbgSales
+                .filter(s => s.customerId && s.quantity)
+                .map(s => MISCBGSale.create({
+                    entry_id: id,
+                    customer_id: parseInt(s.customerId),
+                    quantity: parseFloat(s.quantity) || 0
+                }, { transaction: t }));
+            await Promise.all(salesPromises);
         }
 
         await t.commit();
@@ -636,7 +686,7 @@ exports.exportEntries = async (req, res) => {
     try {
         const { startDate, endDate, status } = req.query;
 
-        const where = { status: { [Op.not]: 'deleted' } };
+        const where = { status: 'approved' };
         if (startDate && endDate) {
             where.date = { [Op.between]: [startDate, endDate] };
         }
@@ -728,22 +778,22 @@ exports.getDashboardData = async (req, res) => {
             startStr = String(qStart).slice(0, 10);
             endStr = String(qEnd).slice(0, 10);
         } else {
-        switch (period) {
-            case 'day':
+            switch (period) {
+                case 'day':
                     startStr = toStr(now);
-                break;
+                    break;
                 case 'week': {
                     const start = new Date(now);
                     start.setDate(start.getDate() - 6);
                     startStr = toStr(start);
-                break;
+                    break;
                 }
                 case 'year': {
                     const start = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
                     startStr = toStr(start);
-                break;
+                    break;
                 }
-            case 'month':
+                case 'month':
                 default: {
                     const start = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
                     startStr = toStr(start);
@@ -755,7 +805,8 @@ exports.getDashboardData = async (req, res) => {
         const entries = await MISDailyEntry.findAll({
             where: {
                 date: { [Op.between]: [startStr, endStr] },
-                status: { [Op.notIn]: ['deleted'] }
+                // Only approved entries should contribute to dashboards
+                status: 'approved'
             },
             include: [
                 { model: MISRawBiogas, as: 'rawBiogas' },
@@ -763,7 +814,8 @@ exports.getDashboardData = async (req, res) => {
                 { model: MISFertilizerData, as: 'fertilizer' },
                 { model: MISUtilities, as: 'utilities' },
                 { model: MISPlantAvailability, as: 'plantAvailability' },
-                { model: MISHSEData, as: 'hse' }
+                { model: MISHSEData, as: 'hse' },
+                { model: MISFeedMixingTank, as: 'feedMixingTank' }
             ]
         });
 
@@ -778,6 +830,11 @@ exports.getDashboardData = async (req, res) => {
             : 0;
         const totalElectricityConsumption = entries.reduce((sum, e) => sum + (e.utilities?.electricity_consumption || 0), 0);
         const totalHSEIncidents = entries.reduce((sum, e) => sum + (e.hse?.safety_lti || 0) + (e.hse?.near_misses || 0), 0);
+        const totalFeed = entries.reduce((sum, e) => {
+            const fmt = e.feedMixingTank;
+            if (!fmt) return sum;
+            return sum + (n(fmt.cow_dung_qty) + n(fmt.pressmud_qty) + n(fmt.permeate_qty) + n(fmt.water_qty));
+        }, 0);
 
         // Daily trend data
         const dailyData = entries.map(e => ({
@@ -799,7 +856,8 @@ exports.getDashboardData = async (req, res) => {
                 totalFOMSold,
                 avgPlantAvailability: avgPlantAvailability.toFixed(2),
                 totalElectricityConsumption,
-                totalHSEIncidents
+                totalHSEIncidents,
+                totalFeed
             },
             trends: dailyData
         });
@@ -851,7 +909,8 @@ exports.getConsolidatedData = async (req, res) => {
         const entries = await MISDailyEntry.findAll({
             where: {
                 date: { [Op.between]: [startDate, endDate] },
-                status: { [Op.notIn]: ['deleted', 'draft'] }
+                // Only include approved entries in consolidated reports
+                status: 'approved'
             },
             include: [
                 { model: MISRawMaterials, as: 'rawMaterials' },
@@ -1024,6 +1083,72 @@ exports.getConsolidatedData = async (req, res) => {
     } catch (error) {
         console.error('Consolidated Data Error:', error);
         res.status(500).json({ message: 'Error fetching consolidated data', error: error.message });
+    }
+};
+
+// CBG Sales Breakdown
+exports.getCBGSalesBreakdown = async (req, res) => {
+    try {
+        const { period = 'month', startDate: qStart, endDate: qEnd } = req.query;
+        const toStr = (d) => d.toISOString().slice(0, 10);
+        const now = new Date();
+        let startStr;
+        let endStr = toStr(now);
+
+        if (qStart && qEnd) {
+            startStr = String(qStart).slice(0, 10);
+            endStr = String(qEnd).slice(0, 10);
+        } else {
+            const date = new Date();
+            if (period === 'day') {
+                startStr = toStr(date);
+            } else if (period === 'week') {
+                date.setDate(date.getDate() - 6);
+                startStr = toStr(date);
+            } else if (period === 'year') {
+                date.setFullYear(date.getFullYear() - 1);
+                startStr = toStr(date);
+            } else {
+                date.setMonth(date.getMonth() - 1);
+                startStr = toStr(date);
+            }
+        }
+
+        const sales = await MISCBGSale.findAll({
+            include: [
+                {
+                    model: MISDailyEntry,
+                    as: 'dailyEntry',
+                    where: {
+                        date: { [Op.between]: [startStr, endStr] },
+                        status: { [Op.notIn]: ['deleted'] }
+                    },
+                    attributes: []
+                },
+                {
+                    model: Customer,
+                    as: 'customer',
+                    attributes: ['name']
+                }
+            ],
+            attributes: [
+                'customer_id',
+                [sequelize.fn('SUM', sequelize.col('quantity')), 'totalQuantity']
+            ],
+            group: ['customer_id', 'customer.id', 'customer.name'],
+            order: [[sequelize.literal('totalQuantity'), 'DESC']]
+        });
+
+        const formatted = sales.map(s => ({
+            customerId: s.customer_id,
+            customerName: s.customer?.name || 'Unknown',
+            totalQuantity: s.dataValues.totalQuantity || 0
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error('CBG Sales Breakdown Error:', error);
+        res.status(500).json({ message: 'Error fetching breakdown', error: error.message });
     }
 };
 
