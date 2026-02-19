@@ -15,6 +15,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { misService } from '../services/misService';
+import { useSnackbar } from 'notistack';
 
 interface ImportModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface ImportModalProps {
 }
 
 export default function ImportModal({ open, onClose, onSuccess }: ImportModalProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -65,10 +67,12 @@ export default function ImportModal({ open, onClose, onSuccess }: ImportModalPro
       if (onSuccess) {
         onSuccess();
       }
+      enqueueSnackbar('Import completed successfully', { variant: 'success' });
     } catch (err: any) {
       setError(
         err.response?.data?.message || err.response?.data?.error || 'Failed to import Excel file. Please try again.'
       );
+      enqueueSnackbar(err.response?.data?.message || err.response?.data?.error || 'Failed to import Excel file. Please try again.', { variant: 'error' });
     } finally {
       setUploading(false);
       setProgress(0);
