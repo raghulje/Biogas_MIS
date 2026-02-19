@@ -198,7 +198,7 @@ export default function MISListView({
     if (!entryToDelete) return;
     try {
       await Promise.resolve(onDelete(entryToDelete));
-      enqueueSnackbar('Entry deleted successfully', { variant: 'success' });
+      enqueueSnackbar(MESSAGES.ENTRY_DELETED, { variant: 'success' });
     } catch (error: any) {
       console.error('Delete failed:', error);
       enqueueSnackbar('Failed to delete entry: ' + (error?.response?.data?.message || error?.message || ''), { variant: 'error' });
@@ -247,7 +247,7 @@ export default function MISListView({
       }
       setSelectedIds(new Set());
       setBulkDeleteDialogOpen(false);
-      if (deleted > 0) enqueueSnackbar(`Deleted ${deleted} entries`, { variant: 'success' });
+      if (deleted > 0) enqueueSnackbar(`${deleted} entries deleted`, { variant: 'success' });
     })();
   };
 

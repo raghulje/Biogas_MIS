@@ -14,6 +14,7 @@ import { parse, format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useSnackbar } from 'notistack';
+import MESSAGES from '../../../utils/messages';
 
 interface Scheduler {
     id: number;
@@ -193,11 +194,11 @@ export default function NotificationConfigPage() {
             }
 
             setSuccess('Schedule updated successfully');
-            enqueueSnackbar('Schedule updated successfully', { variant: 'success' });
+            enqueueSnackbar(MESSAGES.SCHEDULE_UPDATED, { variant: 'success' });
             await fetchData(); // Refresh
         } catch (err) {
             setError('Failed to save schedule');
-            enqueueSnackbar('Failed to save schedule', { variant: 'error' });
+            enqueueSnackbar(MESSAGES.SCHEDULE_UPDATE_FAILED, { variant: 'error' });
         }
     };
 
@@ -220,10 +221,10 @@ export default function NotificationConfigPage() {
             // Let's add `submitEmails` state.
             // For this implementation I will focus on the requested features.
             setSuccess('Recipients updated successfully');
-            enqueueSnackbar('Recipients updated successfully', { variant: 'success' });
+            enqueueSnackbar(MESSAGES.RECIPIENTS_UPDATED, { variant: 'success' });
         } catch (err) {
             setError('Failed to save recipients');
-            enqueueSnackbar('Failed to save recipients', { variant: 'error' });
+            enqueueSnackbar(MESSAGES.RECIPIENTS_UPDATE_FAILED, { variant: 'error' });
         }
     };
 
@@ -251,11 +252,11 @@ export default function NotificationConfigPage() {
         try {
             await adminService.updateTemplate(template.id, { subject: template.subject, body: template.body });
             setSuccess(`Template '${template.name}' saved`);
-            enqueueSnackbar(`Template '${template.name}' saved`, { variant: 'success' });
+            enqueueSnackbar(MESSAGES.TEMPLATE_SAVED(template.name), { variant: 'success' });
             fetchData();
         } catch (e) {
-            setError('Failed to save template');
-            enqueueSnackbar('Failed to save template', { variant: 'error' });
+            setError(MESSAGES.TEMPLATE_SAVE_FAILED);
+            enqueueSnackbar(MESSAGES.TEMPLATE_SAVE_FAILED, { variant: 'error' });
         }
     };
 

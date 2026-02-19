@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
 import { useSnackbar } from 'notistack';
+import MESSAGES from '../../utils/messages';
 import { customerService } from '../../services/customerService';
 import { useAuth } from '../../context/AuthContext';
 
@@ -162,17 +163,17 @@ export default function CustomerPage() {
         try {
             if (editMode && selectedCustomer) {
                 await customerService.updateCustomer(selectedCustomer.id, formData);
-                enqueueSnackbar('Customer updated successfully', { variant: 'success' });
+                enqueueSnackbar(MESSAGES.CUSTOMER_UPDATED, { variant: 'success' });
             } else {
                 await customerService.createCustomer(formData);
-                enqueueSnackbar('Customer created successfully', { variant: 'success' });
+                enqueueSnackbar(MESSAGES.CUSTOMER_CREATED, { variant: 'success' });
             }
             handleClose();
             fetchCustomers();
         } catch (err: any) {
             console.error('Save failed', err);
-            setServerError(err.response?.data?.message || 'Failed to save customer');
-            enqueueSnackbar(err.response?.data?.message || 'Failed to save customer', { variant: 'error' });
+            setServerError(err.response?.data?.message || MESSAGES.CUSTOMER_SAVE_FAILED);
+            enqueueSnackbar(err.response?.data?.message || MESSAGES.CUSTOMER_SAVE_FAILED, { variant: 'error' });
         }
     };
 
@@ -181,10 +182,10 @@ export default function CustomerPage() {
             try {
                 await customerService.deleteCustomer(id);
                 fetchCustomers();
-                enqueueSnackbar('Customer deleted', { variant: 'success' });
+                enqueueSnackbar(MESSAGES.CUSTOMER_DELETED, { variant: 'success' });
             } catch (err) {
                 console.error('Delete failed', err);
-                enqueueSnackbar('Failed to delete customer', { variant: 'error' });
+                enqueueSnackbar(MESSAGES.CUSTOMER_SAVE_FAILED, { variant: 'error' });
             }
         }
     };

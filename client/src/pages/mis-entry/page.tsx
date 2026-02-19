@@ -121,7 +121,7 @@ export default function MISEntryPage() {
     try {
       await misService.deleteEntry(entry.id);
       await fetchEntries();
-      enqueueSnackbar('Entry deleted successfully', { variant: 'success' });
+      enqueueSnackbar(MESSAGES.ENTRY_DELETED, { variant: 'success' });
     } catch (error) {
       console.error('Failed to delete entry', error);
       enqueueSnackbar('Failed to delete entry', { variant: 'error' });
