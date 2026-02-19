@@ -1309,14 +1309,9 @@ export default function AdminPage() {
         }
       }
       const role = formConfig.roles?.find((r: any) => Number(r.id) === Number(selectedRoleIdForPerms));
-      const existingIds = new Set((role?.permissions || []).map((p: any) => Number(p.id)).filter((id: number) => !isNaN(id)));
-      const checkboxActions = ['read', 'create', 'update', 'delete'];
-      for (const p of formConfig.permissions) {
-        if (permissionIds.includes(Number(p.id))) continue;
-        if (!checkboxActions.includes(p.action) && existingIds.has(Number(p.id))) {
-          permissionIds.push(Number(p.id));
-        }
-      }
+      // Destructive overwrite: do NOT preserve any existing non-checkbox permissions.
+      // permissionIds is built exclusively from the UI checkboxes above so saving will
+      // replace role permissions with exactly what was selected in the UI.
       await adminService.assignPermissions({
         roleId: selectedRoleIdForPerms,
         permissionIds,
