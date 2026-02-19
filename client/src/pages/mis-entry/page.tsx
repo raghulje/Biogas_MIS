@@ -129,6 +129,27 @@ export default function MISEntryPage() {
     }
   };
 
+  const handleSubmitSuccess = async (mode: 'create' | 'edit') => {
+    await fetchEntries();
+    if (mode === 'create') enqueueSnackbar(MESSAGES.ENTRY_CREATED_SUBMITTED, { variant: 'success' });
+    else enqueueSnackbar(MESSAGES.ENTRY_UPDATED_SUBMITTED, { variant: 'success' });
+  };
+
+  const handleDraftSaved = async (mode: 'create' | 'edit') => {
+    await fetchEntries();
+    if (mode === 'create') enqueueSnackbar(MESSAGES.DRAFT_SAVED, { variant: 'success' });
+    else enqueueSnackbar(MESSAGES.DRAFT_UPDATED, { variant: 'success' });
+  };
+
+  const handleApproveNotify = async () => {
+    await fetchEntries();
+    enqueueSnackbar(MESSAGES.ENTRY_APPROVED, { variant: 'success' });
+  };
+
+  const handleRejectNotify = async () => {
+    await fetchEntries();
+    enqueueSnackbar(MESSAGES.ENTRY_REJECTED, { variant: 'info' });
+  };
   // Bulk delete handler (called by list view). Returns deleted/failed counts.
   const handleBulkDelete = async (ids: string[]) => {
     let deleted = 0;
@@ -199,7 +220,8 @@ export default function MISEntryPage() {
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDelete}
-          onImportSuccess={fetchEntries}
+          onImportSuccess={async () => { await fetchEntries(); enqueueSnackbar(MESSAGES.IMPORT_DATA_SUCCESS, { variant: 'success' }); }}
+          onBulkDelete={handleBulkDelete}
         />
       ) : (
         <Suspense fallback={formFallback}>

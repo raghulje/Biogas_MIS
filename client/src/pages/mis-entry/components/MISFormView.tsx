@@ -61,6 +61,10 @@ interface MISFormViewProps {
   onBackToList: () => void;
   onAddDigester: () => void;
   onRemoveDigester: (id: number) => void;
+  onSubmitSuccess?: (mode: 'create' | 'edit') => void;
+  onDraftSaved?: (mode: 'create' | 'edit') => void;
+  onApprove?: () => void;
+  onReject?: () => void;
 }
 
 
@@ -140,11 +144,11 @@ export default function MISFormView({
       if (viewMode === 'edit' && selectedEntry) {
         await misService.updateEntry(Number(selectedEntry.id), payload);
         await misService.submitEntry(Number(selectedEntry.id));
-      enqueueSnackbar(MESSAGES.ENTRY_UPDATED_SUBMITTED, { variant: 'success' });
+        onSubmitSuccess?.('edit');
       } else {
         const res = await misService.createEntry(payload);
         await misService.submitEntry(Number(res.id));
-      enqueueSnackbar(MESSAGES.ENTRY_CREATED_SUBMITTED, { variant: 'success' });
+        onSubmitSuccess?.('create');
       }
       onBackToList();
     } catch (err: any) {
@@ -166,10 +170,10 @@ export default function MISFormView({
       const payload = { ...data, status: 'draft' };
       if (viewMode === 'edit' && selectedEntry) {
         await misService.updateEntry(Number(selectedEntry.id), payload);
-        enqueueSnackbar(MESSAGES.DRAFT_UPDATED, { variant: 'success' });
+        onDraftSaved?.('edit');
       } else {
         await misService.createEntry(payload);
-        enqueueSnackbar(MESSAGES.DRAFT_SAVED, { variant: 'success' });
+        onDraftSaved?.('create');
       }
       onBackToList();
     } catch (err: any) {
@@ -184,7 +188,7 @@ export default function MISFormView({
     setSubmitting(true);
     try {
       await misService.approveEntry(Number(selectedEntry.id));
-      enqueueSnackbar(MESSAGES.ENTRY_APPROVED, { variant: 'success' });
+      onApprove?.();
       onBackToList();
     } catch (err: any) {
       setError('Failed to approve entry');
@@ -200,7 +204,7 @@ export default function MISFormView({
     setSubmitting(true);
     try {
       await misService.rejectEntry(Number(selectedEntry.id), reason);
-      enqueueSnackbar(MESSAGES.ENTRY_REJECTED, { variant: 'info' });
+      onReject?.();
       onBackToList();
     } catch (err: any) {
       setError('Failed to reject entry');

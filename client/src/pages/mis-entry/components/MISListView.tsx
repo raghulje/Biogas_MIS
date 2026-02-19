@@ -133,7 +133,7 @@ export default function MISListView({
       console.error(error);
       enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (error.response?.data?.message || error.message), { variant: 'error' });
     } finally {
-      setImporting(false);
+    setImporting(false);
       event.target.value = '';
     }
   };
