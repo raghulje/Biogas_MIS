@@ -275,7 +275,6 @@ export default function NotificationConfigPage() {
                     >
                         <Tab label="Schedule" />
                         <Tab label="Recipients Mapping" />
-                        <Tab label="Email Templates" />
                     </Tabs>
 
                     <TabPanel value={tabValue} index={0}>
@@ -605,118 +604,7 @@ export default function NotificationConfigPage() {
                         </Box>
                     </TabPanel>
 
-                    <TabPanel value={tabValue} index={2}>
-                        {templates.filter(t => ['mis_not_created', 'mis_not_submitted', 'mis_escalation'].includes(t.name)).map(template => (
-                            <Card
-                                key={template.id}
-                                sx={{
-                                    mb: 3,
-                                    borderRadius: { xs: '16px', md: '16px' },
-                                    overflow: 'hidden',
-                                    boxShadow: isPhone ? 2 : 1,
-                                    '&:active': isPhone ? {
-                                        boxShadow: 1
-                                    } : undefined
-                                }}
-                            >
-                                <CardHeader
-                                    title={template.name}
-                                    subheader="Variables: {{date}}"
-                                    sx={{
-                                        background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
-                                        '& .MuiCardHeader-title': {
-                                            fontWeight: 600,
-                                            color: '#2879b6',
-                                            fontSize: { xs: '1.125rem', sm: '1.25rem' }
-                                        },
-                                        '& .MuiCardHeader-subheader': {
-                                            fontSize: { xs: '0.875rem', sm: '0.875rem' }
-                                        },
-                                        py: { xs: 2, sm: 2 },
-                                        px: { xs: 2, sm: 2 }
-                                    }}
-                                />
-                                <CardContent sx={{ px: { xs: 2, sm: 2 }, py: { xs: 2, sm: 2 } }}>
-                                    <TextField
-                                        label="Subject"
-                                        fullWidth
-                                        value={template.subject}
-                                        onChange={(e) => {
-                                            const newTemplates = templates.map(t => t.id === template.id ? { ...t, subject: e.target.value } : t);
-                                            setTemplates(newTemplates);
-                                        }}
-                                        sx={{
-                                            mb: 2,
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '12px',
-                                                fontSize: { xs: '1rem', sm: '1rem' }
-                                            },
-                                            '& .MuiInputLabel-root': {
-                                                fontSize: { xs: '1rem', sm: '1rem' }
-                                            },
-                                            '& .MuiOutlinedInput-input': {
-                                                padding: { xs: '16px 14px', sm: '16.5px 14px' }
-                                            }
-                                        }}
-                                    />
-                                    <TextField
-                                        label="Body (HTML supported)"
-                                        fullWidth
-                                        multiline
-                                        rows={isPhone ? 6 : 4}
-                                        value={template.body}
-                                        onChange={(e) => {
-                                            const newTemplates = templates.map(t => t.id === template.id ? { ...t, body: e.target.value } : t);
-                                            setTemplates(newTemplates);
-                                        }}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '12px',
-                                                fontSize: { xs: '0.9375rem', sm: '1rem' }
-                                            },
-                                            '& .MuiInputLabel-root': {
-                                                fontSize: { xs: '1rem', sm: '1rem' }
-                                            },
-                                            '& .MuiOutlinedInput-input': {
-                                                padding: { xs: '14px', sm: '16.5px 14px' },
-                                                lineHeight: 1.5
-                                            }
-                                        }}
-                                    />
-                                    <Box sx={{ mt: { xs: 2.5, sm: 2 }, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() => handleSaveTemplate(template)}
-                                            fullWidth={isMobile}
-                                            size={isPhone ? 'large' : 'medium'}
-                                            sx={{
-                                                textTransform: 'none',
-                                                borderRadius: '12px',
-                                                py: { xs: 1.75, sm: 1.5 },
-                                                fontWeight: 600,
-                                                borderColor: '#2879b6',
-                                                color: '#2879b6',
-                                                minHeight: isPhone ? 48 : undefined,
-                                                fontSize: { xs: '1rem', sm: '0.875rem' },
-                                                boxShadow: isPhone ? 1 : 0,
-                                                '&:hover': {
-                                                    borderColor: '#235EAC',
-                                                    backgroundColor: 'rgba(40, 121, 182, 0.04)',
-                                                    boxShadow: isPhone ? 2 : 0
-                                                },
-                                                '&:active': isPhone ? {
-                                                    transform: 'scale(0.98)',
-                                                    boxShadow: 0
-                                                } : undefined
-                                            }}
-                                        >
-                                            Save Template
-                                        </Button>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </TabPanel>
+                    {/* Email Templates removed from Notifications page. Templates are managed via Email Templates section. */}
                 </Paper>
             </Box>
         </Layout>
