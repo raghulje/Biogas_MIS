@@ -26,6 +26,7 @@ import {
   CircularProgress,
   Checkbox,
   TablePagination,
+  Zoom,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -55,13 +56,15 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import React from 'react';
 import { useSnackbar } from 'notistack';
 
+import { useAuth } from '../../../context/AuthContext';
+
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
     children: React.ReactElement<any, any>;
   },
   ref: React.Ref<unknown>,
 ) {
-  return <Slide direction="up" ref={ref} {...props} />;
+  return <Zoom ref={ref} {...props} />;
 });
 
 function displayStatus(status: string | undefined): string {
@@ -93,6 +96,7 @@ export default function MISListView({
 }: MISListViewProps) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
+  const { hasPermission } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -106,6 +110,12 @@ export default function MISListView({
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
+
+  const canCreate = hasPermission('mis_entry', 'create');
+  const canUpdate = hasPermission('mis_entry', 'update');
+  const canImport = hasPermission('mis_entry', 'import');
+  const canExport = hasPermission('mis_entry', 'export');
+  const canDelete = hasPermission('mis_entry', 'delete');
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -237,6 +247,7 @@ export default function MISListView({
   return (
     <Box className="aos-fade-up">
       <Box
+        className="aos-fade-down aos-delay-100"
         sx={{
           mb: 3,
           display: 'flex',
@@ -250,83 +261,93 @@ export default function MISListView({
           MIS Entry Records
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Button
-            variant="outlined"
-            startIcon={<ExportIcon />}
-            onClick={handleDownloadTemplate}
-            sx={{
-              textTransform: 'none',
-              borderRadius: '12px',
-              borderColor: '#2879b6',
-              color: '#2879b6',
-              fontWeight: 600,
-              px: 3,
-              py: 1.2,
-            }}
-          >
-            Download Template
-          </Button>
-          <input
-            type="file"
-            id="import-excel"
-            style={{ display: 'none' }}
-            accept=".xlsx, .xls"
-            onChange={handleImport}
-          />
-          <label htmlFor="import-excel">
+          {canExport && (
             <Button
-              component="span"
+              variant="outlined"
+              startIcon={<ExportIcon />}
+              onClick={handleDownloadTemplate}
+              sx={{
+                textTransform: 'none',
+                borderRadius: '12px',
+                borderColor: '#2879b6',
+                color: '#2879b6',
+                fontWeight: 600,
+                px: 3,
+                py: 1.2,
+              }}
+            >
+              Download Template
+            </Button>
+          )}
+          {canImport && (
+            <>
+              <input
+                type="file"
+                id="import-excel"
+                style={{ display: 'none' }}
+                accept=".xlsx, .xls"
+                onChange={handleImport}
+              />
+              <label htmlFor="import-excel">
+                <Button
+                  component="span"
+                  variant="contained"
+                  startIcon={importing ? <CircularProgress size={20} /> : <ImportIcon />}
+                  disabled={importing}
+                  className="btn-gradient-primary"
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    px: 3,
+                    py: 1.2,
+                    borderColor: '#2879b6',
+                    fontWeight: 600,
+                  }}
+                >
+                  {importing ? 'Importing…' : 'Import'}
+                </Button>
+              </label>
+            </>
+          )}
+          {canExport && (
+            <Button
               variant="contained"
-              startIcon={importing ? <CircularProgress size={20} /> : <ImportIcon />}
-              disabled={importing}
-              className="btn-gradient-primary"
+              startIcon={exporting ? <CircularProgress size={20} /> : <ExportIcon />}
+              onClick={handleExport}
+              disabled={exporting || entries.length === 0}
               sx={{
                 textTransform: 'none',
                 borderRadius: '12px',
                 px: 3,
                 py: 1.2,
-                borderColor: '#2879b6',
+                backgroundColor: '#58595B',
+                color: '#fff',
                 fontWeight: 600,
+                '&:hover': { backgroundColor: '#333842' },
               }}
             >
-              {importing ? 'Importing…' : 'Import'}
+              {exporting ? 'Exporting…' : 'Export'}
             </Button>
-          </label>
-          <Button
-            variant="contained"
-            startIcon={exporting ? <CircularProgress size={20} /> : <ExportIcon />}
-            onClick={handleExport}
-            disabled={exporting || entries.length === 0}
-            sx={{
-              textTransform: 'none',
-              borderRadius: '12px',
-              px: 3,
-              py: 1.2,
-              backgroundColor: '#58595B',
-              color: '#fff',
-              fontWeight: 600,
-              '&:hover': { backgroundColor: '#333842' },
-            }}
-          >
-            {exporting ? 'Exporting…' : 'Export'}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onCreateNew}
-            className="btn-gradient-success"
-            sx={{
-              textTransform: 'none',
-              borderRadius: '12px',
-              px: 3,
-              py: 1.2,
-              color: '#fff',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Create New Entry
-          </Button>
+          )}
+          {canCreate && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onCreateNew}
+              className="btn-gradient-success"
+              sx={{
+                textTransform: 'none',
+                borderRadius: '12px',
+                px: 3,
+                py: 1.2,
+                color: '#fff',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Create New Entry
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -519,8 +540,8 @@ export default function MISListView({
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-              {/* Multi-select header checkbox hidden for now */}
-              {/* <TableCell padding="checkbox" sx={{ bgcolor: '#f8f9fa' }}>
+                {/* Multi-select header checkbox hidden for now */}
+                {/* <TableCell padding="checkbox" sx={{ bgcolor: '#f8f9fa' }}>
                   <Checkbox
                     indeterminate={selectedIds.size > 0 && selectedIds.size < filteredEntries.length}
                     checked={filteredEntries.length > 0 && selectedIds.size === filteredEntries.length}
@@ -621,37 +642,38 @@ export default function MISListView({
                             <ViewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Edit Entry">
-                          <IconButton
-                            size="small"
-                            onClick={() => onEdit(entry)}
-                            sx={{
-                              color: '#7dc244',
-                              backgroundColor: 'rgba(125, 194, 68, 0.1)',
-                              borderRadius: '10px',
-                              '&:hover': { backgroundColor: 'rgba(125, 194, 68, 0.2)' },
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        {/* Delete Entry button hidden for now */}
-                        {/*
-                        <Tooltip title="Delete Entry">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDeleteClick(entry)}
-                            sx={{
-                              color: '#ee6a31',
-                              backgroundColor: 'rgba(238, 106, 49, 0.1)',
-                              borderRadius: '10px',
-                              '&:hover': { backgroundColor: 'rgba(238, 106, 49, 0.2)' },
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        */}
+                        {canUpdate && (
+                          <Tooltip title="Edit Entry">
+                            <IconButton
+                              size="small"
+                              onClick={() => onEdit(entry)}
+                              sx={{
+                                color: '#7dc244',
+                                backgroundColor: 'rgba(125, 194, 68, 0.1)',
+                                borderRadius: '10px',
+                                '&:hover': { backgroundColor: 'rgba(125, 194, 68, 0.2)' },
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {canDelete && (
+                          <Tooltip title="Delete Entry">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteClick(entry)}
+                              sx={{
+                                color: '#ee6a31',
+                                backgroundColor: 'rgba(238, 106, 49, 0.1)',
+                                borderRadius: '10px',
+                                '&:hover': { backgroundColor: 'rgba(238, 106, 49, 0.2)' },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -734,28 +756,29 @@ export default function MISListView({
                   >
                     View
                   </Button>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<EditIcon />}
-                    onClick={() => onEdit(entry)}
-                    sx={{ borderRadius: '10px', borderColor: '#7dc244', color: '#7dc244' }}
-                  >
-                    Edit
-                  </Button>
-                  {/* Mobile delete button hidden for now */}
-                  {/*
-                  <IconButton
-                    onClick={() => handleDeleteClick(entry)}
-                    sx={{
-                      borderRadius: '10px',
-                      color: '#ee6a31',
-                      border: '1px solid rgba(238, 106, 49, 0.5)'
-                    }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                  */}
+                  {canUpdate && (
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<EditIcon />}
+                      onClick={() => onEdit(entry)}
+                      sx={{ borderRadius: '10px', borderColor: '#7dc244', color: '#7dc244' }}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <IconButton
+                      onClick={() => handleDeleteClick(entry)}
+                      sx={{
+                        borderRadius: '10px',
+                        color: '#ee6a31',
+                        border: '1px solid rgba(238, 106, 49, 0.5)'
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </Box>
               </CardContent>
             </Card>
@@ -802,7 +825,7 @@ export default function MISListView({
         }}
       >
         <DialogTitle sx={{ fontWeight: 600, color: '#ee6a31' }}>Confirm Delete</DialogTitle>
-        <DialogContent>
+        <DialogContent className="aos-fade-up">
           <Typography>
             Are you sure you want to delete entry <strong>{entryToDelete?.id}</strong>? This action
             cannot be undone.
@@ -854,7 +877,7 @@ export default function MISListView({
         >
           Confirm Bulk Delete
         </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
+        <DialogContent sx={{ mt: 2 }} className="aos-fade-up">
           <Typography variant="body1" sx={{ color: '#333842', mb: 2 }}>
             Are you sure you want to delete <strong>{selectedIds.size}</strong> selected {selectedIds.size === 1 ? 'entry' : 'entries'}?
           </Typography>
