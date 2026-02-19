@@ -75,7 +75,7 @@ export default function MISEntryPage() {
   const [selectedEntry, setSelectedEntry] = useState<MISEntry | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [digesters, setDigesters] = useState<Digester[]>(defaultDigesters);
-  const [showDeleted, setShowDeleted] = useState(false);
+  // const [showDeleted, setShowDeleted] = useState(false); // HIDDEN: Show deleted entries feature
   const { user, hasPermission } = useAuth();
   const roleName = typeof user?.role === 'string' ? user?.role : user?.role?.name;
   const isAdmin = roleName === 'Admin' || roleName === 'SuperAdmin';
@@ -88,7 +88,7 @@ export default function MISEntryPage() {
 
   const fetchEntries = async () => {
     try {
-      const data = await misService.getEntries({ includeDeleted: showDeleted && isAdmin });
+      const data = await misService.getEntries({ includeDeleted: false }); // HIDDEN: was `showDeleted && isAdmin`
       setEntries(data);
     } catch (error) {
       console.error('Failed to fetch entries', error);
@@ -242,6 +242,7 @@ export default function MISEntryPage() {
         formFallback
       ) : viewMode === 'list' ? (
         <>
+          {/* HIDDEN: Show deleted entries toggle — uncomment to re-enable
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
             {isAdmin && (
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
@@ -254,6 +255,7 @@ export default function MISEntryPage() {
               </label>
             )}
           </Box>
+          */}
           <MISListView
             entries={entries}
             isAdmin={isAdmin}

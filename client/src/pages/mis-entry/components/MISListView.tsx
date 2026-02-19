@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -26,7 +26,7 @@ import {
   CircularProgress,
   Checkbox,
   TablePagination,
-  Zoom,
+
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -49,23 +49,14 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { MISEntry } from '../../../mocks/misEntries';
-import Slider from '@mui/material/Slider'; // Ensure Slide is imported
-import Slide from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
+
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import MESSAGES from '../../../utils/messages';
 
 import { useAuth } from '../../../context/AuthContext';
 
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement<any, any>;
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Zoom ref={ref} {...props} />;
-});
+
 
 function displayStatus(status: string | undefined): string {
   if (!status || typeof status !== 'string') return 'Draft';
@@ -98,6 +89,8 @@ export default function MISListView({
   onView,
   onDelete,
   onImportSuccess,
+  onImportError,
+  onBulkDelete,
   isAdmin,
   onHardDelete,
 }: MISListViewProps) {
@@ -137,18 +130,11 @@ export default function MISListView({
       console.error(error);
       onImportError?.(error);
     } finally {
-    setImporting(false);
+      setImporting(false);
       event.target.value = '';
     }
   };
 
-  // If parent asked to show deleted entries, ensure status filter includes them
-  // (so admins who toggle "Show deleted entries" see the results even if a filter was active)
-  useEffect(() => {
-    if ((props as any)?.showDeleted) {
-      setStatusFilter('All');
-    }
-  }, [(props as any)?.showDeleted]);
 
 
   const handleExport = async () => {
@@ -264,7 +250,7 @@ export default function MISListView({
               // parent onDelete is expected to handle notifications
               // we await to keep order and avoid overwhelming backend
               // eslint-disable-next-line @typescript-eslint/no-empty-function
-              await Promise.resolve(onDelete(entry)).catch(() => {});
+              await Promise.resolve(onDelete(entry)).catch(() => { });
             } catch (err) {
               console.error('Bulk delete fallback failed for', id, err);
             }
@@ -875,7 +861,7 @@ export default function MISListView({
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        TransitionComponent={Transition}
+        TransitionComponent={undefined}
         fullScreen={isMobile}
         PaperProps={{
           sx: {
@@ -918,7 +904,7 @@ export default function MISListView({
       <Dialog
         open={bulkDeleteDialogOpen}
         onClose={() => setBulkDeleteDialogOpen(false)}
-        TransitionComponent={Transition}
+        TransitionComponent={undefined}
         fullScreen={isMobile}
         PaperProps={{
           sx: {
