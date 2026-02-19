@@ -33,9 +33,11 @@ export const misService = {
         const response = await api.post('/mis-entries', data);
         return response.data;
     },
-    getEntries: async () => {
+    getEntries: async (opts?: { includeDeleted?: boolean }) => {
         try {
-            const response = await api.get('/mis-entries');
+            const params: Record<string, any> = {};
+            if (opts?.includeDeleted) params.includeDeleted = 'true';
+            const response = await api.get('/mis-entries', { params });
             return response.data;
         } catch (err) {
             console.error('misService.getEntries error:', err);
@@ -68,6 +70,10 @@ export const misService = {
     },
     exportEntries: async (params: any) => {
         const response = await api.get('/mis-entries/export', { params, responseType: 'blob' });
+        return response.data;
+    },
+    hardDeleteEntry: async (id: number) => {
+        const response = await api.delete(`/mis-entries/${id}/hard`);
         return response.data;
     },
     importEntries: async (file: File) => {

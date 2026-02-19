@@ -345,8 +345,27 @@ exports.getEntriesForReport = async (req, res) => {
 
 exports.getEntries = async (req, res) => {
     try {
+        // Allow admin users to include deleted entries via ?includeDeleted=true
+        const includeDeleted = String(req.query.includeDeleted || '').toLowerCase() === 'true';
+        let whereClause = { status: { [Op.ne]: 'deleted' } };
+        if (includeDeleted) {
+            // verify user is admin
+            const userId = req.user && req.user.id;
+            let currentUser = null;
+            try {
+                currentUser = await User.findByPk(userId, { include: [{ association: 'role' }] });
+            } catch (err) { /* ignore */ }
+            const roleName = currentUser && currentUser.role ? currentUser.role.name : null;
+            if (roleName === 'Admin' || roleName === 'SuperAdmin') {
+                whereClause = {}; // include everything
+            } else {
+                // Non-admins cannot include deleted
+                whereClause = { status: { [Op.ne]: 'deleted' } };
+            }
+        }
+
         const entries = await MISDailyEntry.findAll({
-            where: { status: { [Op.ne]: 'deleted' } },
+            where: whereClause,
             attributes: ['id', 'date', 'status', 'created_by', 'created_at'],
             include: [
                 { model: User, as: 'creator', attributes: ['name', 'email'] },

@@ -21,6 +21,8 @@ router.get('/mis-entries', permissionMiddleware('mis_entry', 'read'), misControl
 router.get('/mis-entries/:id', permissionMiddleware('mis_entry', 'read'), misController.getEntryById);
 router.put('/mis-entries/:id', permissionMiddleware('mis_entry', 'update'), misExtensions.updateEntry);
 router.delete('/mis-entries/:id', permissionMiddleware('mis_entry', 'delete'), misExtensions.deleteEntry);
+// Hard delete (permanent) - admin only (controller will enforce role check)
+router.delete('/mis-entries/:id/hard', permissionMiddleware('mis_entry', 'delete'), misExtensions.hardDeleteEntry);
 
 // Workflow
 router.post('/mis-entries/:id/submit', permissionMiddleware('mis_entry', 'submit'), misController.submitEntry);

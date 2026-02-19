@@ -76,6 +76,10 @@ export default function MISEntryPage() {
   const [selectedEntry, setSelectedEntry] = useState<MISEntry | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [digesters, setDigesters] = useState<Digester[]>(defaultDigesters);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const { user, hasPermission } = useAuth();
+  const roleName = typeof user?.role === 'string' ? user?.role : user?.role?.name;
+  const isAdmin = roleName === 'Admin' || roleName === 'SuperAdmin';
 
   useEffect(() => {
     if (viewMode === 'list') {
@@ -85,10 +89,26 @@ export default function MISEntryPage() {
 
   const fetchEntries = async () => {
     try {
-      const data = await misService.getEntries();
+      const data = await misService.getEntries({ includeDeleted: showDeleted && isAdmin });
       setEntries(data);
     } catch (error) {
       console.error('Failed to fetch entries', error);
+    }
+  };
+
+  const handleHardDelete = async (entryId: number) => {
+    if (!isAdmin) {
+      enqueueSnackbar('Only Admin can permanently delete entries', { variant: 'error' });
+      return;
+    }
+    if (!confirm('Permanently delete this entry and all its data? This action cannot be undone.')) return;
+    try {
+      await misService.hardDeleteEntry(entryId);
+      await fetchEntries();
+      enqueueSnackbar('Entry permanently deleted', { variant: 'success' });
+    } catch (err: any) {
+      console.error('Hard delete failed', err);
+      enqueueSnackbar(err.response?.data?.message || 'Failed to permanently delete entry', { variant: 'error' });
     }
   };
 
@@ -222,19 +242,35 @@ export default function MISEntryPage() {
       {loadingDetails ? (
         formFallback
       ) : viewMode === 'list' ? (
-        <MISListView
-          entries={entries}
-          onCreateNew={handleCreateNew}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onImportSuccess={async () => { await fetchEntries(); enqueueSnackbar(MESSAGES.IMPORT_DATA_SUCCESS, { variant: 'success' }); }}
-          onImportError={async (err: any) => {
-            await fetchEntries();
-            enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (err.response?.data?.message || err.message), { variant: 'error' });
-          }}
-          onBulkDelete={handleBulkDelete}
-        />
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            {isAdmin && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                <input
+                  type="checkbox"
+                  checked={showDeleted}
+                  onChange={(e) => { setShowDeleted(e.target.checked); fetchEntries(); }}
+                />
+                Show deleted entries
+              </label>
+            )}
+          </Box>
+          <MISListView
+            entries={entries}
+            isAdmin={isAdmin}
+            onCreateNew={handleCreateNew}
+            onEdit={handleEdit}
+            onView={handleView}
+            onDelete={handleDelete}
+            onHardDelete={handleHardDelete}
+            onImportSuccess={async () => { await fetchEntries(); enqueueSnackbar(MESSAGES.IMPORT_DATA_SUCCESS, { variant: 'success' }); }}
+            onImportError={async (err: any) => {
+              await fetchEntries();
+              enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (err.response?.data?.message || err.message), { variant: 'error' });
+            }}
+            onBulkDelete={handleBulkDelete}
+          />
+        </>
       ) : (
         <Suspense fallback={formFallback}>
           <MISFormView

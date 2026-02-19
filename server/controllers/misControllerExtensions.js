@@ -433,6 +433,61 @@ exports.deleteEntry = async (req, res) => {
     }
 };
 
+// HARD DELETE ENTRY - permanent removal (admin only)
+exports.hardDeleteEntry = async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        // Load user with role to ensure admin
+        const currentUser = await User.findByPk(userId, { include: [{ association: 'role' }] });
+        const roleName = currentUser && currentUser.role ? currentUser.role.name : null;
+        if (!(roleName === 'Admin' || roleName === 'SuperAdmin')) {
+            await t.rollback();
+            return res.status(403).json({ message: 'Only Admin/SuperAdmin can perform permanent deletes' });
+        }
+
+        const entry = await MISDailyEntry.findByPk(id);
+        if (!entry) {
+            await t.rollback();
+            return res.status(404).json({ message: 'Entry not found' });
+        }
+
+        const oldValues = entry.toJSON();
+
+        // Remove child records first
+        await MISRawMaterials.destroy({ where: { entry_id: id }, transaction: t });
+        await MISFeedMixingTank.destroy({ where: { entry_id: id }, transaction: t });
+        await MISDigesterData.destroy({ where: { entry_id: id }, transaction: t });
+        await MISSLSData.destroy({ where: { entry_id: id }, transaction: t });
+        await MISRawBiogas.destroy({ where: { entry_id: id }, transaction: t });
+        await MISRawBiogasQuality.destroy({ where: { entry_id: id }, transaction: t });
+        await MISCompressedBiogas.destroy({ where: { entry_id: id }, transaction: t });
+        await MISCompressors.destroy({ where: { entry_id: id }, transaction: t });
+        await MISFertilizerData.destroy({ where: { entry_id: id }, transaction: t });
+        await MISUtilities.destroy({ where: { entry_id: id }, transaction: t });
+        await MISManpowerData.destroy({ where: { entry_id: id }, transaction: t });
+        await MISPlantAvailability.destroy({ where: { entry_id: id }, transaction: t });
+        await MISHSEData.destroy({ where: { entry_id: id }, transaction: t });
+        await MISBiogasData?.destroy?.({ where: { entry_id: id }, transaction: t }).catch(() => {});
+        await MISFeedData?.destroy?.({ where: { entry_id: id }, transaction: t }).catch(() => {});
+        await MISPowerData?.destroy?.({ where: { entry_id: id }, transaction: t }).catch(() => {});
+        await MISCBGSale.destroy({ where: { entry_id: id }, transaction: t });
+
+        // Finally remove main entry
+        await entry.destroy({ transaction: t });
+
+        await t.commit();
+        await auditService.log(userId, 'HARD_DELETE_MIS_ENTRY', 'MISDailyEntry', id, oldValues, null, req);
+        res.json({ message: 'Entry permanently deleted' });
+    } catch (error) {
+        await t.rollback();
+        console.error('Hard Delete Entry Error:', error);
+        res.status(500).json({ message: 'Error permanently deleting entry', error: error.message });
+    }
+};
+
 // GET IMPORT TEMPLATE - Excel with all section headers
 exports.getImportTemplate = async (req, res) => {
     try {

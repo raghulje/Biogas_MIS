@@ -31,6 +31,7 @@ import {
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
+  DeleteForever as DeleteForeverIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
   Search as SearchIcon,
@@ -86,6 +87,8 @@ interface MISListViewProps {
   onBulkDelete?: (ids: string[]) => Promise<{ deleted: number; failed: number } | null>;
   onImportSuccess?: () => void;
   onImportError?: (err: any) => void;
+  isAdmin?: boolean;
+  onHardDelete?: (entryId: number) => void;
 }
 
 export default function MISListView({
@@ -95,6 +98,8 @@ export default function MISListView({
   onView,
   onDelete,
   onImportSuccess,
+  isAdmin,
+  onHardDelete,
 }: MISListViewProps) {
   const theme = useTheme();
   // Parent component will handle notifications for import/export/delete results.
@@ -700,6 +705,23 @@ export default function MISListView({
                               }}
                             >
                               <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {/* If entry is already soft-deleted, admin can permanently remove it */}
+                        {isAdmin && String(entry.status || '').toLowerCase() === 'deleted' && (
+                          <Tooltip title="Permanently Delete">
+                            <IconButton
+                              size="small"
+                              onClick={() => onHardDelete?.(entry.id)}
+                              sx={{
+                                color: '#b91c1c',
+                                backgroundColor: 'rgba(185, 28, 28, 0.08)',
+                                borderRadius: '10px',
+                                '&:hover': { backgroundColor: 'rgba(185, 28, 28, 0.14)' },
+                              }}
+                            >
+                              <DeleteForeverIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         )}
