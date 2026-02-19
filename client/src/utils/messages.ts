@@ -49,6 +49,9 @@ const MESSAGES = {
   // Dashboard
   FAILED_LOAD_BREAKDOWN: 'Failed to load breakdown',
 
+  // Access controls
+  NO_ACCESS_TO_DRAFTS: 'You do not have access to draft entries.',
+
   // Customer
   CUSTOMER_CREATED: 'Customer created successfully',
   CUSTOMER_UPDATED: 'Customer updated successfully',

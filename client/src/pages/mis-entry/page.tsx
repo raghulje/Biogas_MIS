@@ -3,6 +3,7 @@ import { Layout } from '../../components/Layout';
 import MISListView from './components/MISListView';
 import { misService } from '../../services/misService';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useAuth } from '../../context/AuthContext';
 import { useSnackbar } from 'notistack';
 import MESSAGES from '../../utils/messages';
 
@@ -69,6 +70,7 @@ const defaultDigesters: Digester[] = [
 
 export default function MISEntryPage() {
   const { enqueueSnackbar } = useSnackbar();
+  const { hasPermission } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [entries, setEntries] = useState<MISEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<MISEntry | null>(null);
@@ -108,6 +110,12 @@ export default function MISEntryPage() {
     setLoadingDetails(true);
     try {
       const fullEntry = await misService.getEntryById(entry.id);
+      // Prevent approvers (who only have approve permission) from viewing drafts
+      const isApproverOnly = hasPermission('mis_entry', 'approve') && !hasPermission('mis_entry', 'update') && !hasPermission('mis_entry', 'create');
+      if (isApproverOnly && String(fullEntry.status || '').toLowerCase() === 'draft') {
+        enqueueSnackbar(MESSAGES.NO_ACCESS_TO_DRAFTS, { variant: 'info' });
+        return;
+      }
       setSelectedEntry(fullEntry);
       setViewMode('view');
     } catch (e) {

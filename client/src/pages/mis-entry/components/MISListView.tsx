@@ -176,6 +176,8 @@ export default function MISListView({
     }
   };
 
+  const isApproverOnly = hasPermission('mis_entry', 'approve') && !hasPermission('mis_entry', 'update') && !hasPermission('mis_entry', 'create');
+
   const filteredEntries = entries.filter((entry) => {
     const matchesSearch =
       String(entry.id).toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -185,6 +187,8 @@ export default function MISListView({
     const entryDate = new Date(entry.date);
     const matchesDateRange =
       (!startDate || entryDate >= startDate) && (!endDate || entryDate <= endDate);
+    const isDraft = String(entry.status || '').toLowerCase() === 'draft';
+    if (isApproverOnly && isDraft) return false; // approvers should not see drafts
     return matchesSearch && matchesStatus && matchesDateRange;
   });
   const pageCount = Math.max(1, Math.ceil(filteredEntries.length / rowsPerPage));
