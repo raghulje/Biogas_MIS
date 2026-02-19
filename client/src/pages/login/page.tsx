@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  IconButton,
+  Box,
+  Typography,
+  CircularProgress
+} from '@mui/material';
 // use public asset - put refex-logo.png into client/public/assets/
 import refexLogo from '../../assets/refex-logo.png';
 import { useSnackbar } from 'notistack';
@@ -18,6 +30,10 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -87,24 +103,84 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
             <p className="text-sm text-gray-600">Industrial Biogas Plant MIS</p>
             <div className="mt-3 text-sm">
-              <a
-                href="#"
-                onClick={async (e) => {
+              <button
+                onClick={(e) => {
                   e.preventDefault();
-                  const email = prompt('Enter your account email for password reset:');
-                  if (!email) return;
-                    try {
-                      await (await import('../../services/authService')).authService.forgotPassword(email);
-                      enqueueSnackbar(MESSAGES.RESET_LINK_SENT, { variant: 'info' });
-                    } catch (err) {
-                      enqueueSnackbar(MESSAGES.RESET_LINK_FAILED, { variant: 'error' });
-                    }
+                  setForgotEmail('');
+                  setForgotError('');
+                  setForgotOpen(true);
                 }}
-                className="text-blue-600 hover:underline"
+                className="text-blue-600 hover:underline bg-transparent border-0 p-0"
               >
                 Forgot password?
-              </a>
+              </button>
             </div>
+            <Dialog
+              open={forgotOpen}
+              onClose={() => { if (!forgotLoading) setForgotOpen(false); }}
+              PaperProps={{
+                sx: {
+                  background: 'rgba(255,255,255,0.75)',
+                  backdropFilter: 'blur(6px)',
+                  borderRadius: 3,
+                  p: 2,
+                  minWidth: 360
+                }
+              }}
+            >
+              <DialogTitle>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>Reset password</Typography>
+              </DialogTitle>
+              <DialogContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 0.5 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Enter your account email and we'll send a password reset link.
+                  </Typography>
+                  <TextField
+                    label="Email"
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => { setForgotEmail(e.target.value); setForgotError(''); }}
+                    fullWidth
+                    autoFocus
+                    size="small"
+                  />
+                  {forgotError && <Typography color="error" variant="caption">{forgotError}</Typography>}
+                </Box>
+              </DialogContent>
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button
+                  onClick={() => setForgotOpen(false)}
+                  disabled={forgotLoading}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={async () => {
+                    if (!forgotEmail) {
+                      setForgotError('Please enter your email');
+                      return;
+                    }
+                    try {
+                      setForgotLoading(true);
+                      await (await import('../../services/authService')).authService.forgotPassword(forgotEmail);
+                      setForgotLoading(false);
+                      setForgotOpen(false);
+                      enqueueSnackbar(MESSAGES.RESET_LINK_SENT, { variant: 'info' });
+                    } catch (err: any) {
+                      setForgotLoading(false);
+                      setForgotError(err?.response?.data?.message || 'Failed to send reset link');
+                      enqueueSnackbar(MESSAGES.RESET_LINK_FAILED, { variant: 'error' });
+                    }
+                  }}
+                  sx={{ textTransform: 'none' }}
+                >
+                  {forgotLoading ? <CircularProgress size={20} color="inherit" /> : 'Send reset link'}
+                </Button>
+              </DialogActions>
+            </Dialog>
           </div>
 
           {/* Login Form */}
