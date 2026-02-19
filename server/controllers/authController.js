@@ -22,7 +22,7 @@ const crypto = require('crypto');
 const { PasswordResetToken } = require('../models');
 const emailService = require('../services/emailService');
 // Prefer explicit FRONTEND_URL, then CLIENT_ORIGIN (legacy), else localhost for dev
-const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3015';
 
 exports.forgotPassword = async (req, res) => {
     try {
@@ -110,13 +110,13 @@ exports.login = async (req, res) => {
         if (!isValid) {
             try {
                 const uaInfo = parseUserAgent(req.get('user-agent') || '');
-            await UserActivityLog.create({
-                user_id: user.id,
-                activity_type: 'LOGIN_FAILED',
-                description: 'Invalid password',
+                await UserActivityLog.create({
+                    user_id: user.id,
+                    activity_type: 'LOGIN_FAILED',
+                    description: 'Invalid password',
                     ip_address: req.ip,
                     metadata: uaInfo
-            });
+                });
             } catch (logErr) {
                 console.warn('Activity log failed:', logErr.message);
             }
@@ -131,13 +131,13 @@ exports.login = async (req, res) => {
 
         try {
             const uaInfo = parseUserAgent(req.get('user-agent') || '');
-        await UserActivityLog.create({
-            user_id: user.id,
-            activity_type: 'LOGIN',
-            description: 'User logged in successfully',
+            await UserActivityLog.create({
+                user_id: user.id,
+                activity_type: 'LOGIN',
+                description: 'User logged in successfully',
                 ip_address: req.ip,
                 metadata: uaInfo
-        });
+            });
         } catch (logErr) {
             console.warn('Activity log failed:', logErr.message);
         }
@@ -193,12 +193,25 @@ exports.getProfile = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id, {
             include: [
-                { model: Role, as: 'role' },
+                { model: Role, as: 'role', include: [{ model: Permission, as: 'permissions', through: { attributes: [] } }] },
                 { model: Permission, as: 'permissions', through: { attributes: [] } },
             ],
             attributes: { exclude: ['password'] }
         });
-        res.json(user);
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const userData = user.toJSON();
+
+        // Admin always gets everything in the UI too
+        if (userData.role && (userData.role.name === 'Admin' || userData.role.name === 'SuperAdmin')) {
+            // No need to inject, UI will check role
+        } else {
+            // Inject effective permissions for the frontend (strict user-based only)
+            userData.permissions = userData.permissions || [];
+        }
+
+        res.json(userData);
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
     }

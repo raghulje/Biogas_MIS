@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const apiBase = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/?$/, '');
+const apiBase = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : '/api')).replace(/\/?$/, '');
 const api = axios.create({
     baseURL: apiBase + '/admin',
 });

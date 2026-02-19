@@ -2612,7 +2612,7 @@ const FinalMISPage = () => {
                     );
                   })}
 
-                  {/* Average Row */}
+                  {/* Average Row Commented Out as requested 
                   <tr
                     style={{
                       background: colors.accent2,
@@ -2760,6 +2760,7 @@ const FinalMISPage = () => {
                       ).toFixed(1)}
                     </td>
                   </tr>
+                  */}
 
                   {/* Empty Row */}
                   <tr>

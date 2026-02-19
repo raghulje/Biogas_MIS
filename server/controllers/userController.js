@@ -19,6 +19,7 @@ exports.createUser = async (req, res) => {
         // Sync user-level permissions (primary: admin assigns per user)
         if (req.body.permissions && Array.isArray(req.body.permissions)) {
             await syncUserPermissions(user.id, req.body.permissions);
+            await user.update({ is_custom_perm: true });
         }
 
         await auditService.log(req.user.id, 'CREATE_USER', 'User', user.id, null, { name, email, role_id }, req);
@@ -53,17 +54,18 @@ exports.getUserById = async (req, res) => {
     }
 };
 
-// Map UI page names to backend resources (shared for user permissions)
+// Map UI page names to backend resources — EACH PAGE HAS A UNIQUE RESOURCE
+// This prevents cross-page permission bleed (e.g. Dashboard no longer shares 'config' with Admin Panel)
 const UI_PAGE_TO_RESOURCE = {
-    'Dashboard': 'config',
+    'Dashboard': 'dashboard',
     'MIS Entry': 'mis_entry',
-    'Consolidated MIS View': 'mis_entry',
+    'Consolidated MIS View': 'consolidated_mis',
     'User Management': 'user',
     'Roles & Permissions': 'role',
-    'Configurations': 'config',
     'Admin Panel': 'config',
     'Audit Logs': 'audit',
-    'Import Data': 'mis_entry'
+    'Import Data': 'import_data',
+    'Customer': 'customer'
 };
 
 /** Convert UI permission matrix to DB permission records and set on user (user_permissions). */
@@ -79,11 +81,41 @@ const syncUserPermissions = async (userId, uiPermissions) => {
         const resource = pageName ? UI_PAGE_TO_RESOURCE[pageName] : null;
         if (!resource) continue;
 
+        // Save exactly what the admin toggled — no implicit bundling
         if (perm.read) dbPermissions.push({ resource, action: 'read' });
         if (perm.create) dbPermissions.push({ resource, action: 'create' });
         if (perm.update) dbPermissions.push({ resource, action: 'update' });
         if (perm.delete) dbPermissions.push({ resource, action: 'delete' });
-        if (resource === 'mis_entry' && perm.create) dbPermissions.push({ resource, action: 'submit' });
+    }
+
+    // Also add legacy MIS permissions for API-level enforcement
+    // If user has mis_entry create, also grant submit/import on mis_entry
+    const hasMisCreate = dbPermissions.some(p => p.resource === 'mis_entry' && p.action === 'create');
+    const hasMisUpdate = dbPermissions.some(p => p.resource === 'mis_entry' && p.action === 'update');
+    const hasImportCreate = dbPermissions.some(p => p.resource === 'import_data' && p.action === 'create');
+    if (hasMisCreate) {
+        dbPermissions.push({ resource: 'mis_entry', action: 'submit' });
+    }
+    if (hasImportCreate || hasMisCreate) {
+        dbPermissions.push({ resource: 'mis_entry', action: 'import' });
+    }
+    if (hasMisUpdate) {
+        dbPermissions.push({ resource: 'mis_entry', action: 'export' });
+    }
+    // If user has consolidated_mis read, also grant mis_entry read for API access
+    const hasConsolidatedRead = dbPermissions.some(p => p.resource === 'consolidated_mis' && p.action === 'read');
+    if (hasConsolidatedRead) {
+        dbPermissions.push({ resource: 'mis_entry', action: 'read' });
+    }
+    // If user has import_data read, also grant mis_entry read for API access
+    const hasImportRead = dbPermissions.some(p => p.resource === 'import_data' && p.action === 'read');
+    if (hasImportRead) {
+        dbPermissions.push({ resource: 'mis_entry', action: 'read' });
+    }
+    // If user has dashboard read, also grant config read for API access to configs needed by dashboard
+    const hasDashboardRead = dbPermissions.some(p => p.resource === 'dashboard' && p.action === 'read');
+    if (hasDashboardRead) {
+        dbPermissions.push({ resource: 'config', action: 'read' });
     }
 
     const seen = new Set();
@@ -126,6 +158,7 @@ exports.updateUser = async (req, res) => {
         // Sync user-level permissions (primary: admin assigns per user)
         if (permissions && Array.isArray(permissions)) {
             await syncUserPermissions(user.id, permissions);
+            await user.update({ is_custom_perm: true });
         }
 
         await auditService.log(req.user.id, 'UPDATE_USER', 'User', id, oldValues, { name, email, role_id, is_active }, req);

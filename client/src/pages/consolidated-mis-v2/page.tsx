@@ -260,6 +260,7 @@ export default function ConsolidatedMISV2Page() {
                   <td className="data-cell" style={{ backgroundColor: '#E8F8F5' }} colSpan={4}>{fmt(d.temp)}</td>
                 </tr>
               ))}
+              {/* Average row commented out as requested
               {data?.digesterAverage && (
                 <tr>
                   <td className="row-label">Average</td>
@@ -273,6 +274,7 @@ export default function ConsolidatedMISV2Page() {
                   <td className="data-cell" style={{ backgroundColor: '#E8F8F5' }} colSpan={4}>{fmt(data.digesterAverage.temp)}</td>
                 </tr>
               )}
+              */}
 
               {/* Biogas Quality & Production */}
               <tr>

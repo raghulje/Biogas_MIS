@@ -54,7 +54,6 @@ import { TransitionProps } from '@mui/material/transitions';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React from 'react';
-import { useSnackbar } from 'notistack';
 import MESSAGES from '../../../utils/messages';
 
 import { useAuth } from '../../../context/AuthContext';
@@ -86,6 +85,7 @@ interface MISListViewProps {
   onDelete: (entry: MISEntry) => void;
   onBulkDelete?: (ids: string[]) => Promise<{ deleted: number; failed: number } | null>;
   onImportSuccess?: () => void;
+  onImportError?: (err: any) => void;
 }
 
 export default function MISListView({
@@ -97,7 +97,7 @@ export default function MISListView({
   onImportSuccess,
 }: MISListViewProps) {
   const theme = useTheme();
-  const { enqueueSnackbar } = useSnackbar();
+  // Parent component will handle notifications for import/export/delete results.
   const { hasPermission } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,11 +127,10 @@ export default function MISListView({
     try {
       const { misService } = await import('../../../services/misService');
       await misService.importEntries(file);
-      enqueueSnackbar(MESSAGES.IMPORT_DATA_SUCCESS, { variant: 'success' });
       onImportSuccess?.();
     } catch (error: any) {
       console.error(error);
-      enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (error.response?.data?.message || error.message), { variant: 'error' });
+      onImportError?.(error);
     } finally {
     setImporting(false);
       event.target.value = '';
@@ -155,7 +154,7 @@ export default function MISListView({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error(error);
-      enqueueSnackbar(MESSAGES.EXPORT_FAILED + ': ' + (error.response?.data?.message || error.message), { variant: 'error' });
+      // Parent owns notifications; do not show snackbar here.
     } finally {
       setExporting(false);
     }
@@ -173,7 +172,7 @@ export default function MISListView({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error(error);
-      enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (error.response?.data?.message || error.message), { variant: 'error' });
+      // Parent owns notifications; do not show snackbar here.
     }
   };
 
@@ -202,9 +201,7 @@ export default function MISListView({
       await Promise.resolve(onDelete(entryToDelete));
     } catch (error: any) {
       console.error('Delete failed:', error);
-      // Let parent show error snackbar via its handler; still log here
-      // If parent doesn't surface the error, show a fallback
-      enqueueSnackbar(MESSAGES.FAILED_DELETE_ENTRY + ': ' + (error?.response?.data?.message || error?.message || ''), { variant: 'error' });
+      // Parent will handle error notifications.
     } finally {
       setDeleteDialogOpen(false);
       setEntryToDelete(null);

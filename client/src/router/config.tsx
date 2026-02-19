@@ -14,6 +14,7 @@ const FinalMISPage = lazy(() => import('../pages/final-mis/page'));
 const AdminPage = lazy(() => import('../pages/admin/page'));
 const NotificationConfigPage = lazy(() => import('../pages/admin/notifications/page'));
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/page'));
+const CustomerPage = lazy(() => import('../pages/customer/page'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 const PageLoader = () => (
@@ -124,6 +125,16 @@ const routes: RouteObject[] = [
             <NotificationConfigPage />
           </Suspense>
         </AdminRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/customers',
+    element: (
+      <ProtectedRoute>
+        <Suspense fallback={<PageLoader />}>
+          <CustomerPage />
+        </Suspense>
       </ProtectedRoute>
     ),
   },

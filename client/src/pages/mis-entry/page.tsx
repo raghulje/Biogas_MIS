@@ -221,6 +221,10 @@ export default function MISEntryPage() {
           onView={handleView}
           onDelete={handleDelete}
           onImportSuccess={async () => { await fetchEntries(); enqueueSnackbar(MESSAGES.IMPORT_DATA_SUCCESS, { variant: 'success' }); }}
+          onImportError={async (err: any) => {
+            await fetchEntries();
+            enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (err.response?.data?.message || err.message), { variant: 'error' });
+          }}
           onBulkDelete={handleBulkDelete}
         />
       ) : (

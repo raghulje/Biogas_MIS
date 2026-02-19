@@ -16,17 +16,17 @@ const permissionMiddleware = (resource, action) => {
             let user = null;
             try {
                 user = await User.findByPk(userId, {
-                include: [
+                    include: [
                         { model: Role, as: 'role', include: [{ model: Permission, as: 'permissions', through: { attributes: [] }, attributes: ['id', 'resource', 'action'] }] },
                         { model: Permission, as: 'permissions', through: { attributes: [] }, attributes: ['id', 'resource', 'action'] }
-                        ]
+                    ]
                 });
             } catch (queryErr) {
                 console.error('Permission Middleware: user load failed, trying role-only', queryErr.message);
                 try {
                     user = await User.findByPk(userId, {
                         include: [{ model: Role, as: 'role', include: [{ model: Permission, as: 'permissions', through: { attributes: [] }, attributes: ['id', 'resource', 'action'] }] }]
-            });
+                    });
                 } catch (e2) {
                     console.error('Permission Middleware Error:', e2);
                     return res.status(500).json({ message: 'Server Error' });
@@ -42,10 +42,9 @@ const permissionMiddleware = (resource, action) => {
                 return next();
             }
 
-            // User-level permissions (primary); fallback to role permissions if user has none set
-            const perms = (user.permissions && user.permissions.length > 0)
-                ? user.permissions
-                : (user.role && user.role.permissions) || [];
+            // User-level permissions (primary); No fallback for non-admins to ensure strict user-based control
+            const perms = user.permissions || [];
+
             const hasPermission = perms.some(
                 perm => perm && perm.resource === resource && (perm.action === action || perm.action === '*')
             );

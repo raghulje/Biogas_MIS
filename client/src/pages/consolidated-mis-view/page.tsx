@@ -279,7 +279,7 @@ const ConsolidatedMISView = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockMISData.digesterPerformance.map((row, idx) => (
+                  {mockMISData.digesterPerformance.filter(row => row.digester !== 'Average').map((row, idx) => (
                     <tr key={idx}>
                       <TableCell highlight={row.digester === 'Average'}>{row.digester}</TableCell>
                       <TableCell align="center">{row.ts}</TableCell>

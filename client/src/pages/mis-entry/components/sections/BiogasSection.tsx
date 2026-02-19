@@ -4,8 +4,15 @@ import {
   TextField,
   Grid,
   Box,
+  Button,
+  IconButton,
+  MenuItem,
 } from '@mui/material';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useState, useEffect } from 'react';
+import { customerService } from '../../../../services/customerService';
 
 interface Props {
   selectedEntry?: any;
@@ -13,7 +20,24 @@ interface Props {
 }
 
 export default function BiogasSection({ isReadOnly }: Props) {
-  const { register } = useFormContext();
+  const { register, control, watch, setValue } = useFormContext();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "cbgSales"
+  });
+
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  useEffect(() => {
+    customerService.getCustomers({ status: 'active' }).then(setCustomers).catch(console.error);
+  }, []);
+
+  // Calculate total sold whenever cbgSales changes
+  const cbgSales = watch('cbgSales');
+  useEffect(() => {
+    const total = (cbgSales || []).reduce((sum: number, item: any) => sum + (parseFloat(item.quantity) || 0), 0);
+    setValue('compressedBiogas.cbgSold', total);
+  }, [cbgSales, setValue]);
 
   const sectionStyle = {
     mb: 2,
@@ -129,7 +153,71 @@ export default function BiogasSection({ isReadOnly }: Props) {
               <TextField fullWidth label="CBG Stock" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.cbgStock')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-              <TextField fullWidth label="CBG Sold" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.cbgSold')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
+              <TextField fullWidth label="CBG Sold" type="number" inputProps={{ step: 'any', inputMode: 'decimal', readOnly: true }} {...register('compressedBiogas.cbgSold')} disabled={true} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px', bgcolor: '#f5f5f5' } }} />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ mt: 2, p: 2, border: '1px dashed #e0e0e0', borderRadius: '8px' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>CBG Sales Detail</Typography>
+                  {!isReadOnly && (
+                    <Button
+                      startIcon={<AddCircleIcon />}
+                      variant="outlined"
+                      size="small"
+                      onClick={() => append({ customerId: '', quantity: '' })}
+                    >
+                      Add Sale
+                    </Button>
+                  )}
+                </Box>
+                {fields.map((field, index) => (
+                  <Grid container spacing={2} key={field.id} sx={{ mb: 2, alignItems: 'center' }}>
+                    <Grid item xs={12} sm={6}>
+                      <Controller
+                        name={`cbgSales.${index}.customerId`}
+                        control={control}
+                        defaultValue=""
+                        render={({ field: controllerField }) => (
+                          <TextField
+                            select
+                            fullWidth
+                            label="Customer"
+                            value={controllerField.value || ''}
+                            onChange={controllerField.onChange}
+                            disabled={isReadOnly}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                          >
+                            {customers.map((c) => (
+                              <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                            ))}
+                          </TextField>
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <TextField
+                        fullWidth
+                        label="Quantity (kg)"
+                        type="number"
+                        inputProps={{ step: 'any' }}
+                        {...register(`cbgSales.${index}.quantity`)}
+                        disabled={isReadOnly}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      />
+                    </Grid>
+                    {!isReadOnly && (
+                      <Grid item xs={12} sm={2}>
+                        <IconButton onClick={() => remove(index)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </Grid>
+                    )}
+                  </Grid>
+                ))}
+                {fields.length === 0 && (
+                  <Typography variant="body2" color="textSecondary" align="center">No sales entries added.</Typography>
+                )}
+              </Box>
             </Grid>
           </Grid>
         </Box>

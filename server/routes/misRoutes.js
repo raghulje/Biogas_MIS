@@ -30,5 +30,6 @@ router.post('/mis-entries/:id/reject', permissionMiddleware('mis_entry', 'approv
 
 // Dashboard
 router.get('/dashboard/daily', misExtensions.getDashboardData);
+router.get('/dashboard/cbg-sales', misExtensions.getCBGSalesBreakdown);
 
 module.exports = router;

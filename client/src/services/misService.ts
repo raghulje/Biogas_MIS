@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:5001/api'),
+    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : '/api')),
     headers: {
         'Content-Type': 'application/json',
     },
@@ -108,6 +108,14 @@ export const misService = {
     },
     getImportTemplate: async (): Promise<Blob> => {
         const response = await api.get('/mis-entries/import-template', { responseType: 'blob' });
+        return response.data;
+    },
+    getCBGSalesBreakdown: async (params: { period?: string; startDate?: string; endDate?: string } = {}) => {
+        const period = params.period ?? 'month';
+        const query: Record<string, string> = { period };
+        if (params.startDate) query.startDate = params.startDate;
+        if (params.endDate) query.endDate = params.endDate;
+        const response = await api.get('/dashboard/cbg-sales', { params: query });
         return response.data;
     }
 };

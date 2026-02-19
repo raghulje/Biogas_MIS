@@ -23,8 +23,6 @@ import SLSMachineSection from './sections/SLSMachineSection';
 import BiogasSection from './sections/BiogasSection';
 import OtherSections from './sections/OtherSections';
 import { misService } from '../../../services/misService';
-import { useSnackbar } from 'notistack';
-import MESSAGES from '../../../utils/messages';
 import { useAuth } from '../../../context/AuthContext';
 
 interface Digester {
@@ -88,7 +86,6 @@ export default function MISFormView({
   const isReadOnly = viewMode === 'view';
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { enqueueSnackbar } = useSnackbar();
 
   const defaultCreateValues = {
     date: new Date().toISOString().split('T')[0],

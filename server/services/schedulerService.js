@@ -92,8 +92,16 @@ class SchedulerService {
                 if (!entryCreated) {
                     let noEntryEmails = [];
                     try {
-                        const configRow = await MISEmailConfig.findByPk(1);
-                        const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+                        const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
+                        const parse = (s) => {
+                            if (!s) return [];
+                            try {
+                                const a = JSON.parse(s);
+                                return Array.isArray(a) ? a : [s];
+                            } catch {
+                                return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+                            }
+                        };
                         noEntryEmails = configRow ? parse(configRow.entry_not_created_emails) : [];
                     } catch (_) { /* ignore */ }
                     if (noEntryEmails.length === 0) {
@@ -146,8 +154,16 @@ class SchedulerService {
                 // Get Recipients: Config + Site Users
                 let siteUserEmails = [];
                 try {
-                    const configRow = await MISEmailConfig.findByPk(1);
-                    const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+                    const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
+                    const parse = (s) => {
+                        if (!s) return [];
+                        try {
+                            const a = JSON.parse(s);
+                            return Array.isArray(a) ? a : [s];
+                        } catch {
+                            return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+                        }
+                    };
                     if (configRow) {
                         // For "Not Created" scenario
                         if (!entryCreated) siteUserEmails = [...siteUserEmails, ...parse(configRow.entry_not_created_emails)];
@@ -190,8 +206,16 @@ class SchedulerService {
                 if (!entrySubmitted) {
                     let managerEmails = [];
                     try {
-                        const configRow = await MISEmailConfig.findByPk(1);
-                        const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+                        const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
+                        const parse = (s) => {
+                            if (!s) return [];
+                            try {
+                                const a = JSON.parse(s);
+                                return Array.isArray(a) ? a : [s];
+                            } catch {
+                                return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+                            }
+                        };
                         if (configRow) managerEmails = parse(configRow.escalation_notify_emails);
                     } catch (_) { }
 

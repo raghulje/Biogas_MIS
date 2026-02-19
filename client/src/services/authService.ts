@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // In dev, use relative /api so Vite proxies to backend (no CORS, no port mismatch)
 const apiBase = import.meta.env.DEV
-  ? '/api'
-  : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5001/api'));
+    ? '/api'
+    : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:3015/api'));
 const api = axios.create({ baseURL: apiBase });
 
 api.interceptors.request.use((config) => {

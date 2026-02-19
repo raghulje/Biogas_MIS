@@ -20,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
             MISDailyEntry.hasOne(models.MISManpowerData, { foreignKey: 'entry_id', as: 'manpower', onDelete: 'CASCADE' });
             MISDailyEntry.hasOne(models.MISPlantAvailability, { foreignKey: 'entry_id', as: 'plantAvailability', onDelete: 'CASCADE' });
             MISDailyEntry.hasOne(models.MISHSEData, { foreignKey: 'entry_id', as: 'hse', onDelete: 'CASCADE' });
+            MISDailyEntry.hasMany(models.MISCBGSale, { foreignKey: 'entry_id', as: 'cbgSales', onDelete: 'CASCADE' });
         }
     }
     MISDailyEntry.init({

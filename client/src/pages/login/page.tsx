@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 // use public asset - put refex-logo.png into client/public/assets/
 import refexLogo from '../../assets/refex-logo.png';
 import { useSnackbar } from 'notistack';
+import MESSAGES from '../../utils/messages';
 const SREL_LOGO = refexLogo;
 
 export default function LoginPage() {
@@ -92,12 +93,12 @@ export default function LoginPage() {
                   e.preventDefault();
                   const email = prompt('Enter your account email for password reset:');
                   if (!email) return;
-                  try {
-                    await (await import('../../services/authService')).authService.forgotPassword(email);
-                    enqueueSnackbar('If the email exists, a reset link has been sent.', { variant: 'info' });
-                  } catch (err) {
-                    enqueueSnackbar('Failed to send reset email. Please try again later.', { variant: 'error' });
-                  }
+                    try {
+                      await (await import('../../services/authService')).authService.forgotPassword(email);
+                      enqueueSnackbar(MESSAGES.RESET_LINK_SENT, { variant: 'info' });
+                    } catch (err) {
+                      enqueueSnackbar(MESSAGES.RESET_LINK_FAILED, { variant: 'error' });
+                    }
                 }}
                 className="text-blue-600 hover:underline"
               >

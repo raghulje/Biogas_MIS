@@ -94,11 +94,14 @@ if (shouldServeClient && fs.existsSync(clientPath)) {
 
     // Base Route
     app.get('/', (req, res) => {
+        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+        const host = req.get('host');
+        const baseUrl = `${protocol}://${host}`;
         res.json({
             message: 'Biogas MIS API is running',
-            mode: 'development',
-            apiUrl: `http://localhost:3015/api`,
-            clientUrl: 'http://localhost:5173',
+            mode: process.env.NODE_ENV || 'development',
+            apiUrl: `${baseUrl}/api`,
+            clientUrl: process.env.FRONTEND_URL || `${protocol}://${host.split(':')[0]}:5173`,
             note: 'Set SERVE_CLIENT=true in .env to serve built client files'
         });
     });
@@ -106,10 +109,13 @@ if (shouldServeClient && fs.existsSync(clientPath)) {
     // Return helpful message for non-API routes
     app.get("*", (req, res) => {
         if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
+            const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+            const host = req.get('host');
+            const baseUrl = `${protocol}://${host}`;
             res.json({
                 message: "API Server is running. Client should be running separately on port 5173.",
-                apiUrl: `https://srel.refex.group:/api`,
-                clientUrl: "http://localhost:5173",
+                apiUrl: `${baseUrl}/api`,
+                clientUrl: process.env.FRONTEND_URL || `${protocol}://${host.split(':')[0]}:5173`,
                 note: "Set SERVE_CLIENT=true in .env to serve built client files"
             });
         }
@@ -129,17 +135,11 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server — safe production-ready startup
-const migrationRunner = require('./services/migrationRunner');
-
 async function startServer() {
     try {
         // Authenticate DB connection first
         await db.sequelize.authenticate();
         console.log('Database connection authenticated');
-
-        // Run migrations (programmatic, idempotent). In production CI/CD you may run migrations separately.
-        await migrationRunner.runPendingMigrations();
-        console.log('Migrations checked/applied (if any)');
 
         // Ensure cron/scheduler starts — required for email reminders
         try {

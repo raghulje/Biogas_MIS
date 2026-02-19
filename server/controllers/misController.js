@@ -14,6 +14,7 @@ const {
     MISManpowerData,
     MISPlantAvailability,
     MISHSEData,
+    MISCBGSale,
     User,
     Role,
     MISEmailConfig,
@@ -134,6 +135,13 @@ const transformEntry = (entry) => {
         };
     }
 
+    if (e.cbgSales) {
+        res.cbgSales = e.cbgSales.map(s => ({
+            customerId: s.customer_id,
+            quantity: s.quantity
+        }));
+    }
+
     if (e.compressors) {
         res.compressors = {
             compressor1Hours: e.compressors.compressor_1_hours,
@@ -171,12 +179,15 @@ const transformEntry = (entry) => {
     }
 
     if (e.plantAvailability) {
-        res.plantAvailability = {
-            workingHours: e.plantAvailability.working_hours,
-            scheduledDowntime: e.plantAvailability.scheduled_downtime,
-            unscheduledDowntime: e.plantAvailability.unscheduled_downtime,
-            totalAvailability: e.plantAvailability.total_availability
-        };
+        const pa = Array.isArray(e.plantAvailability) ? e.plantAvailability[0] : e.plantAvailability;
+        if (pa) {
+            res.plantAvailability = {
+                workingHours: pa.working_hours,
+                scheduledDowntime: pa.scheduled_downtime,
+                unscheduledDowntime: pa.unscheduled_downtime,
+                totalAvailability: pa.total_availability
+            };
+        }
     }
 
     if (e.hse) {
@@ -205,7 +216,7 @@ exports.createEntry = async (req, res) => {
     // I'll copy the createEntry logic from previous step.
     const t = await sequelize.transaction();
     try {
-        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, compressors, fertilizer, utilities, manpower, plantAvailability, hse } = req.body;
+        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, cbgSales, compressors, fertilizer, utilities, manpower, plantAvailability, hse } = req.body;
         const userId = req.user.id;
         const statusVal = status ? String(status).toLowerCase() : 'draft';
         const allowedStatus = ['draft', 'submitted', 'under_review', 'approved', 'rejected'].includes(statusVal) ? statusVal : 'draft';
@@ -241,6 +252,15 @@ exports.createEntry = async (req, res) => {
         if (rawBiogasQuality) childPromises.push(MISRawBiogasQuality.create({ entry_id: entryId, ch4: n(rawBiogasQuality.ch4), co2: n(rawBiogasQuality.co2), h2s: n(rawBiogasQuality.h2s), o2: n(rawBiogasQuality.o2), n2: n(rawBiogasQuality.n2) }, { transaction: t }));
 
         if (compressedBiogas) childPromises.push(MISCompressedBiogas.create({ entry_id: entryId, produced: n(compressedBiogas.produced), ch4: n(compressedBiogas.ch4), co2: n(compressedBiogas.co2), h2s: n(compressedBiogas.h2s), o2: n(compressedBiogas.o2), n2: n(compressedBiogas.n2), conversion_ratio: n(compressedBiogas.conversionRatio), ch4_slippage: n(compressedBiogas.ch4Slippage), cbg_stock: n(compressedBiogas.cbgStock), cbg_sold: n(compressedBiogas.cbgSold) }, { transaction: t }));
+
+        if (cbgSales && Array.isArray(cbgSales)) {
+            const salePromises = cbgSales.map(s => MISCBGSale.create({
+                entry_id: entryId,
+                customer_id: s.customerId,
+                quantity: n(s.quantity)
+            }, { transaction: t }));
+            childPromises.push(...salePromises);
+        }
 
         if (compressors) childPromises.push(MISCompressors.create({ entry_id: entryId, compressor_1_hours: n(compressors.compressor1Hours), compressor_2_hours: n(compressors.compressor2Hours), total_hours: n(compressors.totalHours) }, { transaction: t }));
 
@@ -371,6 +391,7 @@ exports.getEntryById = async (req, res) => {
                 { model: MISManpowerData, as: 'manpower' },
                 { model: MISPlantAvailability, as: 'plantAvailability' },
                 { model: MISHSEData, as: 'hse' },
+                { model: MISCBGSale, as: 'cbgSales' },
                 { model: User, as: 'creator', attributes: ['name', 'email'] }
             ]
         });
@@ -396,8 +417,16 @@ exports.submitEntry = async (req, res) => {
         // Recipients from Admin Panel (MIS Email Config); fallback to Manager/Admin + env if none set
         const toEmails = new Set();
         try {
-            const configRow = await MISEmailConfig.findByPk(1);
-            const parse = (s) => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+            const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
+            const parse = (s) => {
+                if (!s) return [];
+                try {
+                    const a = JSON.parse(s);
+                    return Array.isArray(a) ? a : [s];
+                } catch {
+                    return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+                }
+            };
             const adminEmails = configRow ? parse(configRow.submit_notify_emails) : [];
             adminEmails.forEach(e => { const x = String(e).trim().toLowerCase(); if (x) toEmails.add(x); });
         } catch (_) { /* ignore */ }
@@ -408,7 +437,7 @@ exports.submitEntry = async (req, res) => {
             (process.env.MIS_NOTIFY_EMAILS || '').split(',').forEach(e => { const x = e.trim().toLowerCase(); if (x) toEmails.add(x); });
         }
 
-        const FE_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+        const FE_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3015';
         const subject = `MIS Entry Submitted - ${entry.date}`;
         const reviewLink = `${FE_URL.replace(/\/$/, '')}/mis-entry`;
         const html = `<p>Hello,</p>

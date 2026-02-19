@@ -59,7 +59,7 @@ class ReminderScheduler {
       });
       this.jobs.set(jobKey, job);
       jobKeys.push(jobKey);
-      console.log(`Scheduled reminder job ${jobKey} at ${h}:${String(m).padStart(2,'0')} (cron: ${cronExpr})`);
+      console.log(`Scheduled reminder job ${jobKey} at ${h}:${String(m).padStart(2, '0')} (cron: ${cronExpr})`);
     }
     this.scheduleJobs.set(scheduleId, jobKeys);
   }
@@ -109,9 +109,17 @@ class ReminderScheduler {
       const { MISEmailConfig } = require('../models');
       let toList = [];
       try {
-        const cfg = await MISEmailConfig.findByPk(1);
+        const cfg = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
         if (cfg) {
-          const parse = s => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+          const parse = (s) => {
+            if (!s) return [];
+            try {
+              const a = JSON.parse(s);
+              return Array.isArray(a) ? a : [s];
+            } catch {
+              return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+            }
+          };
           toList = parse(cfg.not_submitted_notify_emails || '[]');
         }
       } catch (e) { /* ignore */ }

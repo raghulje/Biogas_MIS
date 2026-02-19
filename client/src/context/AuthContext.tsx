@@ -7,6 +7,7 @@ interface User {
   name: string;
   email: string;
   role: string | { name: string };
+  permissions?: any[];
 }
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
+  hasPermission: (resource: string, action: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +55,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const data = await authService.login({ email, password });
     localStorage.setItem('token', data.accessToken);
     setToken(data.accessToken);
-    setUser(data.user);
+
+    // Fetch full profile immediately after login to get the latest permissions
+    const userData = await authService.getProfile();
+    setUser(userData);
     const at = new Date().toISOString();
     localStorage.setItem('loginAt', at);
     setLoginAt(at);
@@ -93,6 +98,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [loginAt]);
 
+  const hasPermission = (resource: string, action: string): boolean => {
+    if (!user) return false;
+    const roleName = typeof user.role === 'string' ? user.role : user.role?.name;
+    if (roleName === 'Admin' || roleName === 'SuperAdmin') return true;
+    if (!user.permissions || !Array.isArray(user.permissions)) return false;
+    return user.permissions.some((p: any) =>
+      p.resource === resource && (p.action === action || p.action === '*')
+    );
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -102,7 +117,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         isAuthenticated: !!token,
-        loading
+        loading,
+        hasPermission
       }}
     >
       {children}

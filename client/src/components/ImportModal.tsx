@@ -15,8 +15,6 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { misService } from '../services/misService';
-import { useSnackbar } from 'notistack';
-import MESSAGES from '../utils/messages';
 
 interface ImportModalProps {
   open: boolean;
@@ -25,7 +23,7 @@ interface ImportModalProps {
 }
 
 export default function ImportModal({ open, onClose, onSuccess }: ImportModalProps) {
-  const { enqueueSnackbar } = useSnackbar();
+  // Parent should own notifications; use onSuccess/onClose to communicate result.
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -64,16 +62,14 @@ export default function ImportModal({ open, onClose, onSuccess }: ImportModalPro
       setSuccess(true);
       setRecordsImported(data?.results?.success ?? data?.recordsImported ?? 0);
       setSelectedFile(null);
-
-      if (onSuccess) {
-        onSuccess();
-      }
-      enqueueSnackbar(MESSAGES.IMPORT_SUCCESS, { variant: 'success' });
+      if (onSuccess) onSuccess();
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || err.response?.data?.error || 'Failed to import Excel file. Please try again.'
-      );
-      enqueueSnackbar(MESSAGES.IMPORT_FAILED, { variant: 'error' });
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to import Excel file. Please try again.';
+      setError(msg);
+      if (onSuccess) {
+        // use onSuccess as an error callback isn't provided; parent can refresh or handle
+      }
+      // Do not show snackbar here; parent should display it via onSuccess/onError
     } finally {
       setUploading(false);
       setProgress(0);

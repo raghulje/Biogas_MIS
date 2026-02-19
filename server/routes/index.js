@@ -21,6 +21,7 @@ router.get('/health', (req, res) => {
 
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
+router.use('/customers', require('./customerRoutes'));
 
 // Public app config (theme) - used on app load
 router.get('/app-config/theme', appController.getTheme);

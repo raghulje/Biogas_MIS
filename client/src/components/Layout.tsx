@@ -31,6 +31,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   NotificationsActive as NotificationsIcon,
+  Storefront as StoreIcon,
 } from '@mui/icons-material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -120,17 +121,17 @@ export const Layout = ({ children }: LayoutProps) => {
     }
   })();
 
+  const { hasPermission } = useAuth();
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'MIS Entry', icon: <AssignmentIcon />, path: '/mis-entry' },
-    // Consolidated MIS View & v2 hidden for now – routes still work at /consolidated-mis-view, /consolidated-mis-v2
-    { text: 'Final MIS Report', icon: <AssessmentIcon />, path: '/final-mis' },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', visible: hasPermission('dashboard', 'read') },
+    { text: 'MIS Entry', icon: <AssignmentIcon />, path: '/mis-entry', visible: hasPermission('mis_entry', 'read') },
+    { text: 'Final MIS Report', icon: <AssessmentIcon />, path: '/final-mis', visible: hasPermission('mis_entry', 'read') },
+    { text: 'Customer Master', icon: <StoreIcon />, path: '/customers', visible: hasPermission('customer', 'read') },
     ...(hasAdminAccess ? [
-      { text: 'Admin Panel', icon: <AdminIcon />, path: '/admin' },
-      { text: 'Email Notifications', icon: <NotificationsIcon />, path: '/admin/notifications' },
+      { text: 'Admin Panel', icon: <AdminIcon />, path: '/admin', visible: true },
+      { text: 'Email Notifications', icon: <NotificationsIcon />, path: '/admin/notifications', visible: true },
     ] : []),
-    // Audit Logs hidden for now – route still works at /audit-logs
-  ];
+  ].filter(item => item.visible);
 
   const renderDrawerContent = (isCollapsed: boolean) => (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -145,7 +146,7 @@ export const Layout = ({ children }: LayoutProps) => {
           transition: 'all 0.3s ease',
         }}
       >
-          {!isCollapsed && (
+        {!isCollapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
             <img
               src={SREL_LOGO}
@@ -420,7 +421,7 @@ export const Layout = ({ children }: LayoutProps) => {
         }}
       >
         {children}
-        {/* Global footer */ }
+        {/* Global footer */}
         <Box component="footer" sx={{ mt: 4, py: 2, textAlign: 'center', color: 'text.secondary' }}>
           <Typography variant="caption">
             Built & Maintained by Refex AI Team © {new Date().getFullYear()}
