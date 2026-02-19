@@ -122,10 +122,34 @@ export default function MISEntryPage() {
     try {
       await misService.deleteEntry(entry.id);
       await fetchEntries();
+      enqueueSnackbar(MESSAGES.ENTRY_DELETED, { variant: 'success' });
     } catch (error) {
       console.error('Failed to delete entry', error);
       enqueueSnackbar(MESSAGES.FAILED_DELETE_ENTRY, { variant: 'error' });
     }
+  };
+
+  // Bulk delete handler (called by list view). Returns deleted/failed counts.
+  const handleBulkDelete = async (ids: string[]) => {
+    let deleted = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await misService.deleteEntry(id);
+        deleted++;
+      } catch (err) {
+        console.error('Bulk delete failed for', id, err);
+        failed++;
+      }
+    }
+    await fetchEntries();
+    if (deleted > 0) {
+      enqueueSnackbar(MESSAGES.DELETED_N_ENTRIES(deleted), { variant: 'success' });
+    }
+    if (failed > 0) {
+      enqueueSnackbar(`${failed} entries failed to delete`, { variant: 'error' });
+    }
+    return { deleted, failed };
   };
 
   const handleCreateNew = () => {

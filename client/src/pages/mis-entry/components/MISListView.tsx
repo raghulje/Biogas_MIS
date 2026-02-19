@@ -84,6 +84,7 @@ interface MISListViewProps {
   onEdit: (entry: MISEntry) => void;
   onView: (entry: MISEntry) => void;
   onDelete: (entry: MISEntry) => void;
+  onBulkDelete?: (ids: string[]) => Promise<{ deleted: number; failed: number } | null>;
   onImportSuccess?: () => void;
 }
 
@@ -199,9 +200,10 @@ export default function MISListView({
     if (!entryToDelete) return;
     try {
       await Promise.resolve(onDelete(entryToDelete));
-      enqueueSnackbar(MESSAGES.ENTRY_DELETED, { variant: 'success' });
     } catch (error: any) {
       console.error('Delete failed:', error);
+      // Let parent show error snackbar via its handler; still log here
+      // If parent doesn't surface the error, show a fallback
       enqueueSnackbar(MESSAGES.FAILED_DELETE_ENTRY + ': ' + (error?.response?.data?.message || error?.message || ''), { variant: 'error' });
     } finally {
       setDeleteDialogOpen(false);
@@ -235,20 +237,28 @@ export default function MISListView({
   const handleBulkDeleteConfirm = () => {
     (async () => {
       const ids = Array.from(selectedIds);
-      let deleted = 0;
-      for (const id of ids) {
-        const entry = entries.find(e => e.id === id);
-        if (!entry) continue;
-        try {
-          await Promise.resolve(onDelete(entry));
-          deleted++;
-        } catch (err) {
-          console.error('Bulk delete failed for', id, err);
+      try {
+        if (typeof onBulkDelete === 'function') {
+          await onBulkDelete(ids);
+        } else {
+          // Fallback: call single-delete handler for each id (no snackbars here)
+          for (const id of ids) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) continue;
+            try {
+              // parent onDelete is expected to handle notifications
+              // we await to keep order and avoid overwhelming backend
+              // eslint-disable-next-line @typescript-eslint/no-empty-function
+              await Promise.resolve(onDelete(entry)).catch(() => {});
+            } catch (err) {
+              console.error('Bulk delete fallback failed for', id, err);
+            }
+          }
         }
+      } finally {
+        setSelectedIds(new Set());
+        setBulkDeleteDialogOpen(false);
       }
-      setSelectedIds(new Set());
-      setBulkDeleteDialogOpen(false);
-      if (deleted > 0) enqueueSnackbar(MESSAGES.DELETED_N_ENTRIES(deleted), { variant: 'success' });
     })();
   };
 
