@@ -61,6 +61,7 @@ export default function NotificationConfigPage() {
     // Recipient Config
     const [siteUserEmails, setSiteUserEmails] = useState<string[]>([]); // entry_not_created & not_submitted
     const [managerEmails, setManagerEmails] = useState<string[]>([]); // escalation
+    const [submitEmails, setSubmitEmails] = useState<string[]>([]); // approvers (submit notifications)
 
     const [creationCheckTime, setCreationCheckTime] = useState<Date | null>(null);
     const [escalationCheckTime, setEscalationCheckTime] = useState<Date | null>(null);
@@ -89,6 +90,7 @@ export default function NotificationConfigPage() {
             // Parse Config Emails
             setSiteUserEmails(misConfig.entry_not_created_emails || []);
             setManagerEmails(misConfig.escalation_notify_emails || []);
+            setSubmitEmails(misConfig.submit_notify_emails || []);
             // Notification schedule
             if (nsched) {
                 const parseTime = (t: string) => {
@@ -201,12 +203,7 @@ export default function NotificationConfigPage() {
             await adminService.saveMISEmailConfig({
                 entry_not_created_emails: siteUserEmails,
                 not_submitted_notify_emails: siteUserEmails, // Same recipients
-                submit_notify_emails: [], // Keep empty or preserve? Currently UI doesn't manage submission notify.
-                // Wait, saveMISEmailConfig overwrites ALL fields if not careful? 
-                // Backend implementation updates configured fields only if passed?
-                // No, backend implementation takes entire object in `req.body`.
-                // I should fetch existing config first to preserve `submit_notify_emails`.
-                // Actually `getMISEmailConfig` was called on mount. I should store `submit_notify_emails` in state too.
+                submit_notify_emails: submitEmails,
                 escalation_notify_emails: managerEmails
             });
             // Ah wait, I need to preserve submit_notify_emails. Let's add it to state.
@@ -229,6 +226,11 @@ export default function NotificationConfigPage() {
     const handleToggleManager = (email: string) => {
         if (!email) return;
         setManagerEmails(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
+    };
+
+    const handleToggleSubmitNotify = (email: string) => {
+        if (!email) return;
+        setSubmitEmails(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
     };
 
     const handleSaveTemplate = async (template: Template) => {
@@ -574,6 +576,47 @@ export default function NotificationConfigPage() {
                                                     secondaryTypographyProps={{
                                                         sx: { fontSize: isPhone ? '0.875rem' : '0.75rem' }
                                                     }}
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
+                                    Approvers (Submission Review)
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
+                                    Select users who should receive submission notifications and can approve entries.
+                                </Typography>
+                                <Paper
+                                    variant="outlined"
+                                    sx={{
+                                        maxHeight: { xs: '50vh', sm: '60vh', md: 400 },
+                                        overflow: 'auto',
+                                        mt: 1,
+                                        borderRadius: { xs: '12px', md: '4px' },
+                                    }}
+                                >
+                                    <List dense={!isPhone}>
+                                        {users.map(user => (
+                                            <ListItem
+                                                key={user.id}
+                                                button
+                                                onClick={() => handleToggleSubmitNotify(user.email)}
+                                            >
+                                                <ListItemIcon>
+                                                    <Checkbox
+                                                        edge="start"
+                                                        checked={submitEmails.includes(user.email)}
+                                                        disableRipple
+                                                        size={isPhone ? 'medium' : 'small'}
+                                                        sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
+                                                    />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={user.name}
+                                                    secondary={`${user.email} (${user.role?.name})`}
                                                 />
                                             </ListItem>
                                         ))}
