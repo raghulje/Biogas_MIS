@@ -120,7 +120,8 @@ export default function MISEntryPage() {
   const handleDelete = async (entry: MISEntry) => {
     try {
       await misService.deleteEntry(entry.id);
-      fetchEntries();
+      await fetchEntries();
+      enqueueSnackbar('Entry deleted successfully', { variant: 'success' });
     } catch (error) {
       console.error('Failed to delete entry', error);
       enqueueSnackbar('Failed to delete entry', { variant: 'error' });
