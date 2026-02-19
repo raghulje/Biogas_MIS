@@ -805,6 +805,7 @@ const mockSchedulerConfigs: SchedulerConfig[] = [
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import React from 'react';
+import { useSnackbar } from 'notistack';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -829,6 +830,7 @@ export default function AdminPage() {
   const [selectedRole, setSelectedRole] = useState('Operator');
   const [saving, setSaving] = useState(false);
   const [selectedThemeKey, setSelectedThemeKey] = useState<string>(() => localStorage.getItem('appTheme') || 'professional');
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleSaveTheme = async () => {
     try {
@@ -1261,15 +1263,19 @@ export default function AdminPage() {
       if (editingUser) {
         await adminService.updateUser(editingUser.id, userData);
         setMessage({ type: 'success', text: 'User updated successfully' });
+        enqueueSnackbar('User updated successfully', { variant: 'success' });
       } else {
         await adminService.createUser(userData);
         setMessage({ type: 'success', text: 'User created successfully' });
+        enqueueSnackbar('User created successfully', { variant: 'success' });
       }
       setOpenUserDialog(false);
       loadData();
     } catch (e: any) {
       console.error('Save user error:', e);
-      setMessage({ type: 'error', text: e.response?.data?.message || 'Failed to save user' });
+      const msg = e.response?.data?.message || 'Failed to save user';
+      setMessage({ type: 'error', text: msg });
+      enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -1280,9 +1286,11 @@ export default function AdminPage() {
     try {
       await adminService.deleteUser(userId);
       setMessage({ type: 'success', text: 'User deactivated' });
+      enqueueSnackbar('User deactivated', { variant: 'success' });
       loadData();
     } catch (e: any) {
       setMessage({ type: 'error', text: e.response?.data?.message || 'Failed to deactivate user' });
+      enqueueSnackbar(e.response?.data?.message || 'Failed to deactivate user', { variant: 'error' });
     }
   };
 
@@ -1316,6 +1324,7 @@ export default function AdminPage() {
         permissionIds,
       });
       setMessage({ type: 'success', text: 'Permissions saved successfully!' });
+      enqueueSnackbar('Permissions saved successfully', { variant: 'success' });
       // Refetch form config so role permissions persist when revisiting or refreshing
       const fresh = await adminService.getFormConfig();
       setFormConfig(fresh);
