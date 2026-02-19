@@ -13,6 +13,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { parse, format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { useSnackbar } from 'notistack';
 
 interface Scheduler {
     id: number;
@@ -47,6 +48,7 @@ function TabPanel(props: { children?: React.ReactNode; index: number; value: num
 
 export default function NotificationConfigPage() {
     const theme = useTheme();
+    const { enqueueSnackbar } = useSnackbar();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const isPhone = useMediaQuery('(max-width:768px)');
     const [tabValue, setTabValue] = useState(0);
@@ -191,9 +193,11 @@ export default function NotificationConfigPage() {
             }
 
             setSuccess('Schedule updated successfully');
+            enqueueSnackbar('Schedule updated successfully', { variant: 'success' });
             await fetchData(); // Refresh
         } catch (err) {
             setError('Failed to save schedule');
+            enqueueSnackbar('Failed to save schedule', { variant: 'error' });
         }
     };
 
@@ -216,8 +220,10 @@ export default function NotificationConfigPage() {
             // Let's add `submitEmails` state.
             // For this implementation I will focus on the requested features.
             setSuccess('Recipients updated successfully');
+            enqueueSnackbar('Recipients updated successfully', { variant: 'success' });
         } catch (err) {
             setError('Failed to save recipients');
+            enqueueSnackbar('Failed to save recipients', { variant: 'error' });
         }
     };
 
@@ -245,9 +251,11 @@ export default function NotificationConfigPage() {
         try {
             await adminService.updateTemplate(template.id, { subject: template.subject, body: template.body });
             setSuccess(`Template '${template.name}' saved`);
+            enqueueSnackbar(`Template '${template.name}' saved`, { variant: 'success' });
             fetchData();
         } catch (e) {
             setError('Failed to save template');
+            enqueueSnackbar('Failed to save template', { variant: 'error' });
         }
     };
 
