@@ -14,7 +14,20 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Zoom,
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import {
   ExpandMore as ExpandMoreIcon,
   FilterList as FilterIcon,
@@ -32,6 +45,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { misService } from '../../services/misService';
+import MESSAGES from '../../utils/messages';
 
 export default function DashboardPage() {
   const theme = useTheme();
@@ -47,13 +61,22 @@ export default function DashboardPage() {
   };
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [cbgBreakdownOpen, setCBGBreakdownOpen] = useState(false);
+  const [cbgBreakdownData, setCBGBreakdownData] = useState<any[]>([]);
+  const [cbgLoading, setCBGLoading] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
-    if (filterType !== 'custom') fetchDashboardData();
+    if (filterType !== 'custom' && filterType !== 'day') fetchDashboardData();
   }, [filterType]);
+
+  useEffect(() => {
+    if (filterType === 'day' && selectedDate) fetchDashboardData();
+  }, [filterType, selectedDate]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -64,6 +87,13 @@ export default function DashboardPage() {
         params.startDate = startDate.toISOString().slice(0, 10);
         params.endDate = endDate.toISOString().slice(0, 10);
       }
+      if (filterType === 'day' && selectedDate) {
+        // Adjust for local timezone offset manually to ensure the day matched is what user clicked
+        const offset = selectedDate.getTimezoneOffset() * 60000;
+        const localDate = new Date(selectedDate.getTime() - offset).toISOString().slice(0, 10);
+        params.startDate = localDate;
+        params.endDate = localDate;
+      }
       const data = await misService.getDashboardData(params);
       setDashboardData(data);
     } catch (error) {
@@ -72,6 +102,32 @@ export default function DashboardPage() {
       setDashboardData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCBGSoldClick = async () => {
+    setCBGBreakdownOpen(true);
+    setCBGLoading(true);
+    try {
+      const params: { period: string; startDate?: string; endDate?: string } = { period: filterType };
+      if (filterType === 'custom' && startDate && endDate) {
+        params.startDate = startDate.toISOString().slice(0, 10);
+        params.endDate = endDate.toISOString().slice(0, 10);
+      }
+      if (filterType === 'day' && selectedDate) {
+        // Adjust for local timezone offset manually to ensure the day matched is what user clicked
+        const offset = selectedDate.getTimezoneOffset() * 60000;
+        const localDate = new Date(selectedDate.getTime() - offset).toISOString().slice(0, 10);
+        params.startDate = localDate;
+        params.endDate = localDate;
+      }
+      const data = await misService.getCBGSalesBreakdown(params);
+      setCBGBreakdownData(data);
+    } catch (error) {
+      console.error('Failed to fetch CBG sales breakdown', error);
+      enqueueSnackbar(MESSAGES.FAILED_LOAD_BREAKDOWN, { variant: 'error' });
+    } finally {
+      setCBGLoading(false);
     }
   };
 
@@ -98,7 +154,7 @@ export default function DashboardPage() {
       <Layout>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 5, gap: 2 }}>
           <Typography color="textSecondary">{fetchError || 'No dashboard data available.'}</Typography>
-          <Button variant="contained" onClick={() => fetchDashboardData()} sx={{ textTransform: 'none' }}>
+          <Button variant="contained" onClick={() => { setFetchError(null); fetchDashboardData(); }} sx={{ textTransform: 'none' }}>
             Retry
           </Button>
         </Box>
@@ -171,6 +227,23 @@ export default function DashboardPage() {
                 ))}
               </ButtonGroup>
             </Box>
+            {filterType === 'day' && (
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <Box sx={{ mt: 2, maxWidth: 300 }}>
+                  <DatePicker
+                    label="Select Date"
+                    value={selectedDate}
+                    onChange={(newValue) => setSelectedDate(newValue ?? null)}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } }
+                      }
+                    }}
+                  />
+                </Box>
+              </LocalizationProvider>
+            )}
             {filterType === 'custom' && (
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <Grid container spacing={2} alignItems="center">
@@ -224,7 +297,7 @@ export default function DashboardPage() {
               <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                 MIS Summary - {filterType.toUpperCase()}
               </Typography>
-                <Chip
+              <Chip
                 label="Aggregate"
                 size="small"
                 sx={{
@@ -254,7 +327,7 @@ export default function DashboardPage() {
                 },
               }}
             >
-                <Box
+              <Box
                 className="gradient-header"
                 sx={{
                   background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
@@ -270,7 +343,31 @@ export default function DashboardPage() {
               </Box>
               <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
+                  <Grid item xs={12} sm={3}>
+                    <Box
+                      className="hover-lift"
+                      sx={{
+                        p: 2.5,
+                        background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.08) 0%, rgba(40, 121, 182, 0.03) 100%)',
+                        borderRadius: '12px',
+                        borderLeft: '4px solid #2879b6',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
+                            Total Feed Amount
+                          </Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
+                            {formatNumber(summary.totalFeed ?? 0)} kg
+                          </Typography>
+                        </Box>
+                        <AvgIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
+                      </Box>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
                     <Box
                       className="hover-lift"
                       sx={{
@@ -294,7 +391,7 @@ export default function DashboardPage() {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid item xs={12} sm={3}>
                     <Box
                       className="hover-lift"
                       sx={{
@@ -318,15 +415,20 @@ export default function DashboardPage() {
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid item xs={12} sm={3}>
                     <Box
                       className="hover-lift"
+                      onClick={handleCBGSoldClick}
                       sx={{
                         p: 2.5,
                         background: 'linear-gradient(135deg, rgba(238, 106, 49, 0.08) 0%, rgba(238, 106, 49, 0.03) 100%)',
                         borderRadius: '12px',
                         borderLeft: '4px solid #ee6a31',
                         transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: 'rgba(238, 106, 49, 0.12)'
+                        }
                       }}
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -539,6 +641,46 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </Box>
+
+      <Dialog
+        open={cbgBreakdownOpen}
+        onClose={() => setCBGBreakdownOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        TransitionComponent={Zoom}
+        TransitionProps={{ timeout: 400 }}
+      >
+        <DialogTitle>CBG Sales Detail</DialogTitle>
+        <DialogContent className="aos-fade-up">
+          {cbgLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress /></Box>
+          ) : cbgBreakdownData.length === 0 ? (
+            <Typography align="center" color="textSecondary">No sales data for this period.</Typography>
+          ) : (
+            <TableContainer component={Paper} elevation={0} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Customer</TableCell>
+                    <TableCell align="right">Quantity (kg)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {cbgBreakdownData.map((row, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{row.customerName}</TableCell>
+                      <TableCell align="right">{formatNumber(row.totalQuantity)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCBGBreakdownOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Layout>
   );
 }

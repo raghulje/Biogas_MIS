@@ -24,6 +24,7 @@ import BiogasSection from './sections/BiogasSection';
 import OtherSections from './sections/OtherSections';
 import { misService } from '../../../services/misService';
 import { useSnackbar } from 'notistack';
+import MESSAGES from '../../../utils/messages';
 import { useAuth } from '../../../context/AuthContext';
 
 interface Digester {
@@ -139,11 +140,11 @@ export default function MISFormView({
       if (viewMode === 'edit' && selectedEntry) {
         await misService.updateEntry(Number(selectedEntry.id), payload);
         await misService.submitEntry(Number(selectedEntry.id));
-        enqueueSnackbar('Entry updated and submitted successfully!', { variant: 'success' });
+      enqueueSnackbar(MESSAGES.ENTRY_UPDATED_SUBMITTED, { variant: 'success' });
       } else {
         const res = await misService.createEntry(payload);
         await misService.submitEntry(Number(res.id));
-        enqueueSnackbar('Entry created and submitted successfully!', { variant: 'success' });
+      enqueueSnackbar(MESSAGES.ENTRY_CREATED_SUBMITTED, { variant: 'success' });
       }
       onBackToList();
     } catch (err: any) {
@@ -165,10 +166,10 @@ export default function MISFormView({
       const payload = { ...data, status: 'draft' };
       if (viewMode === 'edit' && selectedEntry) {
         await misService.updateEntry(Number(selectedEntry.id), payload);
-        enqueueSnackbar('Draft updated successfully!', { variant: 'success' });
+        enqueueSnackbar(MESSAGES.DRAFT_UPDATED, { variant: 'success' });
       } else {
         await misService.createEntry(payload);
-        enqueueSnackbar('Draft saved successfully!', { variant: 'success' });
+        enqueueSnackbar(MESSAGES.DRAFT_SAVED, { variant: 'success' });
       }
       onBackToList();
     } catch (err: any) {
@@ -183,7 +184,7 @@ export default function MISFormView({
     setSubmitting(true);
     try {
       await misService.approveEntry(Number(selectedEntry.id));
-      enqueueSnackbar('Entry approved!', { variant: 'success' });
+      enqueueSnackbar(MESSAGES.ENTRY_APPROVED, { variant: 'success' });
       onBackToList();
     } catch (err: any) {
       setError('Failed to approve entry');
@@ -199,7 +200,7 @@ export default function MISFormView({
     setSubmitting(true);
     try {
       await misService.rejectEntry(Number(selectedEntry.id), reason);
-      enqueueSnackbar('Entry rejected!', { variant: 'info' });
+      enqueueSnackbar(MESSAGES.ENTRY_REJECTED, { variant: 'info' });
       onBackToList();
     } catch (err: any) {
       setError('Failed to reject entry');

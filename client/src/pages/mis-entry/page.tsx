@@ -4,6 +4,7 @@ import MISListView from './components/MISListView';
 import { misService } from '../../services/misService';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import MESSAGES from '../../utils/messages';
 
 const MISFormView = lazy(() => import('./components/MISFormView'));
 
@@ -97,7 +98,7 @@ export default function MISEntryPage() {
       setViewMode('edit');
     } catch (e) {
       console.error(e);
-      enqueueSnackbar('Failed to load entry details', { variant: 'error' });
+      enqueueSnackbar(MESSAGES.FAILED_LOAD_ENTRY_DETAILS, { variant: 'error' });
     } finally {
       setLoadingDetails(false);
     }
@@ -111,7 +112,7 @@ export default function MISEntryPage() {
       setViewMode('view');
     } catch (e) {
       console.error(e);
-      enqueueSnackbar('Failed to load entry details', { variant: 'error' });
+      enqueueSnackbar(MESSAGES.FAILED_LOAD_ENTRY_DETAILS, { variant: 'error' });
     } finally {
       setLoadingDetails(false);
     }
@@ -124,7 +125,7 @@ export default function MISEntryPage() {
       enqueueSnackbar(MESSAGES.ENTRY_DELETED, { variant: 'success' });
     } catch (error) {
       console.error('Failed to delete entry', error);
-      enqueueSnackbar('Failed to delete entry', { variant: 'error' });
+      enqueueSnackbar(MESSAGES.FAILED_DELETE_ENTRY, { variant: 'error' });
     }
   };
 

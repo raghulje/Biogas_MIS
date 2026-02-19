@@ -55,6 +55,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React from 'react';
 import { useSnackbar } from 'notistack';
+import MESSAGES from '../../../utils/messages';
 
 import { useAuth } from '../../../context/AuthContext';
 
@@ -125,11 +126,11 @@ export default function MISListView({
     try {
       const { misService } = await import('../../../services/misService');
       await misService.importEntries(file);
-      enqueueSnackbar('Data imported successfully!', { variant: 'success' });
+      enqueueSnackbar(MESSAGES.IMPORT_DATA_SUCCESS, { variant: 'success' });
       onImportSuccess?.();
     } catch (error: any) {
       console.error(error);
-      enqueueSnackbar('Import failed: ' + (error.response?.data?.message || error.message), { variant: 'error' });
+      enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (error.response?.data?.message || error.message), { variant: 'error' });
     } finally {
       setImporting(false);
       event.target.value = '';
@@ -153,7 +154,7 @@ export default function MISListView({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error(error);
-      enqueueSnackbar('Export failed: ' + (error.response?.data?.message || error.message), { variant: 'error' });
+      enqueueSnackbar(MESSAGES.EXPORT_FAILED + ': ' + (error.response?.data?.message || error.message), { variant: 'error' });
     } finally {
       setExporting(false);
     }
@@ -171,7 +172,7 @@ export default function MISListView({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error(error);
-      enqueueSnackbar('Failed to download template: ' + (error.response?.data?.message || error.message), { variant: 'error' });
+      enqueueSnackbar(MESSAGES.IMPORT_DATA_FAILED_PREFIX + (error.response?.data?.message || error.message), { variant: 'error' });
     }
   };
 
@@ -201,7 +202,7 @@ export default function MISListView({
       enqueueSnackbar(MESSAGES.ENTRY_DELETED, { variant: 'success' });
     } catch (error: any) {
       console.error('Delete failed:', error);
-      enqueueSnackbar('Failed to delete entry: ' + (error?.response?.data?.message || error?.message || ''), { variant: 'error' });
+      enqueueSnackbar(MESSAGES.FAILED_DELETE_ENTRY + ': ' + (error?.response?.data?.message || error?.message || ''), { variant: 'error' });
     } finally {
       setDeleteDialogOpen(false);
       setEntryToDelete(null);
@@ -247,7 +248,7 @@ export default function MISListView({
       }
       setSelectedIds(new Set());
       setBulkDeleteDialogOpen(false);
-      if (deleted > 0) enqueueSnackbar(`${deleted} entries deleted`, { variant: 'success' });
+      if (deleted > 0) enqueueSnackbar(MESSAGES.DELETED_N_ENTRIES(deleted), { variant: 'success' });
     })();
   };
 
