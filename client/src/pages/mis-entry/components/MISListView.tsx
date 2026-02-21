@@ -825,6 +825,19 @@ export default function MISListView({
                       <DeleteIcon />
                     </IconButton>
                   )}
+                  {isAdmin && String(entry.status || '').toLowerCase() === 'deleted' && (
+                    <IconButton
+                      onClick={() => onHardDelete?.(entry.id)}
+                      sx={{
+                        borderRadius: '10px',
+                        color: '#b91c1c',
+                        border: '1px solid rgba(185, 28, 28, 0.5)'
+                      }}
+                      aria-label="Permanently delete"
+                    >
+                      <DeleteForeverIcon />
+                    </IconButton>
+                  )}
                 </Box>
               </CardContent>
             </Card>

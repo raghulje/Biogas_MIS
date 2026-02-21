@@ -82,6 +82,10 @@ export default function MISFormView({
   onBackToList,
   onAddDigester, // We might ignore this prop
   onRemoveDigester, // We might ignore this prop
+  onSubmitSuccess,
+  onDraftSaved,
+  onApprove,
+  onReject,
 }: MISFormViewProps) {
   const isReadOnly = viewMode === 'view';
   const [submitting, setSubmitting] = useState(false);
@@ -128,6 +132,8 @@ export default function MISFormView({
   const canSave = (viewMode === 'create' && hasPermission('mis_entry', 'create')) ||
     (viewMode === 'edit' && hasPermission('mis_entry', 'update'));
   const canApprove = hasPermission('mis_entry', 'approve');
+  const s = String(selectedEntry?.status || '').toLowerCase();
+  const hideSubmitAndDraft = selectedEntry && ['approved', 'rejected', 'submitted'].includes(s);
 
   const onSubmit: SubmitHandler<any> = async (data) => {
     if (!canSave) {
@@ -308,7 +314,7 @@ export default function MISFormView({
           </Box>
           {!isReadOnly ? (
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, flexWrap: 'wrap' }}>
-              {canSave && (
+              {canSave && !hideSubmitAndDraft && (
                 <>
                   <Button
                     variant="outlined"
@@ -416,7 +422,7 @@ export default function MISFormView({
               py: { xs: 2, md: 0 },
             }}
           >
-            {canSave && (
+            {canSave && !hideSubmitAndDraft && (
               <>
                 <Button
                   variant="outlined"

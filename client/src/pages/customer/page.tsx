@@ -61,8 +61,11 @@ const CUSTOMER_TYPES = [
 export default function CustomerPage() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const { user } = useAuth();
+    const { user, hasPermission } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
+    const canCreate = hasPermission('customer', 'create');
+    const canUpdate = hasPermission('customer', 'update');
+    const canDelete = hasPermission('customer', 'delete');
 
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -200,24 +203,26 @@ export default function CustomerPage() {
                     <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
                         Customer Master
                     </Typography>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => handleOpen()}
-                        sx={{
-                            borderRadius: '12px',
-                            background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
-                            color: '#fff',
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            boxShadow: '0 4px 12px rgba(40, 121, 182, 0.2)',
-                            '&:hover': {
-                                background: 'linear-gradient(135deg, #235EAC 0%, #1889BE 100%)',
-                            },
-                        }}
-                    >
-                        Add Customer
-                    </Button>
+                    {canCreate && (
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => handleOpen()}
+                            sx={{
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                                color: '#fff',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                boxShadow: '0 4px 12px rgba(40, 121, 182, 0.2)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #235EAC 0%, #1889BE 100%)',
+                                },
+                            }}
+                        >
+                            Add Customer
+                        </Button>
+                    )}
                 </Box>
 
                 {/* Filters */}
@@ -341,12 +346,16 @@ export default function CustomerPage() {
                                             />
                                         </TableCell>
                                         <TableCell align="right">
-                                            <IconButton size="small" onClick={() => handleOpen(customer)} sx={{ color: '#2879b6' }}>
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton size="small" onClick={() => handleDelete(customer.id)} sx={{ color: '#ef4444' }}>
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
+                                            {canUpdate && (
+                                                <IconButton size="small" onClick={() => handleOpen(customer)} sx={{ color: '#2879b6' }}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                            {canDelete && (
+                                                <IconButton size="small" onClick={() => handleDelete(customer.id)} sx={{ color: '#ef4444' }}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))

@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import MISListView from './components/MISListView';
 import { misService } from '../../services/misService';
@@ -70,25 +71,50 @@ const defaultDigesters: Digester[] = [
 
 export default function MISEntryPage() {
   const { enqueueSnackbar } = useSnackbar();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [entries, setEntries] = useState<MISEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<MISEntry | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [digesters, setDigesters] = useState<Digester[]>(defaultDigesters);
-  // const [showDeleted, setShowDeleted] = useState(false); // HIDDEN: Show deleted entries feature
+  const [showDeleted, setShowDeleted] = useState(false);
   const { user, hasPermission } = useAuth();
   const roleName = typeof user?.role === 'string' ? user?.role : user?.role?.name;
   const isAdmin = roleName === 'Admin' || roleName === 'SuperAdmin';
+
+  // Open specific entry in view mode when link from email has ?view=<id>
+  useEffect(() => {
+    const viewId = searchParams.get('view');
+    if (viewId && /^\d+$/.test(viewId)) {
+      setLoadingDetails(true);
+      misService
+        .getEntryById(Number(viewId))
+        .then((fullEntry) => {
+          const isApproverOnly = hasPermission('mis_entry', 'approve') && !hasPermission('mis_entry', 'update') && !hasPermission('mis_entry', 'create');
+          if (isApproverOnly && String(fullEntry.status || '').toLowerCase() === 'draft') {
+            enqueueSnackbar(MESSAGES.NO_ACCESS_TO_DRAFTS, { variant: 'info' });
+            return;
+          }
+          setSelectedEntry(fullEntry);
+          setViewMode('view');
+          setSearchParams({}, { replace: true }); // clear ?view= so URL is clean
+        })
+        .catch(() => {
+          enqueueSnackbar(MESSAGES.FAILED_LOAD_ENTRY_DETAILS, { variant: 'error' });
+        })
+        .finally(() => setLoadingDetails(false));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (viewMode === 'list') {
       fetchEntries();
     }
-  }, [viewMode]);
+  }, [viewMode, showDeleted]);
 
   const fetchEntries = async () => {
     try {
-      const data = await misService.getEntries({ includeDeleted: false }); // HIDDEN: was `showDeleted && isAdmin`
+      const data = await misService.getEntries({ includeDeleted: showDeleted && isAdmin });
       setEntries(data);
     } catch (error) {
       console.error('Failed to fetch entries', error);
@@ -242,7 +268,6 @@ export default function MISEntryPage() {
         formFallback
       ) : viewMode === 'list' ? (
         <>
-          {/* HIDDEN: Show deleted entries toggle — uncomment to re-enable
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
             {isAdmin && (
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
@@ -255,7 +280,6 @@ export default function MISEntryPage() {
               </label>
             )}
           </Box>
-          */}
           <MISListView
             entries={entries}
             isAdmin={isAdmin}
@@ -281,6 +305,10 @@ export default function MISEntryPage() {
             onBackToList={handleBackToList}
             onAddDigester={addDigester}
             onRemoveDigester={removeDigester}
+            onSubmitSuccess={handleSubmitSuccess}
+            onDraftSaved={handleDraftSaved}
+            onApprove={handleApproveNotify}
+            onReject={handleRejectNotify}
           />
         </Suspense>
       )}

@@ -309,7 +309,7 @@ exports.getEntriesForReport = async (req, res) => {
         const entries = await MISDailyEntry.findAll({
             where: {
                 date: { [Op.between]: [startDate, endDate] },
-                status: { [Op.ne]: 'deleted' }
+                status: 'approved'
             },
             include: [
                 { model: MISRawMaterials, as: 'rawMaterials' },
@@ -458,7 +458,7 @@ exports.submitEntry = async (req, res) => {
 
         const FE_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3015';
         const subject = `MIS Entry Submitted - ${entry.date}`;
-        const reviewLink = `${FE_URL.replace(/\/$/, '')}/mis-entry`;
+        const reviewLink = `${FE_URL.replace(/\/$/, '')}/mis-entry?view=${id}`;
         const html = `<p>Hello,</p>
                  <p>An MIS entry for <b>${entry.date}</b> has been submitted by ${entry.creator?.name || 'an operator'} and is awaiting your review.</p>
                  <p><a href="${reviewLink}">${reviewLink}</a></p>`;

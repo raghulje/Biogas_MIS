@@ -32,13 +32,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initAuth = async () => {
       if (token) {
+        // Quick client-side expiry check to avoid 401 from getProfile when token is expired
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1] || '{}'));
+          const exp = payload.exp ? payload.exp * 1000 : 0;
+          if (exp && Date.now() >= exp) {
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+        } catch (_) {
+          /* ignore invalid token format */
+        }
         try {
           const userData = await authService.getProfile();
           setUser(userData);
           const stored = localStorage.getItem('loginAt');
           if (stored) setLoginAt(stored);
         } catch (error) {
-          console.error('Auth sync failed', error);
           localStorage.removeItem('token');
           setToken(null);
           setUser(null);
