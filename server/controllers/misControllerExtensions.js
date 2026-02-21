@@ -415,9 +415,12 @@ exports.deleteEntry = async (req, res) => {
         }
 
         const status = String(entry.status || '').toLowerCase();
-        if (status !== 'draft') {
+        const currentUser = await User.findByPk(userId, { include: [{ association: 'role' }] });
+        const roleName = currentUser?.role?.name || null;
+        const isAdmin = roleName === 'Admin' || roleName === 'SuperAdmin';
+        if (status !== 'draft' && !isAdmin) {
             await t.rollback();
-            return res.status(400).json({ message: 'Only draft entries can be deleted. Submitted, approved, and rejected entries cannot be deleted.' });
+            return res.status(400).json({ message: 'Only draft entries can be deleted. Submitted, approved, and rejected entries can only be deleted by Admin.' });
         }
 
         // Store for audit
@@ -498,7 +501,7 @@ exports.hardDeleteEntry = async (req, res) => {
 exports.getImportTemplate = async (req, res) => {
     try {
         const headers = [
-            'Date', 'Status',
+            'Date', 'Status', 'CreatedBy',
             'CowDungPurchased', 'CowDungStock', 'OldPressMudOpeningBalance', 'OldPressMudPurchased', 'OldPressMudDegradationLoss', 'OldPressMudClosingStock', 'NewPressMudPurchased', 'PressMudUsed', 'TotalPressMudStock', 'AuditNote',
             'CowDungQty', 'CowDungTS', 'CowDungVS', 'PressmudQty', 'PressmudTS', 'PressmudVS', 'PermeateQty', 'PermeateTS', 'PermeateVS', 'WaterQty', 'SlurryTotal', 'SlurryTS', 'SlurryVS', 'SlurryPH',
             'Digester01_FeedingSlurry', 'Digester01_FeedingTS', 'Digester01_FeedingVS', 'Digester01_DischargeSlurry', 'Digester01_DischargeTS', 'Digester01_DischargeVS', 'Digester01_PH', 'Digester01_Temp', 'Digester01_HRT', 'Digester01_OLR',
@@ -560,10 +563,18 @@ exports.importEntries = async (req, res) => {
                 const statusVal = String(row.Status || row.status || 'draft').toLowerCase();
                 const status = ['draft', 'submitted', 'approved', 'rejected'].includes(statusVal) ? statusVal : 'draft';
 
+                // Resolve created_by: use Creator from import file if present and matches a user; else importer
+                let createdById = userId;
+                const createdByName = (row.CreatedBy || row.Created_By || row['Created By'] || '').toString().trim();
+                if (createdByName) {
+                    const creator = await User.findOne({ where: { name: createdByName }, attributes: ['id'], transaction: t });
+                    if (creator) createdById = creator.id;
+                }
+
                 const entry = await MISDailyEntry.create({
                     date: dateStr,
                     status,
-                    created_by: userId
+                    created_by: createdById
                 }, { transaction: t });
                 const entryId = entry.id;
 
