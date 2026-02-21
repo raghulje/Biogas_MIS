@@ -73,22 +73,32 @@ class SchedulerService {
         this.jobs.set(scheduler.id, job);
     }
 
+    /**
+     * Entry date for reminder/check: plant gets complete details (e.g. total CBG produced) only the next day
+     * (e.g. data for 21st Feb is available on 22nd Feb after 1–3 PM). So we check for yesterday's entry.
+     */
+    getEntryDateForCheck() {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return d.toISOString().split('T')[0];
+    }
+
     async executeJob(scheduler) {
-        const today = new Date().toISOString().split('T')[0];
-        console.log(`Executing scheduler job_type='${scheduler.job_type}' for date=${today}`);
+        const entryDate = this.getEntryDateForCheck();
+        console.log(`Executing scheduler job_type='${scheduler.job_type}' for entry_date=${entryDate} (previous day)`);
         const { EmailTemplate } = require('../models');
 
         try {
             if (scheduler.job_type === 'daily_reminder') {
-                // Check if entries exist for today
+                // Check if entries exist for entry date (previous day - data available next day)
                 const entries = await MISDailyEntry.findAll({
-                    where: { date: today }
+                    where: { date: entryDate }
                 });
 
                 const entryCreated = entries.length > 0;
                 const entrySubmitted = entries.some(e => e.status === 'submitted' || e.status === 'approved' || e.status === 'under_review');
 
-                // No entry for today: send to Admin-configured list, or fallback to Operators
+                // No entry for entry date (previous day): send to Admin-configured list, or fallback to Operators
                 if (!entryCreated) {
                     let noEntryEmails = [];
                     try {
@@ -110,9 +120,9 @@ class SchedulerService {
                         noEntryEmails = operators.map(o => o.email).filter(Boolean);
                     }
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_no_entry_reminder' } });
-                    const subject = template?.subject || 'MIS Entry Reminder: No Entry Created for ' + today;
-                    const body = template ? await emailService.replaceTemplateVariables(template.body, { name: 'Recipient', date: today })
-                        : `<p>Hello,</p><p>No MIS entry has been created for today (${today}). Please ensure an entry is created.</p>`;
+                    const subject = template?.subject || 'MIS Entry Reminder: No Entry Created for ' + entryDate;
+                    const body = template ? await emailService.replaceTemplateVariables(template.body, { name: 'Recipient', date: entryDate })
+                        : `<p>Hello,</p><p>No MIS entry has been created for ${entryDate}. Please ensure an entry is created (data for this date is available from the next day).</p>`;
                     for (const email of noEntryEmails) {
                         const addr = String(email).trim();
                         if (addr) {
@@ -130,8 +140,8 @@ class SchedulerService {
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_pending_submission' } });
                     for (const op of operators) {
                         const subject = template?.subject || 'MIS Entry Reminder: Please Submit Entry';
-                        const body = template ? await emailService.replaceTemplateVariables(template.body, { name: op.name, date: today })
-                            : `<p>Hello ${op.name},</p><p>The MIS entry for ${today} is in Draft status. Please submit it.</p>`;
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { name: op.name, date: entryDate })
+                            : `<p>Hello ${op.name},</p><p>The MIS entry for ${entryDate} is in Draft status. Please submit it.</p>`;
                         await emailService.sendEmail(op.email, subject, body);
                     }
                 }
@@ -140,14 +150,14 @@ class SchedulerService {
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_entry_submitted_notify' } });
                     for (const mgr of managers) {
                         const subject = template?.subject || 'MIS Entry Submitted';
-                        const body = template ? await emailService.replaceTemplateVariables(template.body, { name: mgr.name, date: today })
-                            : `<p>Hello ${mgr.name},</p><p>An MIS entry for ${today} has been submitted for review.</p>`;
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { name: mgr.name, date: entryDate })
+                            : `<p>Hello ${mgr.name},</p><p>An MIS entry for ${entryDate} has been submitted for review.</p>`;
                         await emailService.sendEmail(mgr.email, subject, body);
                     }
                 }
             } else if (scheduler.job_type === 'mis_creation_check') {
-                // 16:45 Check: Entry created? Submitted?
-                const entries = await MISDailyEntry.findAll({ where: { date: today } });
+                // Check: Entry for previous day created? Submitted? (plant data available next day)
+                const entries = await MISDailyEntry.findAll({ where: { date: entryDate } });
                 const entryCreated = entries.length > 0;
                 const entrySubmitted = entries.some(e => ['submitted', 'approved', 'under_review'].includes(e.status));
 
@@ -182,25 +192,25 @@ class SchedulerService {
 
                 if (!entryCreated) {
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_not_created' } });
-                    const subject = template?.subject || `MIS Entry Missing for ${today}`;
+                    const subject = template?.subject || `MIS Entry Missing for ${entryDate}`;
                     for (const email of uniqueEmails) {
-                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today })
-                            : `<p>Hello,</p><p>The MIS entry for ${today} has NOT been created yet. Please create it immediately.</p>`;
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
+                            : `<p>Hello,</p><p>The MIS entry for ${entryDate} has NOT been created yet. Please create it (data for this date is available from the next day).</p>`;
                         await emailService.sendEmail(email, subject, body);
                     }
                 } else if (!entrySubmitted) {
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
-                    const subject = template?.subject || `MIS Entry Draft for ${today}`;
+                    const subject = template?.subject || `MIS Entry Draft for ${entryDate}`;
                     for (const email of uniqueEmails) {
-                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today })
-                            : `<p>Hello,</p><p>The MIS entry for ${today} is created but NOT submitted. Please submit it immediately.</p>`;
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
+                            : `<p>Hello,</p><p>The MIS entry for ${entryDate} is created but NOT submitted. Please submit it immediately.</p>`;
                         await emailService.sendEmail(email, subject, body);
                     }
                 }
 
             } else if (scheduler.job_type === 'mis_escalation_check') {
-                // 17:30 Check: Entry submitted? If not, notify Managers.
-                const entries = await MISDailyEntry.findAll({ where: { date: today } });
+                // Escalation check: Entry for previous day submitted? If not, notify Managers.
+                const entries = await MISDailyEntry.findAll({ where: { date: entryDate } });
                 const entrySubmitted = entries.some(e => ['submitted', 'approved', 'under_review'].includes(e.status));
 
                 if (!entrySubmitted) {
@@ -227,10 +237,10 @@ class SchedulerService {
                     const uniqueEmails = [...new Set(managerEmails.filter(Boolean))];
 
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_escalation' } });
-                    const subject = template?.subject || `ESCALATION: MIS Entry Missing/Draft for ${today}`;
+                    const subject = template?.subject || `ESCALATION: MIS Entry Missing/Draft for ${entryDate}`;
                     for (const email of uniqueEmails) {
-                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today })
-                            : `<p>Hello Manager,</p><p>The MIS entry for ${today} is overdue (not submitted). Please check with the team.</p>`;
+                        const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
+                            : `<p>Hello Manager,</p><p>The MIS entry for ${entryDate} is overdue (not submitted). Please check with the team.</p>`;
                         await emailService.sendEmail(email, subject, body);
                     }
                 }

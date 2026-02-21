@@ -26,13 +26,16 @@ exports.createCustomer = async (req, res) => {
 
 exports.getCustomers = async (req, res) => {
     try {
-        const { search, status } = req.query;
+        const { search, status, type } = req.query;
         let where = {};
         if (search) {
             where.name = { [Op.like]: `%${search}%` };
         }
         if (status) {
             where.status = status;
+        }
+        if (type) {
+            where.type = type;
         }
 
         const customers = await Customer.findAll({

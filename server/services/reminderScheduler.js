@@ -90,11 +90,21 @@ class ReminderScheduler {
     }
   }
 
+  /**
+   * Entry date for reminder: plant gets complete details (e.g. total CBG produced) only the next day
+   * (e.g. data for 21st Feb is available on 22nd Feb after 1–3 PM). So we remind for yesterday's entry.
+   */
+  getEntryDateForReminder() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  }
+
   async runReminder(scheduleRow, reminderIndex) {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      console.log(`Reminder check for schedule ${scheduleRow.id} (reminder #${reminderIndex}) on ${today}`);
-      const entries = await MISDailyEntry.findAll({ where: { date: today } });
+      const entryDate = this.getEntryDateForReminder();
+      console.log(`Reminder check for schedule ${scheduleRow.id} (reminder #${reminderIndex}) for entry_date=${entryDate}`);
+      const entries = await MISDailyEntry.findAll({ where: { date: entryDate } });
       const entryCreated = Array.isArray(entries) && entries.length > 0;
       console.log('Checking MIS entry existence...', { entryCount: entries.length });
       const entrySubmitted = entryCreated && entries.some(e => ['submitted', 'approved', 'under_review'].includes(e && e.status));
@@ -139,10 +149,10 @@ class ReminderScheduler {
 
       const { EmailTemplate } = require('../models');
       const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
-      const subject = template?.subject || `MIS Entry Reminder for ${today}`;
+      const subject = template?.subject || `MIS Entry Reminder for ${entryDate}`;
       for (const to of toList) {
         try {
-          const body = template ? await emailService.replaceTemplateVariables(template.body, { date: today }) : `<p>Please submit MIS for ${today}</p>`;
+          const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate }) : `<p>Please submit MIS for ${entryDate} (data for this date is available from the next day).</p>`;
           await emailService.sendEmail(to, subject, body);
           console.log(`Reminder email sent to ${to} [schedule ${scheduleRow.id} #${reminderIndex}]`);
         } catch (e) {

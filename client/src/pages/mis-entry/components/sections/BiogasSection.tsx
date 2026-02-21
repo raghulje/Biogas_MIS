@@ -1,4 +1,3 @@
-
 import {
   Typography,
   TextField,
@@ -7,12 +6,23 @@ import {
   Button,
   IconButton,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useState, useEffect } from 'react';
 import { customerService } from '../../../../services/customerService';
+import { useAuth } from '../../../../context/AuthContext';
+import { useSnackbar } from 'notistack';
+
+const SELLING_PRODUCTS = ['CBG', 'FOM', 'LFOM'] as const;
 
 interface Props {
   selectedEntry?: any;
@@ -26,11 +36,40 @@ export default function BiogasSection({ isReadOnly }: Props) {
     name: "cbgSales"
   });
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { hasPermission } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
+  const canCreateCustomer = hasPermission('customer', 'create');
+
   const [customers, setCustomers] = useState<any[]>([]);
+  const cbgSalesRows = watch('cbgSales') || [];
+
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
+  const [addCustomerType, setAddCustomerType] = useState<string>('CBG');
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [addCustomerSaving, setAddCustomerSaving] = useState(false);
+
+  const fetchCustomers = () => {
+    customerService.getCustomers({ status: 'active' }).then(setCustomers).catch(console.error);
+  };
 
   useEffect(() => {
-    customerService.getCustomers({ status: 'active' }).then(setCustomers).catch(console.error);
+    fetchCustomers();
   }, []);
+
+  // When loading existing entry: set customerType from customer for each row
+  useEffect(() => {
+    if (customers.length === 0 || !Array.isArray(cbgSalesRows)) return;
+    cbgSalesRows.forEach((row: any, index: number) => {
+      if (row.customerId && !row.customerType) {
+        const customer = customers.find((c: any) => Number(c.id) === Number(row.customerId));
+        if (customer?.type) setValue(`cbgSales.${index}.customerType`, customer.type);
+      }
+    });
+  }, [customers, cbgSalesRows?.length, setValue]);
 
   // Calculate total sold whenever cbgSales changes
   const cbgSales = watch('cbgSales');
@@ -38,6 +77,35 @@ export default function BiogasSection({ isReadOnly }: Props) {
     const total = (cbgSales || []).reduce((sum: number, item: any) => sum + (parseFloat(item.quantity) || 0), 0);
     setValue('compressedBiogas.cbgSold', total);
   }, [cbgSales, setValue]);
+
+  const openAddCustomer = (type: string) => {
+    setAddCustomerType(type);
+    setNewCustomerName('');
+    setNewCustomerEmail('');
+    setNewCustomerPhone('');
+    setAddCustomerOpen(true);
+  };
+
+  const handleAddNewCustomer = async () => {
+    if (!newCustomerName.trim()) return;
+    setAddCustomerSaving(true);
+    try {
+      await customerService.createCustomer({
+        name: newCustomerName.trim(),
+        type: addCustomerType,
+        email: newCustomerEmail.trim() || undefined,
+        phone: newCustomerPhone.trim() || undefined,
+        status: 'active',
+      });
+      fetchCustomers();
+      setAddCustomerOpen(false);
+      enqueueSnackbar('Customer added successfully', { variant: 'success' });
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setAddCustomerSaving(false);
+    }
+  };
 
   const sectionStyle = {
     mb: 2,
@@ -156,69 +224,290 @@ export default function BiogasSection({ isReadOnly }: Props) {
               <TextField fullWidth label="CBG Sold" type="number" inputProps={{ step: 'any', inputMode: 'decimal', readOnly: true }} {...register('compressedBiogas.cbgSold')} disabled={true} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px', bgcolor: '#f5f5f5' } }} />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{ mt: 2, p: 2, border: '1px dashed #e0e0e0', borderRadius: '8px' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>CBG Sales Detail</Typography>
-                  {!isReadOnly && (
-                    <Button
-                      startIcon={<AddCircleIcon />}
-                      variant="outlined"
-                      size="small"
-                      onClick={() => append({ customerId: '', quantity: '' })}
+              <Box
+                sx={{
+                  mt: 2,
+                  p: { xs: 2, sm: 3 },
+                  borderRadius: '16px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#2879b6',
+                    mb: 2.5,
+                    fontSize: { xs: '1rem', sm: '1.125rem' },
+                  }}
+                >
+                  Sales Details
+                </Typography>
+
+                {SELLING_PRODUCTS.map((productType, sectionIndex) => {
+                  const rowIndices = fields
+                    .map((_, i) => i)
+                    .filter((i) => (cbgSalesRows[i]?.customerType || '') === productType);
+                  const customersForType = customers.filter((c: any) => (c.type || '') === productType);
+                  const productAccent = productType === 'CBG' ? '#2879b6' : productType === 'FOM' ? '#7dc244' : '#F59E21';
+
+                  return (
+                    <Box
+                      key={productType}
+                      sx={{
+                        mb: 3,
+                        pl: { xs: 2, sm: 2.5 },
+                        borderLeft: `4px solid ${productAccent}`,
+                        borderRadius: '0 12px 12px 0',
+                        bgcolor: 'rgba(0,0,0,0.02)',
+                        py: 2,
+                        px: 2,
+                      }}
                     >
-                      Add Sale
-                    </Button>
-                  )}
-                </Box>
-                {fields.map((field, index) => (
-                  <Grid container spacing={2} key={field.id} sx={{ mb: 2, alignItems: 'center' }}>
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name={`cbgSales.${index}.customerId`}
-                        control={control}
-                        defaultValue=""
-                        render={({ field: controllerField }) => (
-                          <TextField
-                            select
-                            fullWidth
-                            label="Customer"
-                            value={controllerField.value || ''}
-                            onChange={controllerField.onChange}
-                            disabled={isReadOnly}
-                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: 700,
+                          color: 'text.primary',
+                          mb: 1.5,
+                          fontSize: { xs: '0.95rem', sm: '1rem' },
+                        }}
+                      >
+                        {sectionIndex + 1}) {productType}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1.5, display: 'block', fontWeight: 500 }}
+                      >
+                        a) Customer Name
+                      </Typography>
+                      {rowIndices.map((index) => (
+                        <Grid
+                          container
+                          spacing={2}
+                          key={fields[index].id}
+                          sx={{
+                            mb: 2,
+                            alignItems: 'center',
+                            bgcolor: '#fff',
+                            borderRadius: '12px',
+                            p: 1.5,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Grid item xs={12} sm={5}>
+                            <Controller
+                              name={`cbgSales.${index}.customerId`}
+                              control={control}
+                              defaultValue=""
+                              render={({ field: controllerField }) => (
+                                <TextField
+                                  select
+                                  fullWidth
+                                  size="small"
+                                  label="Customer"
+                                  value={controllerField.value || ''}
+                                  onChange={controllerField.onChange}
+                                  disabled={isReadOnly}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      borderRadius: '10px',
+                                      ...(isReadOnly && { backgroundColor: 'rgba(0,0,0,0.04)' }),
+                                    },
+                                  }}
+                                >
+                                  {customersForType.map((c: any) => (
+                                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                                  ))}
+                                </TextField>
+                              )}
+                            />
+                          </Grid>
+                          <Grid item xs={10} sm={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Quantity (kg)"
+                              type="number"
+                              inputProps={{ step: 'any', min: 0 }}
+                              {...register(`cbgSales.${index}.quantity`)}
+                              disabled={isReadOnly}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '10px',
+                                  ...(isReadOnly && { backgroundColor: 'rgba(0,0,0,0.04)' }),
+                                },
+                              }}
+                            />
+                          </Grid>
+                          {!isReadOnly && (
+                            <Grid item xs={2} sm={1} sx={{ display: 'flex', justifyContent: { xs: 'flex-end', sm: 'center' } }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => remove(index)}
+                                color="error"
+                                sx={{
+                                  bgcolor: 'rgba(211, 47, 47, 0.12)',
+                                  borderRadius: '10px',
+                                  '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.2)' },
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Grid>
+                          )}
+                        </Grid>
+                      ))}
+                      {!isReadOnly && (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 1.5,
+                            mt: 2,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Button
+                            startIcon={<AddCircleIcon />}
+                            variant="contained"
+                            size="medium"
+                            onClick={() => append({ customerType: productType, customerId: '', quantity: '' })}
+                            sx={{
+                              borderRadius: '12px',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: 2,
+                              py: 1,
+                              boxShadow: '0 2px 6px rgba(40, 121, 182, 0.35)',
+                            }}
                           >
-                            {customers.map((c) => (
-                              <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                            ))}
-                          </TextField>
-                        )}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        label="Quantity (kg)"
-                        type="number"
-                        inputProps={{ step: 'any' }}
-                        {...register(`cbgSales.${index}.quantity`)}
-                        disabled={isReadOnly}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
-                      />
-                    </Grid>
-                    {!isReadOnly && (
-                      <Grid item xs={12} sm={2}>
-                        <IconButton onClick={() => remove(index)} color="error">
-                          <DeleteIcon />
-                        </IconButton>
-                      </Grid>
-                    )}
-                  </Grid>
-                ))}
+                            Add Sale
+                          </Button>
+                          <Typography variant="body2" color="text.secondary" sx={{ mx: 0.5 }} component="span">
+                            b)
+                          </Typography>
+                          <Button
+                            startIcon={<PersonAddIcon />}
+                            variant="outlined"
+                            size="medium"
+                            onClick={() => openAddCustomer(productType)}
+                            disabled={!canCreateCustomer}
+                            sx={{
+                              borderRadius: '12px',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              borderWidth: 2,
+                              px: 2,
+                              py: 1,
+                              '&:hover': { borderWidth: 2 },
+                            }}
+                          >
+                            Add New Customer
+                          </Button>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+
                 {fields.length === 0 && (
-                  <Typography variant="body2" color="textSecondary" align="center">No sales entries added.</Typography>
+                  <Box
+                    sx={{
+                      py: 4,
+                      px: 2,
+                      textAlign: 'center',
+                      borderRadius: '12px',
+                      bgcolor: 'rgba(0,0,0,0.04)',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320, mx: 'auto' }}>
+                      No sales entries added. Use &quot;Add Sale&quot; under each selling product to add customer and quantity.
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </Grid>
+
+            <Dialog
+              open={addCustomerOpen}
+              onClose={() => setAddCustomerOpen(false)}
+              maxWidth="sm"
+              fullWidth
+              fullScreen={isMobile}
+              PaperProps={{
+                sx: {
+                  borderRadius: { xs: 0, sm: '16px' },
+                  maxHeight: { xs: '100vh', sm: '90vh' },
+                },
+              }}
+            >
+              <DialogTitle sx={{ fontWeight: 700, color: '#2879b6', pb: 1 }}>
+                Add New Customer
+              </DialogTitle>
+              <DialogContent sx={{ pt: 0 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Selling Product"
+                      value={addCustomerType}
+                      disabled
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Customer Name"
+                      value={newCustomerName}
+                      onChange={(e) => setNewCustomerName(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      type="email"
+                      value={newCustomerEmail}
+                      onChange={(e) => setNewCustomerEmail(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Phone"
+                      value={newCustomerPhone}
+                      onChange={(e) => setNewCustomerPhone(e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                    />
+                  </Grid>
+                </Grid>
+              </DialogContent>
+              <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+                <Button onClick={() => setAddCustomerOpen(false)} sx={{ borderRadius: '10px' }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleAddNewCustomer}
+                  disabled={!newCustomerName.trim() || addCustomerSaving}
+                  sx={{ borderRadius: '10px', fontWeight: 600 }}
+                >
+                  {addCustomerSaving ? 'Saving…' : 'Save Customer'}
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Grid>
         </Box>
       </Box>

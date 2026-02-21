@@ -29,7 +29,7 @@ api.interceptors.response.use(
 );
 
 export const customerService = {
-    getCustomers: async (params?: { search?: string; status?: string }) => {
+    getCustomers: async (params?: { search?: string; status?: string; type?: string }) => {
         const response = await api.get('/customers', { params });
         return response.data;
     },
