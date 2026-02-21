@@ -687,7 +687,7 @@ export default function MISListView({
                             </IconButton>
                           </Tooltip>
                         )}
-                        {canDelete && (
+                        {canDelete && String(entry.status || '').toLowerCase() === 'draft' && (
                           <Tooltip title="Delete Entry">
                             <IconButton
                               size="small"
@@ -813,7 +813,7 @@ export default function MISListView({
                       Edit
                     </Button>
                   )}
-                  {canDelete && (
+                  {canDelete && String(entry.status || '').toLowerCase() === 'draft' && (
                     <IconButton
                       onClick={() => handleDeleteClick(entry)}
                       sx={{

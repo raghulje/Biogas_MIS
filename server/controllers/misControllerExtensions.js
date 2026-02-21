@@ -414,6 +414,12 @@ exports.deleteEntry = async (req, res) => {
             return res.status(404).json({ message: 'Entry not found' });
         }
 
+        const status = String(entry.status || '').toLowerCase();
+        if (status !== 'draft') {
+            await t.rollback();
+            return res.status(400).json({ message: 'Only draft entries can be deleted. Submitted, approved, and rejected entries cannot be deleted.' });
+        }
+
         // Store for audit
         const oldValues = entry.toJSON();
 
