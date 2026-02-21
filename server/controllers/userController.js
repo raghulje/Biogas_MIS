@@ -86,6 +86,7 @@ const syncUserPermissions = async (userId, uiPermissions) => {
         if (perm.create) dbPermissions.push({ resource, action: 'create' });
         if (perm.update) dbPermissions.push({ resource, action: 'update' });
         if (perm.delete) dbPermissions.push({ resource, action: 'delete' });
+        if (resource === 'mis_entry' && perm.approve) dbPermissions.push({ resource: 'mis_entry', action: 'approve' });
     }
 
     // Also add legacy MIS permissions for API-level enforcement

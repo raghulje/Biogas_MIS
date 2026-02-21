@@ -62,6 +62,7 @@ interface Permission {
   create: boolean;
   update: boolean;
   delete: boolean;
+  approve?: boolean; // MIS Entry only: approve/reject submitted entries
 }
 
 interface User {
@@ -647,7 +648,7 @@ function FinalMISReportEmailPanel({
 
 const defaultPermissions: Permission[] = [
   { page: 'Dashboard', read: true, create: false, update: false, delete: false },
-  { page: 'MIS Entry', read: true, create: true, update: true, delete: false },
+  { page: 'MIS Entry', read: true, create: true, update: true, delete: false, approve: false },
   { page: 'Consolidated MIS View', read: true, create: false, update: false, delete: false },
   { page: 'Final MIS Report', read: false, create: false, update: false, delete: false },
   { page: 'User Management', read: false, create: false, update: false, delete: false },
@@ -660,7 +661,7 @@ const defaultPermissions: Permission[] = [
 
 const adminPermissions: Permission[] = [
   { page: 'Dashboard', read: true, create: true, update: true, delete: true },
-  { page: 'MIS Entry', read: true, create: true, update: true, delete: true },
+  { page: 'MIS Entry', read: true, create: true, update: true, delete: true, approve: true },
   { page: 'Consolidated MIS View', read: true, create: true, update: true, delete: true },
   { page: 'User Management', read: true, create: true, update: true, delete: true },
   // Roles & Permissions removed — no role-based management
@@ -920,7 +921,8 @@ export default function AdminPage() {
       read: false,
       create: false,
       update: false,
-      delete: false
+      delete: false,
+      approve: false
     }));
 
     if (!backendPerms || !Array.isArray(backendPerms)) return uiPerms;
@@ -944,6 +946,7 @@ export default function AdminPage() {
       if (action === 'create' || action === '*') (uiPerm as any).create = true;
       if (action === 'update' || action === '*') (uiPerm as any).update = true;
       if (action === 'delete' || action === '*') (uiPerm as any).delete = true;
+      if (action === 'approve' || action === '*') (uiPerm as any).approve = true;
     });
 
     return uiPerms;
@@ -1205,6 +1208,7 @@ export default function AdminPage() {
 
   const handlePermissionChange = (pageIndex: number, permissionType: keyof Permission) => {
     if (permissionType === 'page') return;
+    if (permissionType === 'approve' && userPermissions[pageIndex]?.page !== 'MIS Entry') return;
     const pageName = userPermissions[pageIndex].page;
 
     const newValue = !userPermissions[pageIndex][permissionType];
@@ -3297,6 +3301,9 @@ export default function AdminPage() {
                     <TableCell align="center" sx={{ fontWeight: 700, color: '#ee6a31' }}>
                       Delete
                     </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, color: '#7dc244' }}>
+                      Approve
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -3335,6 +3342,18 @@ export default function AdminPage() {
                           sx={{ color: '#ee6a31', '&.Mui-checked': { color: '#ee6a31' } }}
                         />
                       </TableCell>
+                      <TableCell align="center">
+                        {perm.page === 'MIS Entry' ? (
+                          <Checkbox
+                            checked={!!perm.approve}
+                            onChange={() => handlePermissionChange(index, 'approve')}
+                            size="small"
+                            sx={{ color: '#7dc244', '&.Mui-checked': { color: '#7dc244' } }}
+                          />
+                        ) : (
+                          <span style={{ color: '#ccc' }}>—</span>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -3349,7 +3368,7 @@ export default function AdminPage() {
                     {perm.page}
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {['read', 'create', 'update', 'delete'].map((action) => (
+                    {['read', 'create', 'update', 'delete', ...(perm.page === 'MIS Entry' ? ['approve'] : [])].map((action) => (
                       <Box key={action} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>{action}</Typography>
                         <FormControlLabel
@@ -3358,7 +3377,7 @@ export default function AdminPage() {
                               checked={(perm as any)[action]}
                               onChange={() => handlePermissionChange(index, action as any)}
                               size="medium"
-                              sx={{ p: 0.5, color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : '#ee6a31', '&.Mui-checked': { color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : '#ee6a31' } }}
+                              sx={{ p: 0.5, color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : action === 'approve' ? '#7dc244' : '#ee6a31', '&.Mui-checked': { color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : action === 'approve' ? '#7dc244' : '#ee6a31' } }}
                             />
                           }
                           label=""
