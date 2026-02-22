@@ -308,8 +308,8 @@ exports.getEntriesForReport = async (req, res) => {
         }
         const entries = await MISDailyEntry.findAll({
             where: {
-                date: { [Op.between]: [startDate, endDate] },
-                status: 'approved'
+                date: { [Op.between]: [startDate, endDate] }
+                // status: 'approved' — commented out: include all statuses in Final MIS Report
             },
             include: [
                 { model: MISRawMaterials, as: 'rawMaterials' },

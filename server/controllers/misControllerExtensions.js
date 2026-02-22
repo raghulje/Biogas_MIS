@@ -758,7 +758,8 @@ exports.exportEntries = async (req, res) => {
     try {
         const { startDate, endDate, status } = req.query;
 
-        const where = { status: 'approved' };
+        const where = {};
+        // where.status = 'approved'; — commented out: export all statuses
         if (startDate && endDate) {
             where.date = { [Op.between]: [startDate, endDate] };
         }
@@ -876,9 +877,8 @@ exports.getDashboardData = async (req, res) => {
 
         const entries = await MISDailyEntry.findAll({
             where: {
-                date: { [Op.between]: [startStr, endStr] },
-                // Only approved entries should contribute to dashboards
-                status: 'approved'
+                date: { [Op.between]: [startStr, endStr] }
+                // status: 'approved' — commented out: dashboard shows all statuses
             },
             include: [
                 { model: MISRawBiogas, as: 'rawBiogas' },
@@ -980,9 +980,8 @@ exports.getConsolidatedData = async (req, res) => {
 
         const entries = await MISDailyEntry.findAll({
             where: {
-                date: { [Op.between]: [startDate, endDate] },
-                // Only include approved entries in consolidated reports
-                status: 'approved'
+                date: { [Op.between]: [startDate, endDate] }
+                // status: 'approved' — commented out: consolidated report includes all statuses
             },
             include: [
                 { model: MISRawMaterials, as: 'rawMaterials' },

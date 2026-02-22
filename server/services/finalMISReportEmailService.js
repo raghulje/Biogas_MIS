@@ -4,9 +4,8 @@ const { Op } = require('sequelize');
 async function fetchEntriesForReport(startDate, endDate) {
   const entries = await MISDailyEntry.findAll({
     where: {
-      date: { [Op.between]: [startDate, endDate] },
-      // Only include approved entries in final MIS reports
-      status: 'approved'
+      date: { [Op.between]: [startDate, endDate] }
+      // status: 'approved' — commented out: final MIS report includes all statuses
     },
     include: [
       { model: MISRawMaterials, as: 'rawMaterials' },
