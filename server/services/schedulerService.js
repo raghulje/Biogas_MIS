@@ -74,13 +74,24 @@ class SchedulerService {
     }
 
     /**
-     * Entry date for reminder/check: plant gets complete details (e.g. total CBG produced) only the next day
-     * (e.g. data for 21st Feb is available on 22nd Feb after 1–3 PM). So we check for yesterday's entry.
+     * Entry date for reminder/check: plant shift day = 8:00 AM to 8:00 AM next day.
+     * - Before 8:00 AM today: last completed shift ended yesterday 8 AM → entry date = (today - 2).
+     * - At or after 8:00 AM today: last completed shift ended today 8 AM → entry date = (today - 1).
+     * So checks on 21/02 (after 8 AM) are for entry date 20/02.
      */
     getEntryDateForCheck() {
-        const d = new Date();
-        d.setDate(d.getDate() - 1);
-        return d.toISOString().split('T')[0];
+        const now = new Date();
+        const hour = now.getHours();
+        const d = new Date(now);
+        if (hour < 8) {
+            d.setDate(d.getDate() - 2);
+        } else {
+            d.setDate(d.getDate() - 1);
+        }
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
     }
 
     async executeJob(scheduler) {
