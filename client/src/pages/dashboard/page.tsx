@@ -360,7 +360,7 @@ export default function DashboardPage() {
                             Total Feed Amount
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber(summary.totalFeed ?? 0)} tons
+                            {formatNumber((Number(summary.totalFeed ?? 0) / 1000))} tons
                           </Typography>
                         </Box>
                         <AvgIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
@@ -408,7 +408,7 @@ export default function DashboardPage() {
                             CBG Produced
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {formatNumber(summary.totalCBGProduced ?? 0)} kg
+                            {formatNumber((Number(summary.totalCBGProduced ?? 0) / 1000))} tons
                           </Typography>
                         </Box>
                         <GasIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
@@ -437,7 +437,7 @@ export default function DashboardPage() {
                             CBG Sold
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {formatNumber(summary.totalCBGSold ?? 0)} kg
+                            {formatNumber((Number(summary.totalCBGSold ?? 0) / 1000))} tons
                           </Typography>
                         </Box>
                         <SellIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
