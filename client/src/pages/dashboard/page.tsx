@@ -497,7 +497,7 @@ export default function DashboardPage() {
                             FOM Produced
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber(summary.totalFOMProduced ?? 0)} kg
+                            {formatNumber((Number(summary.totalFOMProduced ?? 0) / 1000))} tons
                           </Typography>
                         </Box>
                         <FomIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
@@ -545,7 +545,7 @@ export default function DashboardPage() {
                             FOM Sold
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {formatNumber(summary.totalFOMSold ?? 0)} kg
+                            {formatNumber((Number(summary.totalFOMSold ?? 0) / 1000))} tons
                           </Typography>
                         </Box>
                         <StoreIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
