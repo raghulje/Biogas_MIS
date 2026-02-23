@@ -360,7 +360,7 @@ export default function DashboardPage() {
                             Total Feed Amount
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber(summary.totalFeed ?? 0)} kg
+                            {formatNumber(summary.totalFeed ?? 0)} tons
                           </Typography>
                         </Box>
                         <AvgIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
