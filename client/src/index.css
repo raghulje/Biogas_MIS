@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------- iOS / PWA safe area & viewport ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Reliable full-height on iOS (address bar shrinks 100vh) */
+html, body, #root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
+}
+
+body {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+}
+
 /* AOS Animation Styles */
 @keyframes fadeInUp {
   from {
@@ -252,6 +269,7 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     border-top: 1px solid rgba(0, 0, 0, 0.05);

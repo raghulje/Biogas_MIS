@@ -678,7 +678,7 @@ exports.saveFinalMISReportConfig = async (req, res) => {
         const [row] = await FinalMISReportConfig.findOrCreate({
             where: { id: 1 },
             defaults: {
-                to_emails: toJson(to_emails || []),
+                to_emails: toJson(to_emails != null ? to_emails : []),
                 subject: subject || 'Final MIS Report',
                 body: body || '',
                 schedule_type: schedule_type || 'monthly',
@@ -688,15 +688,18 @@ exports.saveFinalMISReportConfig = async (req, res) => {
             }
         });
         if (row && !row.isNewRecord) {
-            await row.update({
-                to_emails: toJson(to_emails || []),
-                subject: subject || 'Final MIS Report',
-                body: body || '',
-                schedule_type: schedule_type || 'monthly',
-                schedule_time: schedule_time || '09:00',
-                cron_expression: cron_expression || null,
-                is_active: is_active !== false,
-            });
+            const updateFields = {
+                subject: subject != null ? subject : row.subject,
+                body: body != null ? body : row.body,
+                schedule_type: schedule_type != null ? schedule_type : row.schedule_type,
+                schedule_time: schedule_time != null ? schedule_time : row.schedule_time,
+                cron_expression: cron_expression != null ? cron_expression : row.cron_expression,
+                is_active: is_active !== undefined ? is_active !== false : row.is_active,
+            };
+            if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'to_emails')) {
+                updateFields.to_emails = toJson(to_emails);
+            }
+            await row.update(updateFields);
         }
         const updated = await FinalMISReportConfig.findByPk(1);
         const to_emails_out = parseEmails(updated?.to_emails);

@@ -23,6 +23,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useSnackbar } from 'notistack';
 
 const SELLING_PRODUCTS = ['CBG', 'FOM', 'LFOM'] as const;
+const FUEL_TYPES = ['Petrol', 'Diesel'] as const;
 
 interface Props {
   selectedEntry?: any;
@@ -35,6 +36,10 @@ export default function BiogasSection({ isReadOnly }: Props) {
     control,
     name: "cbgSales"
   });
+  const { fields: fuelFields, append: fuelAppend, remove: fuelRemove } = useFieldArray({
+    control,
+    name: "fuelUtilized"
+  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -44,6 +49,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
 
   const [customers, setCustomers] = useState<any[]>([]);
   const cbgSalesRows = watch('cbgSales') || [];
+  const fuelUtilizedRows = watch('fuelUtilized') || [];
 
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
   const [addCustomerType, setAddCustomerType] = useState<string>('CBG');
@@ -227,7 +233,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
               <Box
                 sx={{
                   mt: 2,
-                  p: { xs: 2, sm: 3 },
+                  p: { xs: 2.5, sm: 3.5 },
                   borderRadius: '16px',
                   border: '1px solid',
                   borderColor: 'divider',
@@ -240,7 +246,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                   sx={{
                     fontWeight: 700,
                     color: '#2879b6',
-                    mb: 2.5,
+                    mb: 3,
                     fontSize: { xs: '1rem', sm: '1.125rem' },
                   }}
                 >
@@ -258,13 +264,13 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     <Box
                       key={productType}
                       sx={{
-                        mb: 3,
-                        pl: { xs: 2, sm: 2.5 },
+                        mb: 3.5,
+                        pl: { xs: 2, sm: 3 },
                         borderLeft: `4px solid ${productAccent}`,
                         borderRadius: '0 12px 12px 0',
                         bgcolor: 'rgba(0,0,0,0.02)',
-                        py: 2,
-                        px: 2,
+                        py: 2.5,
+                        px: 2.5,
                       }}
                     >
                       <Typography
@@ -272,7 +278,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                         sx={{
                           fontWeight: 700,
                           color: 'text.primary',
-                          mb: 1.5,
+                          mb: 2,
                           fontSize: { xs: '0.95rem', sm: '1rem' },
                         }}
                       >
@@ -281,21 +287,21 @@ export default function BiogasSection({ isReadOnly }: Props) {
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mb: 1.5, display: 'block', fontWeight: 500 }}
+                        sx={{ mb: 2, pb: 1.5, display: 'block', fontWeight: 500 }}
                       >
                         a) Customer Name
                       </Typography>
                       {rowIndices.map((index) => (
                         <Grid
                           container
-                          spacing={2}
+                          spacing={2.5}
                           key={fields[index].id}
                           sx={{
-                            mb: 2,
+                            mb: 3.5,
                             alignItems: 'center',
                             bgcolor: '#fff',
                             borderRadius: '12px',
-                            p: 1.5,
+                            p: 2.5,
                             border: '1px solid',
                             borderColor: 'divider',
                           }}
@@ -314,6 +320,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                                   value={controllerField.value || ''}
                                   onChange={controllerField.onChange}
                                   disabled={isReadOnly}
+                                  InputLabelProps={{ shrink: true }}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       borderRadius: '10px',
@@ -337,11 +344,13 @@ export default function BiogasSection({ isReadOnly }: Props) {
                               inputProps={{ step: 'any', min: 0 }}
                               {...register(`cbgSales.${index}.quantity`)}
                               disabled={isReadOnly}
+                              InputLabelProps={{ shrink: true }}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: '10px',
                                   ...(isReadOnly && { backgroundColor: 'rgba(0,0,0,0.04)' }),
                                 },
+                                '& .MuiInputLabel-outlined': { backgroundColor: '#fff' },
                               }}
                             />
                           </Grid>
@@ -368,8 +377,11 @@ export default function BiogasSection({ isReadOnly }: Props) {
                           sx={{
                             display: 'flex',
                             flexWrap: 'wrap',
-                            gap: 1.5,
-                            mt: 2,
+                            gap: 2,
+                            mt: 5,
+                            pt: 2,
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
                             alignItems: 'center',
                           }}
                         >
@@ -382,8 +394,8 @@ export default function BiogasSection({ isReadOnly }: Props) {
                               borderRadius: '12px',
                               textTransform: 'none',
                               fontWeight: 600,
-                              px: 2,
-                              py: 1,
+                              px: 2.5,
+                              py: 1.25,
                               boxShadow: '0 2px 6px rgba(40, 121, 182, 0.35)',
                             }}
                           >
@@ -403,8 +415,8 @@ export default function BiogasSection({ isReadOnly }: Props) {
                               textTransform: 'none',
                               fontWeight: 600,
                               borderWidth: 2,
-                              px: 2,
-                              py: 1,
+                              px: 2.5,
+                              py: 1.25,
                               '&:hover': { borderWidth: 2 },
                             }}
                           >
@@ -436,6 +448,226 @@ export default function BiogasSection({ isReadOnly }: Props) {
               </Box>
             </Grid>
 
+            {/* Fuel Utilized */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: { xs: 2.5, sm: 3.5 },
+                  borderRadius: '16px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#2879b6',
+                    mb: 3,
+                    fontSize: { xs: '1rem', sm: '1.125rem' },
+                  }}
+                >
+                  Fuel Utilized
+                </Typography>
+
+                {FUEL_TYPES.map((fuelType, sectionIndex) => {
+                  const rowIndices = fuelFields
+                    .map((_, i) => i)
+                    .filter((i) => (fuelUtilizedRows[i]?.fuelType || '') === fuelType);
+                  const customersForType = customers.filter((c: any) => (c.type || '') === fuelType);
+                  const fuelAccent = fuelType === 'Petrol' ? '#2879b6' : '#e65100';
+
+                  return (
+                    <Box
+                      key={fuelType}
+                      sx={{
+                        mb: 3.5,
+                        pl: { xs: 2, sm: 3 },
+                        borderLeft: `4px solid ${fuelAccent}`,
+                        borderRadius: '0 12px 12px 0',
+                        bgcolor: 'rgba(0,0,0,0.02)',
+                        py: 2.5,
+                        px: 2.5,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: 700,
+                          color: 'text.primary',
+                          mb: 2,
+                          fontSize: { xs: '0.95rem', sm: '1rem' },
+                        }}
+                      >
+                        {sectionIndex + 1}) {fuelType}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 2, pb: 1.5, display: 'block', fontWeight: 500 }}
+                      >
+                        a) Customer Name
+                      </Typography>
+                      {rowIndices.map((index) => (
+                        <Grid
+                          container
+                          spacing={2.5}
+                          key={fuelFields[index].id}
+                          sx={{
+                            mb: 3.5,
+                            alignItems: 'center',
+                            bgcolor: '#fff',
+                            borderRadius: '12px',
+                            p: 2.5,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Grid item xs={12} sm={5}>
+                            <Controller
+                              name={`fuelUtilized.${index}.customerId`}
+                              control={control}
+                              defaultValue=""
+                              render={({ field: controllerField }) => (
+                                <TextField
+                                  select
+                                  fullWidth
+                                  size="small"
+                                  label="Customer"
+                                  value={controllerField.value || ''}
+                                  onChange={controllerField.onChange}
+                                  disabled={isReadOnly}
+                                  InputLabelProps={{ shrink: true }}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      borderRadius: '10px',
+                                      ...(isReadOnly && { backgroundColor: 'rgba(0,0,0,0.04)' }),
+                                    },
+                                  }}
+                                >
+                                  {customersForType.map((c: any) => (
+                                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                                  ))}
+                                </TextField>
+                              )}
+                            />
+                          </Grid>
+                          <Grid item xs={10} sm={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Quantity (L)"
+                              type="number"
+                              inputProps={{ step: 'any', min: 0 }}
+                              {...register(`fuelUtilized.${index}.quantity`)}
+                              disabled={isReadOnly}
+                              InputLabelProps={{ shrink: true }}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '10px',
+                                  ...(isReadOnly && { backgroundColor: 'rgba(0,0,0,0.04)' }),
+                                },
+                                '& .MuiInputLabel-outlined': { backgroundColor: '#fff' },
+                              }}
+                            />
+                          </Grid>
+                          {!isReadOnly && (
+                            <Grid item xs={2} sm={1} sx={{ display: 'flex', justifyContent: { xs: 'flex-end', sm: 'center' } }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => fuelRemove(index)}
+                                color="error"
+                                sx={{
+                                  bgcolor: 'rgba(211, 47, 47, 0.12)',
+                                  borderRadius: '10px',
+                                  '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.2)' },
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Grid>
+                          )}
+                        </Grid>
+                      ))}
+                      {!isReadOnly && (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 2,
+                            mt: 5,
+                            pt: 2,
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Button
+                            startIcon={<AddCircleIcon />}
+                            variant="contained"
+                            size="medium"
+                            onClick={() => fuelAppend({ fuelType, customerId: '', quantity: '' })}
+                            sx={{
+                              borderRadius: '12px',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: 2.5,
+                              py: 1.25,
+                              boxShadow: '0 2px 6px rgba(40, 121, 182, 0.35)',
+                            }}
+                          >
+                            Add Sale
+                          </Button>
+                          <Typography variant="body2" color="text.secondary" sx={{ mx: 0.5 }} component="span">
+                            b)
+                          </Typography>
+                          <Button
+                            startIcon={<PersonAddIcon />}
+                            variant="outlined"
+                            size="medium"
+                            onClick={() => openAddCustomer(fuelType)}
+                            disabled={!canCreateCustomer}
+                            sx={{
+                              borderRadius: '12px',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              borderWidth: 2,
+                              px: 2.5,
+                              py: 1.25,
+                              '&:hover': { borderWidth: 2 },
+                            }}
+                          >
+                            Add New Customer
+                          </Button>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+
+                {fuelFields.length === 0 && (
+                  <Box
+                    sx={{
+                      py: 4,
+                      px: 2,
+                      textAlign: 'center',
+                      borderRadius: '12px',
+                      bgcolor: 'rgba(0,0,0,0.04)',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320, mx: 'auto' }}>
+                      No fuel entries added. Use &quot;Add Sale&quot; under each fuel type to add customer and quantity.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
             <Dialog
               open={addCustomerOpen}
               onClose={() => setAddCustomerOpen(false)}
@@ -449,52 +681,77 @@ export default function BiogasSection({ isReadOnly }: Props) {
                 },
               }}
             >
-              <DialogTitle sx={{ fontWeight: 700, color: '#2879b6', pb: 1 }}>
+              <DialogTitle
+                component="div"
+                sx={{
+                  fontWeight: 700,
+                  color: '#2879b6',
+                  pt: 3,
+                  px: 3,
+                  pb: 2,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
                 Add New Customer
               </DialogTitle>
-              <DialogContent sx={{ pt: 0 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Selling Product"
-                      value={addCustomerType}
-                      disabled
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                    />
+              <DialogContent sx={{ pt: 5, px: 3, pb: 2, overflow: 'visible' }}>
+                <Box
+                  component="form"
+                  noValidate
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (newCustomerName.trim()) handleAddNewCustomer();
+                  }}
+                  sx={{ pt: '40px' }}
+                >
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Selling Product"
+                        value={addCustomerType}
+                        disabled
+                        sx={{
+                          '& .MuiOutlinedInput-root': { borderRadius: '10px' },
+                          '& .MuiInputLabel-outlined': { backgroundColor: 'background.paper' },
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        required
+                        label="Customer Name"
+                        value={newCustomerName}
+                        onChange={(e) => setNewCustomerName(e.target.value)}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                        inputProps={{ 'aria-required': true }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        type="email"
+                        value={newCustomerEmail}
+                        onChange={(e) => setNewCustomerEmail(e.target.value)}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Phone"
+                        value={newCustomerPhone}
+                        onChange={(e) => setNewCustomerPhone(e.target.value)}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                      />
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      required
-                      label="Customer Name"
-                      value={newCustomerName}
-                      onChange={(e) => setNewCustomerName(e.target.value)}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Email"
-                      type="email"
-                      value={newCustomerEmail}
-                      onChange={(e) => setNewCustomerEmail(e.target.value)}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Phone"
-                      value={newCustomerPhone}
-                      onChange={(e) => setNewCustomerPhone(e.target.value)}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-                    />
-                  </Grid>
-                </Grid>
+                </Box>
               </DialogContent>
-              <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+              <DialogActions sx={{ px: 3, py: 2.5, gap: 2, flexWrap: 'wrap', borderTop: '1px solid', borderColor: 'divider' }}>
                 <Button onClick={() => setAddCustomerOpen(false)} sx={{ borderRadius: '10px' }}>
                   Cancel
                 </Button>

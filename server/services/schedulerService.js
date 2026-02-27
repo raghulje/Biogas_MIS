@@ -109,13 +109,13 @@ class SchedulerService {
                 const entryCreated = entries.length > 0;
                 const entrySubmitted = entries.some(e => e.status === 'submitted' || e.status === 'approved' || e.status === 'under_review');
 
-                // No entry for entry date (previous day): send to Admin-configured list, or fallback to Operators
+                // No entry for entry date (previous day): send to Admin-configured list only. Fallback to Operators only when config field not set.
                 if (!entryCreated) {
-                    let noEntryEmails = [];
+                    let noEntryEmails = null;
                     try {
                         const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
                         const parse = (s) => {
-                            if (!s) return [];
+                            if (s === null || s === undefined) return null;
                             try {
                                 const a = JSON.parse(s);
                                 return Array.isArray(a) ? a : [s];
@@ -123,9 +123,11 @@ class SchedulerService {
                                 return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
                             }
                         };
-                        noEntryEmails = configRow ? parse(configRow.entry_not_created_emails) : [];
+                        if (configRow && configRow.entry_not_created_emails != null) {
+                            noEntryEmails = parse(configRow.entry_not_created_emails) || [];
+                        }
                     } catch (_) { /* ignore */ }
-                    if (noEntryEmails.length === 0) {
+                    if (noEntryEmails === null) {
                         const operatorRole = await Role.findOne({ where: { name: 'Operator' } });
                         const operators = operatorRole ? await User.findAll({ where: { role_id: operatorRole.id, is_active: true } }) : [];
                         noEntryEmails = operators.map(o => o.email).filter(Boolean);
@@ -167,17 +169,16 @@ class SchedulerService {
                     }
                 }
             } else if (scheduler.job_type === 'mis_creation_check') {
-                // Check: Entry for previous day created? Submitted? (plant data available next day)
+                // Check: Entry for previous day created? Submitted? Use only config emails when set; no role merge.
                 const entries = await MISDailyEntry.findAll({ where: { date: entryDate } });
                 const entryCreated = entries.length > 0;
                 const entrySubmitted = entries.some(e => ['submitted', 'approved', 'under_review'].includes(e.status));
 
-                // Get Recipients: Config + Site Users
-                let siteUserEmails = [];
+                let siteUserEmails = null;
                 try {
                     const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
                     const parse = (s) => {
-                        if (!s) return [];
+                        if (s === null || s === undefined) return null;
                         try {
                             const a = JSON.parse(s);
                             return Array.isArray(a) ? a : [s];
@@ -186,18 +187,21 @@ class SchedulerService {
                         }
                     };
                     if (configRow) {
-                        // For "Not Created" scenario
-                        if (!entryCreated) siteUserEmails = [...siteUserEmails, ...parse(configRow.entry_not_created_emails)];
-                        // For "Not Submitted" scenario
-                        if (entryCreated && !entrySubmitted) siteUserEmails = [...siteUserEmails, ...parse(configRow.not_submitted_notify_emails)];
+                        if (!entryCreated && configRow.entry_not_created_emails != null) {
+                            siteUserEmails = parse(configRow.entry_not_created_emails) || [];
+                        } else if (entryCreated && !entrySubmitted && configRow.not_submitted_notify_emails != null) {
+                            siteUserEmails = parse(configRow.not_submitted_notify_emails) || [];
+                        }
                     }
                 } catch (_) { }
 
-                // Fallback/Addition: Role 'Site User' or 'Operator'
-                const roles = await Role.findAll({ where: { name: { [Op.in]: ['Site User', 'Operator'] } } });
-                for (const role of roles) {
-                    const users = await User.findAll({ where: { role_id: role.id, is_active: true } });
-                    siteUserEmails = [...siteUserEmails, ...users.map(u => u.email)];
+                if (siteUserEmails === null) {
+                    const roles = await Role.findAll({ where: { name: { [Op.in]: ['Site User', 'Operator'] } } });
+                    siteUserEmails = [];
+                    for (const role of roles) {
+                        const users = await User.findAll({ where: { role_id: role.id, is_active: true } });
+                        siteUserEmails = [...siteUserEmails, ...users.map(u => u.email)];
+                    }
                 }
                 const uniqueEmails = [...new Set(siteUserEmails.filter(Boolean))];
 
@@ -220,16 +224,16 @@ class SchedulerService {
                 }
 
             } else if (scheduler.job_type === 'mis_escalation_check') {
-                // Escalation check: Entry for previous day submitted? If not, notify Managers.
+                // Escalation check: Entry for previous day submitted? Use only config emails when set.
                 const entries = await MISDailyEntry.findAll({ where: { date: entryDate } });
                 const entrySubmitted = entries.some(e => ['submitted', 'approved', 'under_review'].includes(e.status));
 
                 if (!entrySubmitted) {
-                    let managerEmails = [];
+                    let managerEmails = null;
                     try {
                         const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
                         const parse = (s) => {
-                            if (!s) return [];
+                            if (s === null || s === undefined) return null;
                             try {
                                 const a = JSON.parse(s);
                                 return Array.isArray(a) ? a : [s];
@@ -237,13 +241,13 @@ class SchedulerService {
                                 return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
                             }
                         };
-                        if (configRow) managerEmails = parse(configRow.escalation_notify_emails);
+                        if (configRow && configRow.escalation_notify_emails != null) {
+                            managerEmails = parse(configRow.escalation_notify_emails) || [];
+                        }
                     } catch (_) { }
-
-                    const managerRole = await Role.findOne({ where: { name: 'Manager' } });
-                    if (managerRole) {
-                        const users = await User.findAll({ where: { role_id: managerRole.id, is_active: true } });
-                        managerEmails = [...managerEmails, ...users.map(u => u.email)];
+                    if (managerEmails === null) {
+                        const managerRole = await Role.findOne({ where: { name: 'Manager' } });
+                        managerEmails = managerRole ? (await User.findAll({ where: { role_id: managerRole.id, is_active: true } })).map(u => u.email).filter(Boolean) : [];
                     }
                     const uniqueEmails = [...new Set(managerEmails.filter(Boolean))];
 

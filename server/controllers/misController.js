@@ -15,6 +15,7 @@ const {
     MISPlantAvailability,
     MISHSEData,
     MISCBGSale,
+    MISFuelUtilized,
     User,
     Role,
     MISEmailConfig,
@@ -142,6 +143,14 @@ const transformEntry = (entry) => {
         }));
     }
 
+    if (e.fuelUtilized) {
+        res.fuelUtilized = e.fuelUtilized.map(f => ({
+            fuelType: f.fuel_type,
+            customerId: f.customer_id,
+            quantity: f.quantity
+        }));
+    }
+
     if (e.compressors) {
         res.compressors = {
             compressor1Hours: e.compressors.compressor_1_hours,
@@ -216,7 +225,7 @@ exports.createEntry = async (req, res) => {
     // I'll copy the createEntry logic from previous step.
     const t = await sequelize.transaction();
     try {
-        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, cbgSales, compressors, fertilizer, utilities, manpower, plantAvailability, hse } = req.body;
+        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, cbgSales, fuelUtilized, compressors, fertilizer, utilities, manpower, plantAvailability, hse } = req.body;
         const userId = req.user.id;
         const statusVal = status ? String(status).toLowerCase() : 'draft';
         const allowedStatus = ['draft', 'submitted', 'under_review', 'approved', 'rejected'].includes(statusVal) ? statusVal : 'draft';
@@ -260,6 +269,18 @@ exports.createEntry = async (req, res) => {
                 quantity: n(s.quantity)
             }, { transaction: t }));
             childPromises.push(...salePromises);
+        }
+
+        if (fuelUtilized && Array.isArray(fuelUtilized)) {
+            const fuelPromises = fuelUtilized
+                .filter(f => f.customerId && f.fuelType && (f.quantity !== '' && f.quantity != null))
+                .map(f => MISFuelUtilized.create({
+                    entry_id: entryId,
+                    fuel_type: String(f.fuelType),
+                    customer_id: parseInt(f.customerId),
+                    quantity: n(f.quantity)
+                }, { transaction: t }));
+            childPromises.push(...fuelPromises);
         }
 
         if (compressors) childPromises.push(MISCompressors.create({ entry_id: entryId, compressor_1_hours: n(compressors.compressor1Hours), compressor_2_hours: n(compressors.compressor2Hours), total_hours: n(compressors.totalHours) }, { transaction: t }));
@@ -411,6 +432,7 @@ exports.getEntryById = async (req, res) => {
                 { model: MISPlantAvailability, as: 'plantAvailability' },
                 { model: MISHSEData, as: 'hse' },
                 { model: MISCBGSale, as: 'cbgSales' },
+                { model: MISFuelUtilized, as: 'fuelUtilized' },
                 { model: User, as: 'creator', attributes: ['name', 'email'] }
             ]
         });
@@ -433,12 +455,12 @@ exports.submitEntry = async (req, res) => {
         await entry.update({ status: 'submitted' });
         await auditService.log(req.user.id, 'SUBMIT_ENTRY', 'MISDailyEntry', id, null, { status: 'submitted' }, req);
 
-        // Recipients from Admin Panel (MIS Email Config); fallback to Manager/Admin + env if none set
+        // Recipients from Admin Panel (MIS Email Config). Use fallback only when config or field is not set (null/undefined).
         const toEmails = new Set();
         try {
             const configRow = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
             const parse = (s) => {
-                if (!s) return [];
+                if (s === null || s === undefined) return null;
                 try {
                     const a = JSON.parse(s);
                     return Array.isArray(a) ? a : [s];
@@ -446,10 +468,17 @@ exports.submitEntry = async (req, res) => {
                     return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
                 }
             };
-            const adminEmails = configRow ? parse(configRow.submit_notify_emails) : [];
-            adminEmails.forEach(e => { const x = String(e).trim().toLowerCase(); if (x) toEmails.add(x); });
-        } catch (_) { /* ignore */ }
-        if (toEmails.size === 0) {
+            const adminEmails = configRow ? parse(configRow.submit_notify_emails) : null;
+            if (adminEmails !== null) {
+                adminEmails.forEach(e => { const x = String(e).trim().toLowerCase(); if (x) toEmails.add(x); });
+            }
+            if (toEmails.size === 0 && (adminEmails === null || !configRow || configRow.submit_notify_emails == null)) {
+                const roles = await Role.findAll({ where: { name: ['Manager', 'Admin'] } });
+                const reviewers = await User.findAll({ where: { role_id: roles.map(r => r.id), is_active: true } });
+                reviewers.forEach(r => { if (r.email) toEmails.add(r.email.trim().toLowerCase()); });
+                (process.env.MIS_NOTIFY_EMAILS || '').split(',').forEach(e => { const x = e.trim().toLowerCase(); if (x) toEmails.add(x); });
+            }
+        } catch (_) {
             const roles = await Role.findAll({ where: { name: ['Manager', 'Admin'] } });
             const reviewers = await User.findAll({ where: { role_id: roles.map(r => r.id), is_active: true } });
             reviewers.forEach(r => { if (r.email) toEmails.add(r.email.trim().toLowerCase()); });

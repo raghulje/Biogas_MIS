@@ -106,6 +106,7 @@ export default function MISFormView({
     rawBiogasQuality: {},
     compressedBiogas: {},
     cbgSales: [],
+    fuelUtilized: [],
     compressors: {},
     fertilizer: {},
     utilities: {},
@@ -133,7 +134,7 @@ export default function MISFormView({
     (viewMode === 'edit' && hasPermission('mis_entry', 'update'));
   const canApprove = hasPermission('mis_entry', 'approve');
   const s = String(selectedEntry?.status || '').toLowerCase();
-  const hideSubmitAndDraft = selectedEntry && ['approved', 'rejected', 'submitted'].includes(s);
+  const hideSubmitAndDraft = selectedEntry && ['approved', 'rejected'].includes(s);
 
   const onSubmit: SubmitHandler<any> = async (data) => {
     if (!canSave) {
@@ -416,10 +417,12 @@ export default function MISFormView({
               mt: 3,
               bgcolor: { xs: 'rgba(255,255,255,0.9)', md: 'transparent' },
               backdropFilter: { xs: 'blur(10px)', md: 'none' },
+              WebkitBackdropFilter: { xs: 'blur(10px)', md: 'none' },
               borderTop: { xs: '1px solid rgba(0,0,0,0.1)', md: 'none' },
               mx: { xs: -2, md: 0 },
               px: { xs: 2, md: 0 },
               py: { xs: 2, md: 0 },
+              paddingBottom: { xs: 'calc(16px + env(safe-area-inset-bottom, 0px))', md: 0 },
             }}
           >
             {canSave && !hideSubmitAndDraft && (

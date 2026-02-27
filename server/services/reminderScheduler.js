@@ -126,14 +126,14 @@ class ReminderScheduler {
         return;
       }
 
-      // Determine recipients: use MISEmailConfig or fallback to Operators
+      // Determine recipients: use only MISEmailConfig when set; fallback to Operators only when config field not set
       const { MISEmailConfig } = require('../models');
-      let toList = [];
+      let toList = null;
       try {
         const cfg = await MISEmailConfig.findByPk(1) || await MISEmailConfig.findOne({ order: [['id', 'ASC']] });
-        if (cfg) {
+        if (cfg && cfg.not_submitted_notify_emails != null) {
           const parse = (s) => {
-            if (!s) return [];
+            if (s === null || s === undefined) return null;
             try {
               const a = JSON.parse(s);
               return Array.isArray(a) ? a : [s];
@@ -141,15 +141,19 @@ class ReminderScheduler {
               return String(s).split(/[,;]/).map(e => e.trim()).filter(Boolean);
             }
           };
-          toList = parse(cfg.not_submitted_notify_emails || '[]');
+          toList = parse(cfg.not_submitted_notify_emails) || [];
         }
       } catch (e) { /* ignore */ }
 
-      if (!toList || toList.length === 0) {
-        const opRole = await Role.findOne({ where: { name: 'Operator' } });
-        if (opRole) {
-          const users = await User.findAll({ where: { role_id: opRole.id, is_active: true } });
-          toList = users.map(u => u.email).filter(Boolean);
+      if (toList === null || toList.length === 0) {
+        if (toList === null) {
+          const opRole = await Role.findOne({ where: { name: 'Operator' } });
+          if (opRole) {
+            const users = await User.findAll({ where: { role_id: opRole.id, is_active: true } });
+            toList = users.map(u => u.email).filter(Boolean);
+          } else {
+            toList = [];
+          }
         }
       }
 

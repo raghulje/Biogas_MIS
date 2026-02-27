@@ -280,12 +280,14 @@ export const Layout = ({ children }: LayoutProps) => {
           ml: { md: `${currentDrawerWidth}px` },
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           color: '#333842',
           borderBottom: '1px solid rgba(40, 121, 182, 0.1)',
           transition: 'all 0.3s ease',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
         }}
       >
-        <Toolbar sx={{ py: 1 }}>
+        <Toolbar sx={{ py: 1, minHeight: { xs: 56, sm: 64 } }}>
           <IconButton
             color="inherit"
             edge="start"
@@ -383,6 +385,8 @@ export const Layout = ({ children }: LayoutProps) => {
               width: drawerWidth,
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              paddingTop: 'env(safe-area-inset-top, 0px)',
             },
           }}
         >
@@ -415,8 +419,9 @@ export const Layout = ({ children }: LayoutProps) => {
           flexGrow: 1,
           p: { xs: 1.5, sm: 3 },
           width: { md: `calc(100% - ${currentDrawerWidth}px)` },
-          mt: { xs: 7, sm: 8 },
-          minHeight: 'calc(100vh - 64px)',
+            mt: { xs: 'calc(56px + env(safe-area-inset-top, 0px))', sm: 'calc(64px + env(safe-area-inset-top, 0px))' },
+            minHeight: 'calc(100vh - 64px)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
           transition: 'all 0.3s ease',
         }}
       >

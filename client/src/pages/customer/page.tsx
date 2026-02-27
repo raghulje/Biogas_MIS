@@ -55,7 +55,9 @@ export interface Customer {
 const CUSTOMER_TYPES = [
     'CBG',
     'FOM',
-    'LFOM'
+    'LFOM',
+    'Petrol',
+    'Diesel'
 ];
 
 export default function CustomerPage() {

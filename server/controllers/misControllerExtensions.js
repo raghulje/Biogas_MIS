@@ -19,6 +19,7 @@ const {
     ImportLog,
     User,
     MISCBGSale,
+    MISFuelUtilized,
     MISEmailConfig,
     Customer,
     sequelize
@@ -34,7 +35,7 @@ exports.updateEntry = async (req, res) => {
     const t = await sequelize.transaction();
     try {
         const { id } = req.params;
-        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, compressors, fertilizer, utilities, manpower, plantAvailability, hse, cbgSales } = req.body;
+        const { date, status, remarks, rawMaterials, feedMixingTank, digesters, slsMachine, rawBiogas, rawBiogasQuality, compressedBiogas, compressors, fertilizer, utilities, manpower, plantAvailability, hse, cbgSales, fuelUtilized } = req.body;
         const userId = req.user.id;
 
         // Find existing entry
@@ -53,7 +54,8 @@ exports.updateEntry = async (req, res) => {
                 { model: MISManpowerData, as: 'manpower' },
                 { model: MISPlantAvailability, as: 'plantAvailability' },
                 { model: MISHSEData, as: 'hse' },
-                { model: MISCBGSale, as: 'cbgSales' }
+                { model: MISCBGSale, as: 'cbgSales' },
+                { model: MISFuelUtilized, as: 'fuelUtilized' }
             ]
         });
 
@@ -390,6 +392,20 @@ exports.updateEntry = async (req, res) => {
             await Promise.all(salesPromises);
         }
 
+        // Fuel Utilized - delete existing and recreate
+        if (fuelUtilized && Array.isArray(fuelUtilized)) {
+            await MISFuelUtilized.destroy({ where: { entry_id: id }, transaction: t });
+            const fuelPromises = fuelUtilized
+                .filter(f => f.customerId && f.fuelType && (f.quantity !== '' && f.quantity != null))
+                .map(f => MISFuelUtilized.create({
+                    entry_id: id,
+                    fuel_type: String(f.fuelType),
+                    customer_id: parseInt(f.customerId),
+                    quantity: parseFloat(f.quantity) || 0
+                }, { transaction: t }));
+            await Promise.all(fuelPromises);
+        }
+
         await t.commit();
         await auditService.log(userId, 'UPDATE_MIS_ENTRY', 'MISDailyEntry', id, oldValues, null, req);
         res.json({ message: 'Entry updated successfully' });
@@ -483,6 +499,7 @@ exports.hardDeleteEntry = async (req, res) => {
         await MISFeedData?.destroy?.({ where: { entry_id: id }, transaction: t }).catch(() => {});
         await MISPowerData?.destroy?.({ where: { entry_id: id }, transaction: t }).catch(() => {});
         await MISCBGSale.destroy({ where: { entry_id: id }, transaction: t });
+        await MISFuelUtilized.destroy({ where: { entry_id: id }, transaction: t });
 
         // Finally remove main entry
         await entry.destroy({ transaction: t });

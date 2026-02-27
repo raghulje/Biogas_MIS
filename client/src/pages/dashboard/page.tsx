@@ -408,7 +408,7 @@ export default function DashboardPage() {
                             CBG Produced
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {formatNumber((Number(summary.totalCBGProduced ?? 0) / 1000))} tons
+                            {formatNumber(summary.totalCBGProduced ?? 0)} kg
                           </Typography>
                         </Box>
                         <GasIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
@@ -437,7 +437,7 @@ export default function DashboardPage() {
                             CBG Sold
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {formatNumber((Number(summary.totalCBGSold ?? 0) / 1000))} tons
+                            {formatNumber(summary.totalCBGSold ?? 0)} kg
                           </Typography>
                         </Box>
                         <SellIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
@@ -480,7 +480,20 @@ export default function DashboardPage() {
               </Box>
               <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                 <Grid container spacing={2}>
+                  {/* Avg Availability - commented out for now
                   <Grid item xs={12} sm={4}>
+                    <Box className="hover-lift" sx={{ p: 2.5, background: 'linear-gradient(135deg, rgba(125, 194, 68, 0.08) 0%, rgba(125, 194, 68, 0.03) 100%)', borderRadius: '12px', borderLeft: '4px solid #7dc244', transition: 'all 0.3s ease' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>Avg Availability</Typography>
+                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>{formatNumber(summary.avgPlantAvailability ?? 0)}%</Typography>
+                        </Box>
+                        <AvgIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
+                      </Box>
+                    </Box>
+                  </Grid>
+                  */}
+                  <Grid item xs={12} sm={6}>
                     <Box
                       className="hover-lift"
                       sx={{
@@ -497,38 +510,14 @@ export default function DashboardPage() {
                             FOM Produced
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber((Number(summary.totalFOMProduced ?? 0) / 1000))} tons
+                            {formatNumber(summary.totalFOMProduced ?? 0)} kg
                           </Typography>
                         </Box>
                         <FomIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(125, 194, 68, 0.08) 0%, rgba(125, 194, 68, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #7dc244',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            Avg Availability
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {formatNumber(summary.avgPlantAvailability ?? 0)}%
-                          </Typography>
-                        </Box>
-                        <AvgIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid item xs={12} sm={6}>
                     <Box
                       className="hover-lift"
                       sx={{
@@ -545,7 +534,7 @@ export default function DashboardPage() {
                             FOM Sold
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {formatNumber((Number(summary.totalFOMSold ?? 0) / 1000))} tons
+                            {formatNumber(summary.totalFOMSold ?? 0)} kg
                           </Typography>
                         </Box>
                         <StoreIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />

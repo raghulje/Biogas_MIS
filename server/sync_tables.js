@@ -1,4 +1,4 @@
-const { sequelize, Customer, MISCBGSale } = require('./models');
+const { sequelize, Customer, MISCBGSale, MISFuelUtilized } = require('./models');
 
 async function syncTables() {
     try {
@@ -13,6 +13,10 @@ async function syncTables() {
         console.log('Syncing MISCBGSale model...');
         await MISCBGSale.sync({ alter: true });
         console.log('MISCBGSale table synced.');
+
+        console.log('Syncing MISFuelUtilized model...');
+        await MISFuelUtilized.sync({ alter: true });
+        console.log('MISFuelUtilized table synced.');
 
         console.log('All done.');
         process.exit(0);
