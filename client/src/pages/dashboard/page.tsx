@@ -62,13 +62,13 @@ export default function DashboardPage() {
   const theme = useTheme();
   const isPhone = useMediaQuery('(max-width:768px)');
   const [filterType, setFilterType] = useState('month');
-  // Format numbers: show exact values (no rounding), trim trailing zeros
+  // Format numbers: max 2 decimal places (avoid float noise), trim trailing zeros
   const formatNumber = (val: any) => {
     if (val === null || val === undefined) return '0';
     const n = Number(val);
     if (Number.isNaN(n)) return String(val);
     if (Number.isInteger(n)) return String(n);
-    const s = n.toString();
+    const s = n.toFixed(2);
     return s.replace(/\.?0+$/, '') || '0';
   };
   const [startDate, setStartDate] = useState<Date | null>(null);
