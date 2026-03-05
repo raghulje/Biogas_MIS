@@ -16,7 +16,10 @@ module.exports = (sequelize, DataTypes) => {
         sent_at: {
             type: DataTypes.DATE,
             defaultValue: DataTypes.NOW
-        }
+        },
+        audit_log_id: { type: DataTypes.INTEGER, allowNull: true },
+        entity_type: { type: DataTypes.STRING(64), allowNull: true },
+        entity_id: { type: DataTypes.STRING(64), allowNull: true }
     }, {
         sequelize,
         modelName: 'EmailLog',

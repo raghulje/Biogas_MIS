@@ -162,13 +162,15 @@ class ReminderScheduler {
         return;
       }
 
+      const entryId = entries[0]?.id;
+      const meta = { entity_type: 'MISDailyEntry', entity_id: entryId ? String(entryId) : null };
       const { EmailTemplate } = require('../models');
       const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
       const subject = template?.subject || `MIS Entry Reminder for ${entryDate}`;
       for (const to of toList) {
         try {
           const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate }) : `<p>Please submit MIS for ${entryDate} (data for this date is available from the next day).</p>`;
-          await emailService.sendEmail(to, subject, body);
+          await emailService.sendEmail(to, subject, body, meta);
           console.log(`Reminder email sent to ${to} [schedule ${scheduleRow.id} #${reminderIndex}]`);
         } catch (e) {
           console.error('Failed to send reminder to', to, e.message);

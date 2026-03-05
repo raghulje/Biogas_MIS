@@ -208,15 +208,18 @@ const FinalMISPage = () => {
     const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
     const avg = (arr: number[]) => (arr.length > 0 ? sum(arr) / arr.length : 0);
 
-    // Aggregate feeding data per digester
+    // D-01 and D-02 are the only digesters; D-03 column = Total = D-01 + D-02
     const d01Feed = sum(
       filteredEntries.map((e) => e.digesters[0]?.feeding.totalSlurryFeed || 0)
     );
     const d02Feed = sum(
       filteredEntries.map((e) => e.digesters[1]?.feeding.totalSlurryFeed || 0)
     );
-    const d03Feed = sum(
-      filteredEntries.map((e) => e.digesters[2]?.feeding.totalSlurryFeed || 0)
+    const d01Discharge = sum(
+      filteredEntries.map((e) => e.digesters[0]?.discharge?.totalSlurryOut || 0)
+    );
+    const d02Discharge = sum(
+      filteredEntries.map((e) => e.digesters[1]?.discharge?.totalSlurryOut || 0)
     );
 
     return {
@@ -234,13 +237,13 @@ const FinalMISPage = () => {
       feeding: {
         pressMud: {
           d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)
           ),
           d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)
           ),
           d03: sum(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty)
           ),
           total: sum(
             filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty)
@@ -248,13 +251,13 @@ const FinalMISPage = () => {
         },
         cowDung: {
           d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)
           ),
           d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)
           ),
           d03: sum(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty)
           ),
           total: sum(
             filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty)
@@ -263,13 +266,13 @@ const FinalMISPage = () => {
         otherFeedstock: { d01: 0, d02: 0, d03: 0, total: 0 },
         decanterPermeate: {
           d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)
           ),
           d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)
           ),
           d03: sum(
-            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty)
           ),
           total: sum(
             filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty)
@@ -277,35 +280,25 @@ const FinalMISPage = () => {
         },
         water: {
           d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.waterQty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.waterQty / 2)
           ),
           d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.waterQty / 3)
+            filteredEntries.map((e) => e.feedMixingTank.waterQty / 2)
           ),
-          d03: sum(
-            filteredEntries.map((e) => e.feedMixingTank.waterQty / 3)
-          ),
+          d03: sum(filteredEntries.map((e) => e.feedMixingTank.waterQty)),
           total: sum(filteredEntries.map((e) => e.feedMixingTank.waterQty)),
         },
         digester03Slurry: {
-          d01: 0,
-          d02: 0,
-          d03: sum(
-            filteredEntries.map(
-              (e) => e.digesters[2]?.discharge.totalSlurryOut || 0
-            )
-          ),
-          total: sum(
-            filteredEntries.map(
-              (e) => e.digesters[2]?.discharge.totalSlurryOut || 0
-            )
-          ),
+          d01: d01Discharge,
+          d02: d02Discharge,
+          d03: d01Discharge + d02Discharge,
+          total: d01Discharge + d02Discharge,
         },
         totalFeedInput: {
           d01: d01Feed,
           d02: d02Feed,
-          d03: d03Feed,
-          total: d01Feed + d02Feed + d03Feed,
+          d03: d01Feed + d02Feed,
+          total: d01Feed + d02Feed,
         },
       },
       rawMaterialQuality: {

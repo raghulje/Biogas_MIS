@@ -136,10 +136,11 @@ class SchedulerService {
                     const subject = template?.subject || 'MIS Entry Reminder: No Entry Created for ' + entryDate;
                     const body = template ? await emailService.replaceTemplateVariables(template.body, { name: 'Recipient', date: entryDate })
                         : `<p>Hello,</p><p>No MIS entry has been created for ${entryDate}. Please ensure an entry is created (data for this date is available from the next day).</p>`;
+                    const meta = { entity_type: 'MISDailyEntry', entity_id: null };
                     for (const email of noEntryEmails) {
                         const addr = String(email).trim();
                         if (addr) {
-                            try { await emailService.sendEmail(addr, subject, body); } catch (err) { console.error('No-entry reminder email failed for', addr, err.message); }
+                            try { await emailService.sendEmail(addr, subject, body, meta); } catch (err) { console.error('No-entry reminder email failed for', addr, err.message); }
                         }
                     }
                 }
@@ -150,22 +151,26 @@ class SchedulerService {
                 const managers = managerRole ? await User.findAll({ where: { role_id: managerRole.id, is_active: true } }) : [];
 
                 if (entryCreated && !entrySubmitted) {
+                    const entryId = entries[0]?.id;
+                    const meta = { entity_type: 'MISDailyEntry', entity_id: entryId ? String(entryId) : null };
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_pending_submission' } });
                     for (const op of operators) {
                         const subject = template?.subject || 'MIS Entry Reminder: Please Submit Entry';
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { name: op.name, date: entryDate })
                             : `<p>Hello ${op.name},</p><p>The MIS entry for ${entryDate} is in Draft status. Please submit it.</p>`;
-                        await emailService.sendEmail(op.email, subject, body);
+                        await emailService.sendEmail(op.email, subject, body, meta);
                     }
                 }
 
                 if (entryCreated && entrySubmitted) {
+                    const entryId = entries[0]?.id;
+                    const meta = { entity_type: 'MISDailyEntry', entity_id: entryId ? String(entryId) : null };
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_entry_submitted_notify' } });
                     for (const mgr of managers) {
                         const subject = template?.subject || 'MIS Entry Submitted';
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { name: mgr.name, date: entryDate })
                             : `<p>Hello ${mgr.name},</p><p>An MIS entry for ${entryDate} has been submitted for review.</p>`;
-                        await emailService.sendEmail(mgr.email, subject, body);
+                        await emailService.sendEmail(mgr.email, subject, body, meta);
                     }
                 }
             } else if (scheduler.job_type === 'mis_creation_check') {
@@ -205,13 +210,15 @@ class SchedulerService {
                 }
                 const uniqueEmails = [...new Set(siteUserEmails.filter(Boolean))];
 
+                const entryId = entries[0]?.id;
+                const meta = { entity_type: 'MISDailyEntry', entity_id: entryId ? String(entryId) : null };
                 if (!entryCreated) {
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_not_created' } });
                     const subject = template?.subject || `MIS Entry Missing for ${entryDate}`;
                     for (const email of uniqueEmails) {
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
                             : `<p>Hello,</p><p>The MIS entry for ${entryDate} has NOT been created yet. Please create it (data for this date is available from the next day).</p>`;
-                        await emailService.sendEmail(email, subject, body);
+                        await emailService.sendEmail(email, subject, body, meta);
                     }
                 } else if (!entrySubmitted) {
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
@@ -219,7 +226,7 @@ class SchedulerService {
                     for (const email of uniqueEmails) {
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
                             : `<p>Hello,</p><p>The MIS entry for ${entryDate} is created but NOT submitted. Please submit it immediately.</p>`;
-                        await emailService.sendEmail(email, subject, body);
+                        await emailService.sendEmail(email, subject, body, meta);
                     }
                 }
 
@@ -251,12 +258,13 @@ class SchedulerService {
                     }
                     const uniqueEmails = [...new Set(managerEmails.filter(Boolean))];
 
+                    const meta = { entity_type: 'MISDailyEntry', entity_id: null };
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_escalation' } });
                     const subject = template?.subject || `ESCALATION: MIS Entry Missing/Draft for ${entryDate}`;
                     for (const email of uniqueEmails) {
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
                             : `<p>Hello Manager,</p><p>The MIS entry for ${entryDate} is overdue (not submitted). Please check with the team.</p>`;
-                        await emailService.sendEmail(email, subject, body);
+                        await emailService.sendEmail(email, subject, body, meta);
                     }
                 }
             }
@@ -327,8 +335,9 @@ class SchedulerService {
 
             const html = await finalMISReportEmailService.buildReportHtmlForRange(startDate, endDate, customBody);
 
+            const meta = { entity_type: 'FinalMISReportConfig', entity_id: row.id ? String(row.id) : null };
             for (const email of toList) {
-                await emailService.sendEmail(email, subject, html);
+                await emailService.sendEmail(email, subject, html, meta);
             }
 
             await row.update({ last_sent_at: new Date() });

@@ -15,13 +15,16 @@ function buildFieldChanges(oldValues, newValues) {
 }
 
 const auditService = {
+    /**
+     * @returns {Promise<Object|null>} The created AuditLog record, or null on error
+     */
     log: async (userId, action, resourceType, resourceId, oldValues, newValues, req) => {
         try {
             const field_changes = buildFieldChanges(
                 oldValues && typeof oldValues === 'object' ? oldValues : null,
                 newValues && typeof newValues === 'object' ? newValues : null
             );
-            await AuditLog.create({
+            const record = await AuditLog.create({
                 user_id: userId,
                 action,
                 resource_type: resourceType,
@@ -31,8 +34,10 @@ const auditService = {
                 ip_address: req ? (req.ip || req.connection?.remoteAddress) : null,
                 user_agent: req ? req.get('User-Agent') : null
             });
+            return record;
         } catch (error) {
             console.error('Audit Log Error:', error);
+            return null;
         }
     },
     buildFieldChanges

@@ -219,51 +219,68 @@ export const Layout = ({ children }: LayoutProps) => {
           </ListItem>
         ))}
       </List>
-      <Divider sx={{ mx: isCollapsed ? 0.5 : 2 }} />
-      <List sx={{ px: isCollapsed ? 0.5 : 1.5, py: 1.5 }}>
-        <ListItem disablePadding>
-          <Tooltip title={isCollapsed ? 'Logout' : ''} placement="right" arrow>
-            <ListItemButton
-              onClick={handleLogout}
-              sx={{
-                borderRadius: '12px',
-                py: 1.5,
-                px: isCollapsed ? 1.5 : 2,
-                justifyContent: isCollapsed ? 'center' : 'flex-start',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  backgroundColor: 'rgba(238, 106, 49, 0.1)',
-                  color: '#ee6a31',
-                  transform: isCollapsed ? 'scale(1.05)' : 'translateX(4px)',
-                  '& .MuiListItemIcon-root': {
+      {/* Footer: divider, logout, collapse — same horizontal padding as menu for alignment */}
+      <Box sx={{ flexShrink: 0, px: isCollapsed ? 0.5 : 1.5 }}>
+        <Divider sx={{ my: 0 }} />
+        <List sx={{ py: 0.5 }}>
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <Tooltip title={isCollapsed ? 'Logout' : ''} placement="right" arrow>
+              <ListItemButton
+                onClick={handleLogout}
+                sx={{
+                  borderRadius: '12px',
+                  py: 1.5,
+                  px: isCollapsed ? 1.5 : 2,
+                  justifyContent: isCollapsed ? 'center' : 'flex-start',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(238, 106, 49, 0.1)',
                     color: '#ee6a31',
+                    transform: isCollapsed ? 'scale(1.05)' : 'translateX(4px)',
+                    '& .MuiListItemIcon-root': {
+                      color: '#ee6a31',
+                    },
                   },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 44, justifyContent: 'center' }}>
+                  <LogoutIcon />
+                </ListItemIcon>
+                {!isCollapsed && (
+                  <ListItemText primary="Logout" primaryTypographyProps={{ fontWeight: 500 }} />
+                )}
+              </ListItemButton>
+            </Tooltip>
+          </ListItem>
+        </List>
+        <Tooltip title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right" arrow>
+          <Box
+            sx={{
+              display: { xs: 'none', md: 'flex' },
+              justifyContent: isCollapsed ? 'center' : 'flex-end',
+              alignItems: 'center',
+              py: 0.75,
+              pb: 1,
+            }}
+          >
+            <IconButton
+              onClick={handleCollapsedToggle}
+              size="small"
+              sx={{
+                color: '#2879b6',
+                backgroundColor: 'rgba(40, 121, 182, 0.08)',
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: 'rgba(40, 121, 182, 0.15)',
+                  color: '#1d5a8a',
                 },
+                transition: 'all 0.2s ease',
               }}
             >
-              <ListItemIcon sx={{ minWidth: isCollapsed ? 'auto' : 44, justifyContent: 'center' }}>
-                <LogoutIcon />
-              </ListItemIcon>
-              {!isCollapsed && (
-                <ListItemText primary="Logout" primaryTypographyProps={{ fontWeight: 500 }} />
-              )}
-            </ListItemButton>
-          </Tooltip>
-        </ListItem>
-      </List>
-      <Box sx={{ p: 1, display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end' }}>
-        <IconButton
-          onClick={handleCollapsedToggle}
-          sx={{
-            color: '#2879b6',
-            display: { xs: 'none', md: 'flex' },
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            },
-          }}
-        >
-          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
+              {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+            </IconButton>
+          </Box>
+        </Tooltip>
       </Box>
     </Box>
   );

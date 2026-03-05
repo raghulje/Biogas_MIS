@@ -49,18 +49,30 @@ class EmailService {
         return nodemailer.createTransport(getTransportOptions(config));
     }
 
-    async sendEmail(to, subject, html) {
+    /**
+     * @param {string} to - Recipient email
+     * @param {string} subject - Email subject
+     * @param {string} html - Email HTML body
+     * @param {Object} [meta] - Optional: { audit_log_id, entity_type, entity_id } to link email to audit/entity
+     */
+    async sendEmail(to, subject, html, meta = {}) {
+        const logFields = (base) => ({
+            ...base,
+            audit_log_id: meta.audit_log_id ?? null,
+            entity_type: meta.entity_type ?? null,
+            entity_id: meta.entity_id ?? null
+        });
         let transporter;
         try {
             transporter = await this.getTransporter();
         } catch (error) {
             console.error('Email Service Error: Could not get transporter', error);
-            await EmailLog.create({
+            await EmailLog.create(logFields({
                 recipient: to,
                 subject: subject,
                 status: 'failed',
                 error_message: error.message
-            });
+            }));
             return false;
         }
 
@@ -76,21 +88,21 @@ class EmailService {
 
             console.log('Message sent: %s', info.messageId);
 
-            await EmailLog.create({
+            await EmailLog.create(logFields({
                 recipient: to,
                 subject: subject,
                 status: 'sent'
-            });
+            }));
 
             return true;
         } catch (error) {
             console.error('Error sending email:', error);
-            await EmailLog.create({
+            await EmailLog.create(logFields({
                 recipient: to,
                 subject: subject,
                 status: 'failed',
                 error_message: error.message
-            });
+            }));
             return false;
         }
     }

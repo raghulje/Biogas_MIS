@@ -84,11 +84,21 @@ export const misService = {
         });
         return response.data;
     },
-    getDashboardData: async (params: { period?: string; startDate?: string; endDate?: string } = {}) => {
+    getDashboardData: async (params: {
+        period?: string;
+        startDate?: string;
+        endDate?: string;
+        year?: number | string;
+        week?: number | string;
+        month?: number | string;
+    } = {}) => {
         const period = params.period ?? 'month';
         const query: Record<string, string> = { period };
         if (params.startDate) query.startDate = params.startDate;
         if (params.endDate) query.endDate = params.endDate;
+        if (params.year != null) query.year = String(params.year);
+        if (params.week != null) query.week = String(params.week);
+        if (params.month != null) query.month = String(params.month);
         const response = await api.get('/dashboard/daily', { params: query });
         return response.data;
     },
@@ -116,11 +126,21 @@ export const misService = {
         const response = await api.get('/mis-entries/import-template', { responseType: 'blob' });
         return response.data;
     },
-    getCBGSalesBreakdown: async (params: { period?: string; startDate?: string; endDate?: string } = {}) => {
+    getCBGSalesBreakdown: async (params: {
+        period?: string;
+        startDate?: string;
+        endDate?: string;
+        year?: number | string;
+        week?: number | string;
+        month?: number | string;
+    } = {}) => {
         const period = params.period ?? 'month';
         const query: Record<string, string> = { period };
         if (params.startDate) query.startDate = params.startDate;
         if (params.endDate) query.endDate = params.endDate;
+        if (params.year != null) query.year = String(params.year);
+        if (params.week != null) query.week = String(params.week);
+        if (params.month != null) query.month = String(params.month);
         const response = await api.get('/dashboard/cbg-sales', { params: query });
         return response.data;
     }

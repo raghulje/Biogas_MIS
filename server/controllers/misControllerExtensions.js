@@ -855,14 +855,16 @@ exports.exportEntries = async (req, res) => {
     }
 };
 
+const calendarUtils = require('../utils/calendarUtils');
+
 // DASHBOARD DATA - uses MIS entry data; supports period (day/week/month/year) or custom startDate/endDate
+// Week = calendar week (Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc.). Uses date-fns via calendarUtils.
 exports.getDashboardData = async (req, res) => {
     try {
-        const { period = 'month', startDate: qStart, endDate: qEnd } = req.query;
-        const toStr = (d) => d.toISOString().slice(0, 10);
+        const { period = 'month', startDate: qStart, endDate: qEnd, year: qYear, week: qWeek, month: qMonth } = req.query;
         const now = new Date();
         let startStr;
-        let endStr = toStr(now);
+        let endStr;
 
         if (qStart && qEnd) {
             startStr = String(qStart).slice(0, 10);
@@ -870,23 +872,31 @@ exports.getDashboardData = async (req, res) => {
         } else {
             switch (period) {
                 case 'day':
-                    startStr = toStr(now);
+                    startStr = calendarUtils.toDateString(now);
+                    endStr = startStr;
                     break;
                 case 'week': {
-                    const start = new Date(now);
-                    start.setDate(start.getDate() - 6);
-                    startStr = toStr(start);
+                    const y = qYear != null ? parseInt(qYear, 10) : now.getFullYear();
+                    const w = qWeek != null ? parseInt(qWeek, 10) : calendarUtils.getCalendarWeek(now);
+                    const { start, end } = calendarUtils.getCalendarWeekRange(y, w);
+                    startStr = calendarUtils.toDateString(start);
+                    endStr = calendarUtils.toDateString(end);
                     break;
                 }
                 case 'year': {
-                    const start = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-                    startStr = toStr(start);
+                    const y = qYear != null ? parseInt(qYear, 10) : now.getFullYear();
+                    const { start, end } = calendarUtils.getYearRange(y);
+                    startStr = calendarUtils.toDateString(start);
+                    endStr = calendarUtils.toDateString(end);
                     break;
                 }
                 case 'month':
                 default: {
-                    const start = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-                    startStr = toStr(start);
+                    const y = qYear != null ? parseInt(qYear, 10) : now.getFullYear();
+                    const m = qMonth != null ? parseInt(qMonth, 10) : (now.getMonth() + 1);
+                    const { start, end } = calendarUtils.getMonthRange(y, m);
+                    startStr = calendarUtils.toDateString(start);
+                    endStr = calendarUtils.toDateString(end);
                     break;
                 }
             }
@@ -1063,11 +1073,16 @@ exports.getConsolidatedData = async (req, res) => {
             temp: avg(digestersConsolidated, d => d.temp)
         } : null;
 
+        // D-01 and D-02 are the only digesters; D-03 column = Total = D-01 + D-02
+        const pressMudD01 = sum(entries, e => (e.digesters && e.digesters[0]) ? n(e.digesters[0].feeding_slurry) : 0);
+        const pressMudD02 = sum(entries, e => (e.digesters && e.digesters[1]) ? n(e.digesters[1].feeding_slurry) : 0);
+        const d01Discharge = sum(entries, e => (e.digesters && e.digesters[0]) ? n(e.digesters[0].discharge_slurry) : 0);
+        const d02Discharge = sum(entries, e => (e.digesters && e.digesters[1]) ? n(e.digesters[1].discharge_slurry) : 0);
         const feeding = {
-            pressMudD01: sum(entries, e => (e.digesters && e.digesters[0]) ? n(e.digesters[0].feeding_slurry) : 0),
-            pressMudD02: sum(entries, e => (e.digesters && e.digesters[1]) ? n(e.digesters[1].feeding_slurry) : 0),
-            pressMudD03: sum(entries, e => (e.digesters && e.digesters[2]) ? n(e.digesters[2].feeding_slurry) : 0),
-            pressMudTotal: 0,
+            pressMudD01,
+            pressMudD02,
+            pressMudD03: pressMudD01 + pressMudD02,
+            pressMudTotal: pressMudD01 + pressMudD02,
             cowDungD01: 0,
             cowDungD02: 0,
             cowDungD03: 0,
@@ -1075,10 +1090,9 @@ exports.getConsolidatedData = async (req, res) => {
             otherFeedstockTotal: 0,
             decanterPermeate: sum(entries, e => (e.feedMixingTank && n(e.feedMixingTank.permeate_qty)) || 0),
             water: sum(entries, e => (e.feedMixingTank && n(e.feedMixingTank.water_qty)) || 0),
-            digester03Slurry: sum(entries, e => (e.digesters && e.digesters[2]) ? n(e.digesters[2].discharge_slurry) : 0),
+            digester03Slurry: d01Discharge + d02Discharge,
             totalFeedInput: sum(entries, e => (e.feedMixingTank && n(e.feedMixingTank.slurry_total)) || 0)
         };
-        feeding.pressMudTotal = (feeding.pressMudD01 || 0) + (feeding.pressMudD02 || 0) + (feeding.pressMudD03 || 0);
 
         const rawMaterialQuality = {
             tsPercent: avg(entries, e => e.feedMixingTank && n(e.feedMixingTank.slurry_ts)),
@@ -1174,32 +1188,40 @@ exports.getConsolidatedData = async (req, res) => {
     }
 };
 
-// CBG Sales Breakdown
+// CBG Sales Breakdown - uses same date range logic as getDashboardData (calendarUtils)
 exports.getCBGSalesBreakdown = async (req, res) => {
     try {
-        const { period = 'month', startDate: qStart, endDate: qEnd } = req.query;
-        const toStr = (d) => d.toISOString().slice(0, 10);
+        const { period = 'month', startDate: qStart, endDate: qEnd, year: qYear, week: qWeek, month: qMonth } = req.query;
         const now = new Date();
         let startStr;
-        let endStr = toStr(now);
+        let endStr;
 
         if (qStart && qEnd) {
             startStr = String(qStart).slice(0, 10);
             endStr = String(qEnd).slice(0, 10);
+        } else if (period === 'week') {
+            const y = qYear != null ? parseInt(qYear, 10) : now.getFullYear();
+            const w = qWeek != null ? parseInt(qWeek, 10) : calendarUtils.getCalendarWeek(now);
+            const { start, end } = calendarUtils.getCalendarWeekRange(y, w);
+            startStr = calendarUtils.toDateString(start);
+            endStr = calendarUtils.toDateString(end);
+        } else if (period === 'month') {
+            const y = qYear != null ? parseInt(qYear, 10) : now.getFullYear();
+            const m = qMonth != null ? parseInt(qMonth, 10) : (now.getMonth() + 1);
+            const { start, end } = calendarUtils.getMonthRange(y, m);
+            startStr = calendarUtils.toDateString(start);
+            endStr = calendarUtils.toDateString(end);
+        } else if (period === 'year') {
+            const y = qYear != null ? parseInt(qYear, 10) : now.getFullYear();
+            const { start, end } = calendarUtils.getYearRange(y);
+            startStr = calendarUtils.toDateString(start);
+            endStr = calendarUtils.toDateString(end);
+        } else if (period === 'day') {
+            startStr = calendarUtils.toDateString(now);
+            endStr = startStr;
         } else {
-            const date = new Date();
-            if (period === 'day') {
-                startStr = toStr(date);
-            } else if (period === 'week') {
-                date.setDate(date.getDate() - 6);
-                startStr = toStr(date);
-            } else if (period === 'year') {
-                date.setFullYear(date.getFullYear() - 1);
-                startStr = toStr(date);
-            } else {
-                date.setMonth(date.getMonth() - 1);
-                startStr = toStr(date);
-            }
+            startStr = calendarUtils.toDateString(now);
+            endStr = startStr;
         }
 
         const sales = await MISCBGSale.findAll({

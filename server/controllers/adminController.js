@@ -764,8 +764,9 @@ exports.sendTestFinalMISReport = async (req, res) => {
 
         const html = await finalMISReportEmailService.buildReportHtmlForRange(startDate, endDate, customBody);
 
+        const meta = { entity_type: 'FinalMISReportConfig', entity_id: row?.id ? String(row.id) : null };
         for (const email of toList) {
-            await emailService.sendEmail(email, subject, html);
+            await emailService.sendEmail(email, subject, html, meta);
         }
 
         if (row) {

@@ -25,11 +25,23 @@ interface Props {
 }
 
 export default function DigestersSection({ isReadOnly }: Props) {
-  const { control, register } = useFormContext();
+  const { control, register, watch, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "digesters"
   });
+
+  const d01Feed = watch('digesters.0.feeding.totalSlurryFeed');
+  const d02Feed = watch('digesters.1.feeding.totalSlurryFeed');
+  const feedingTotal = (parseFloat(d01Feed) || 0) + (parseFloat(d02Feed) || 0);
+
+  const handleFeedingTotalChange = (value: string) => {
+    const num = value === '' ? 0 : parseFloat(value);
+    if (value !== '' && Number.isNaN(num)) return;
+    const half = num / 2;
+    setValue('digesters.0.feeding.totalSlurryFeed', half, { shouldValidate: true });
+    setValue('digesters.1.feeding.totalSlurryFeed', half, { shouldValidate: true });
+  };
 
   const handleAddDigester = () => {
     const newId = fields.length > 0 ? Math.max(...fields.map((f: any) => f.id || 0)) + 1 : 1;
@@ -75,6 +87,25 @@ export default function DigestersSection({ isReadOnly }: Props) {
             >
               Add Digester
             </Button>
+          </Box>
+        )}
+
+        {/* Feeding Data: Total → D-01 and D-02 = Total/2 each */}
+        {fields.length >= 2 && (
+          <Box sx={{ mb: 2, p: 2, bgcolor: '#fafafa', borderRadius: 1, border: '1px solid #eee' }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              Feeding Data — Total (split equally to D-01 & D-02)
+            </Typography>
+            <TextField
+              type="number"
+              size="small"
+              label="Total"
+              value={feedingTotal || ''}
+              onChange={(e) => handleFeedingTotalChange(e.target.value)}
+              disabled={isReadOnly}
+              inputProps={{ min: 0, step: 'any' }}
+              sx={{ maxWidth: 200 }}
+            />
           </Box>
         )}
 

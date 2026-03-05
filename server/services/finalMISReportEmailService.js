@@ -149,48 +149,50 @@ function aggregate(entries) {
   // Mimic the frontend useMemo logic
   const d01Feed = sum(entries.map((e) => e.digesters[0]?.feeding.totalSlurryFeed || 0));
   const d02Feed = sum(entries.map((e) => e.digesters[1]?.feeding.totalSlurryFeed || 0));
-  const d03Feed = sum(entries.map((e) => e.digesters[2]?.feeding.totalSlurryFeed || 0));
+  const d01Discharge = sum(entries.map((e) => e.digesters[0]?.discharge.totalSlurryOut || 0));
+  const d02Discharge = sum(entries.map((e) => e.digesters[1]?.discharge.totalSlurryOut || 0));
 
   return {
     recordCount: entries.length,
     dateRange: `${entries[0].date} to ${entries[entries.length - 1].date}`,
+    // D-01 and D-02 are the only digesters; D-03 column = Total = D-01 + D-02
     feeding: {
       pressMud: {
-        d01: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty / 3)),
-        d02: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty / 3)),
-        d03: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty / 3)),
+        d01: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)),
+        d02: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)),
+        d03: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty)),
         total: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty)),
       },
       cowDung: {
-        d01: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty / 3)),
-        d02: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty / 3)),
-        d03: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty / 3)),
+        d01: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)),
+        d02: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)),
+        d03: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty)),
         total: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty)),
       },
       otherFeedstock: { d01: 0, d02: 0, d03: 0, total: 0 },
       decanterPermeate: {
-        d01: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty / 3)),
-        d02: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty / 3)),
-        d03: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty / 3)),
+        d01: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)),
+        d02: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)),
+        d03: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty)),
         total: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty)),
       },
       water: {
-        d01: sum(entries.map((e) => e.feedMixingTank.waterQty / 3)),
-        d02: sum(entries.map((e) => e.feedMixingTank.waterQty / 3)),
-        d03: sum(entries.map((e) => e.feedMixingTank.waterQty / 3)),
+        d01: sum(entries.map((e) => e.feedMixingTank.waterQty / 2)),
+        d02: sum(entries.map((e) => e.feedMixingTank.waterQty / 2)),
+        d03: sum(entries.map((e) => e.feedMixingTank.waterQty)),
         total: sum(entries.map((e) => e.feedMixingTank.waterQty)),
       },
       digester03Slurry: {
-        d01: 0,
-        d02: 0,
-        d03: sum(entries.map((e) => e.digesters[2]?.discharge.totalSlurryOut || 0)),
-        total: sum(entries.map((e) => e.digesters[2]?.discharge.totalSlurryOut || 0)),
+        d01: d01Discharge,
+        d02: d02Discharge,
+        d03: d01Discharge + d02Discharge,
+        total: d01Discharge + d02Discharge,
       },
       totalFeedInput: {
         d01: d01Feed,
         d02: d02Feed,
-        d03: d03Feed,
-        total: d01Feed + d02Feed + d03Feed,
+        d03: d01Feed + d02Feed,
+        total: d01Feed + d02Feed,
       },
     },
     rawMaterialQuality: {
@@ -370,7 +372,7 @@ function buildReportHtml(startDate, endDate, a, customBody) {
     <tr><td>Other feedstock (tpd)</td><td class="text-center">0.00</td><td class="text-center">0.00</td><td class="text-center">0.00</td><td class="text-center font-bold">0.00</td><td colspan="7"></td></tr>
     <tr><td>Decanter permeate (m3)</td><td class="text-center">${n2(a.feeding.decanterPermeate.d01)}</td><td class="text-center">${n2(a.feeding.decanterPermeate.d02)}</td><td class="text-center">${n2(a.feeding.decanterPermeate.d03)}</td><td class="text-center font-bold">${n2(a.feeding.decanterPermeate.total)}</td><td colspan="7"></td></tr>
     <tr><td>Water (m3)</td><td class="text-center">${n2(a.feeding.water.d01)}</td><td class="text-center">${n2(a.feeding.water.d02)}</td><td class="text-center">${n2(a.feeding.water.d03)}</td><td class="text-center font-bold">${n2(a.feeding.water.total)}</td><td colspan="7"></td></tr>
-    <tr><td>Digester 03 slurry (m3)</td><td class="text-center">0.00</td><td class="text-center">0.00</td><td class="text-center">${n2(a.feeding.digester03Slurry.d03)}</td><td class="text-center font-bold">${n2(a.feeding.digester03Slurry.total)}</td><td colspan="7"></td></tr>
+    <tr><td>Digester 03 slurry (m3)</td><td class="text-center">${n2(a.feeding.digester03Slurry.d01)}</td><td class="text-center">${n2(a.feeding.digester03Slurry.d02)}</td><td class="text-center">${n2(a.feeding.digester03Slurry.d03)}</td><td class="text-center font-bold">${n2(a.feeding.digester03Slurry.total)}</td><td colspan="7"></td></tr>
     <tr><td>Total Feed Input (m3)</td><td class="text-center">${n2(a.feeding.totalFeedInput.d01)}</td><td class="text-center">${n2(a.feeding.totalFeedInput.d02)}</td><td class="text-center">${n2(a.feeding.totalFeedInput.d03)}</td><td class="text-center font-bold">${n2(a.feeding.totalFeedInput.total)}</td><td colspan="7"></td></tr>
     
     <!-- Spacing -->

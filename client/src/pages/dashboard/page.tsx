@@ -7,9 +7,6 @@ import {
   Button,
   ButtonGroup,
   Grid,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Chip,
   CircularProgress,
   useTheme,
@@ -26,6 +23,10 @@ import {
   TableRow,
   Paper,
   Zoom,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
@@ -46,22 +47,36 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { misService } from '../../services/misService';
 import MESSAGES from '../../utils/messages';
+import { getCalendarWeek, getWeeksInYear, formatWeekRangeLabel } from '../../utils/calendarUtils';
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const currentDate = new Date();
+const currentYear = currentDate.getFullYear(); // Year options run from current year down to minYear (updates automatically each year)
+const minYear = 2020;
 
 export default function DashboardPage() {
   const theme = useTheme();
   const isPhone = useMediaQuery('(max-width:768px)');
   const [filterType, setFilterType] = useState('month');
-  // Format numbers: round to max 2 decimals for display on cards
+  // Format numbers: show exact values (no rounding), trim trailing zeros
   const formatNumber = (val: any) => {
     if (val === null || val === undefined) return '0';
     const n = Number(val);
     if (Number.isNaN(n)) return String(val);
     if (Number.isInteger(n)) return String(n);
-    return n.toFixed(2);
+    const s = n.toString();
+    return s.replace(/\.?0+$/, '') || '0';
   };
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedWeek, setSelectedWeek] = useState(getCalendarWeek(currentDate));
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -70,31 +85,54 @@ export default function DashboardPage() {
   const [cbgLoading, setCBGLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
+  // When year changes in weekly filter, clamp week to that year's max weeks (52 or 53)
   useEffect(() => {
-    if (filterType !== 'custom' && filterType !== 'day') fetchDashboardData();
-  }, [filterType]);
+    if (filterType !== 'week') return;
+    const maxWeeks = getWeeksInYear(selectedYear);
+    if (selectedWeek > maxWeeks) setSelectedWeek(maxWeeks);
+  }, [filterType, selectedYear]);
+
+  useEffect(() => {
+    if (filterType === 'day') return;
+    if (filterType === 'custom') return;
+    fetchDashboardData();
+  }, [filterType, selectedYear, selectedMonth, selectedWeek]);
 
   useEffect(() => {
     if (filterType === 'day' && selectedDate) fetchDashboardData();
   }, [filterType, selectedDate]);
 
+  const buildParams = (): { period: string; startDate?: string; endDate?: string; year?: number; week?: number; month?: number } => {
+    const params: { period: string; startDate?: string; endDate?: string; year?: number; week?: number; month?: number } = { period: filterType };
+    if (filterType === 'custom' && startDate && endDate) {
+      params.startDate = startDate.toISOString().slice(0, 10);
+      params.endDate = endDate.toISOString().slice(0, 10);
+    }
+    if (filterType === 'day' && selectedDate) {
+      const offset = selectedDate.getTimezoneOffset() * 60000;
+      const localDate = new Date(selectedDate.getTime() - offset).toISOString().slice(0, 10);
+      params.startDate = localDate;
+      params.endDate = localDate;
+    }
+    if (filterType === 'week') {
+      params.year = selectedYear;
+      params.week = selectedWeek;
+    }
+    if (filterType === 'month') {
+      params.year = selectedYear;
+      params.month = selectedMonth;
+    }
+    if (filterType === 'year') {
+      params.year = selectedYear;
+    }
+    return params;
+  };
+
   const fetchDashboardData = async () => {
     setLoading(true);
     setFetchError(null);
     try {
-      const params: { period: string; startDate?: string; endDate?: string } = { period: filterType };
-      if (filterType === 'custom' && startDate && endDate) {
-        params.startDate = startDate.toISOString().slice(0, 10);
-        params.endDate = endDate.toISOString().slice(0, 10);
-      }
-      if (filterType === 'day' && selectedDate) {
-        // Adjust for local timezone offset manually to ensure the day matched is what user clicked
-        const offset = selectedDate.getTimezoneOffset() * 60000;
-        const localDate = new Date(selectedDate.getTime() - offset).toISOString().slice(0, 10);
-        params.startDate = localDate;
-        params.endDate = localDate;
-      }
-      const data = await misService.getDashboardData(params);
+      const data = await misService.getDashboardData(buildParams());
       setDashboardData(data);
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
@@ -109,19 +147,7 @@ export default function DashboardPage() {
     setCBGBreakdownOpen(true);
     setCBGLoading(true);
     try {
-      const params: { period: string; startDate?: string; endDate?: string } = { period: filterType };
-      if (filterType === 'custom' && startDate && endDate) {
-        params.startDate = startDate.toISOString().slice(0, 10);
-        params.endDate = endDate.toISOString().slice(0, 10);
-      }
-      if (filterType === 'day' && selectedDate) {
-        // Adjust for local timezone offset manually to ensure the day matched is what user clicked
-        const offset = selectedDate.getTimezoneOffset() * 60000;
-        const localDate = new Date(selectedDate.getTime() - offset).toISOString().slice(0, 10);
-        params.startDate = localDate;
-        params.endDate = localDate;
-      }
-      const data = await misService.getCBGSalesBreakdown(params);
+      const data = await misService.getCBGSalesBreakdown(buildParams());
       setCBGBreakdownData(data);
     } catch (error) {
       console.error('Failed to fetch CBG sales breakdown', error);
@@ -163,6 +189,14 @@ export default function DashboardPage() {
   }
 
   const { summary } = dashboardData;
+
+  const periodLabel = filterType === 'week'
+    ? `Week ${selectedWeek}, ${selectedYear}`
+    : filterType === 'month'
+      ? `${MONTHS[selectedMonth - 1]} ${selectedYear}`
+      : filterType === 'year'
+        ? String(selectedYear)
+        : filterType.toUpperCase();
 
   return (
     <Layout>
@@ -244,6 +278,110 @@ export default function DashboardPage() {
                 </Box>
               </LocalizationProvider>
             )}
+            {filterType === 'week' && (
+              <Grid container spacing={2} alignItems="center" sx={{ mt: 2 }}>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth size="medium" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}>
+                    <InputLabel id="dashboard-week-year-label">Year</InputLabel>
+                    <Select
+                      labelId="dashboard-week-year-label"
+                      label="Year"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    >
+                      {Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i).map((y) => (
+                        <MenuItem key={y} value={y}>{y}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth size="medium" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}>
+                    <InputLabel id="dashboard-week-label">Week</InputLabel>
+                    <Select
+                      labelId="dashboard-week-label"
+                      label="Week"
+                      value={selectedWeek}
+                      onChange={(e) => setSelectedWeek(Number(e.target.value))}
+                    >
+                      {Array.from({ length: getWeeksInYear(selectedYear) }, (_, i) => i + 1).map((w) => (
+                        <MenuItem key={w} value={w}>Week {w}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      fontWeight: 500,
+                      py: 1.5,
+                      px: 2,
+                      borderRadius: '12px',
+                      bgcolor: 'action.hover',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    {formatWeekRangeLabel(selectedYear, selectedWeek)}
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
+            {filterType === 'month' && (
+              <Grid container spacing={2} alignItems="center" sx={{ mt: 2 }}>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth size="medium" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}>
+                    <InputLabel id="dashboard-month-year-label">Year</InputLabel>
+                    <Select
+                      labelId="dashboard-month-year-label"
+                      label="Year"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    >
+                      {Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i).map((y) => (
+                        <MenuItem key={y} value={y}>{y}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth size="medium" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}>
+                    <InputLabel id="dashboard-month-label">Month</InputLabel>
+                    <Select
+                      labelId="dashboard-month-label"
+                      label="Month"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                    >
+                      {MONTHS.map((name, i) => (
+                        <MenuItem key={name} value={i + 1}>{name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
+            {filterType === 'year' && (
+              <Grid container spacing={2} alignItems="center" sx={{ mt: 2 }}>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth size="medium" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}>
+                    <InputLabel id="dashboard-year-label">Year</InputLabel>
+                    <Select
+                      labelId="dashboard-year-label"
+                      label="Year"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    >
+                      {Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i).map((y) => (
+                        <MenuItem key={y} value={y}>{y}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
             {filterType === 'custom' && (
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <Grid container spacing={2} alignItems="center">
@@ -295,7 +433,7 @@ export default function DashboardPage() {
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
-                MIS Summary - {filterType.toUpperCase()}
+                MIS Summary - {periodLabel}
               </Typography>
               <Chip
                 label="Aggregate"
@@ -360,7 +498,7 @@ export default function DashboardPage() {
                             Total Feed Amount
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber((Number(summary.totalFeed ?? 0) / 1000))} tons
+                            {formatNumber(Number(summary.totalFeed ?? 0))} tons
                           </Typography>
                         </Box>
                         <AvgIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />

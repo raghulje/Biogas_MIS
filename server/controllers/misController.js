@@ -453,7 +453,6 @@ exports.submitEntry = async (req, res) => {
         if (!entry) return res.status(404).json({ message: 'Entry not found' });
 
         await entry.update({ status: 'submitted' });
-        await auditService.log(req.user.id, 'SUBMIT_ENTRY', 'MISDailyEntry', id, null, { status: 'submitted' }, req);
 
         // Recipients from Admin Panel (MIS Email Config). Use fallback only when config or field is not set (null/undefined).
         const toEmails = new Set();
@@ -492,17 +491,27 @@ exports.submitEntry = async (req, res) => {
                  <p>An MIS entry for <b>${entry.date}</b> has been submitted by ${entry.creator?.name || 'an operator'} and is awaiting your review.</p>
                  <p><a href="${reviewLink}">${reviewLink}</a></p>`;
 
+        const recipients = Array.from(toEmails);
+        const auditRecord = await auditService.log(
+            req.user.id, 'SUBMIT_ENTRY', 'MISDailyEntry', id, null,
+            { status: 'submitted', emails_sent_to: recipients },
+            req
+        );
+        const meta = {
+            audit_log_id: auditRecord?.id ?? null,
+            entity_type: 'MISDailyEntry',
+            entity_id: id
+        };
+
         // Send emails in parallel to avoid blocking the response
-        const emailPromises = Array.from(toEmails).map(async (email) => {
+        const emailPromises = recipients.map(async (email) => {
             try {
-                await emailService.sendEmail(email, subject, html);
+                await emailService.sendEmail(email, subject, html, meta);
             } catch (emailErr) {
                 console.error('Submit notification email failed for', email, emailErr.message);
             }
         });
 
-        // We don't await ALL of them if we want to respond fast, but awaiting them in parallel is much better than in a loop.
-        // Actually, let's await them so we can log any catastrophic failure but parallelize the latency.
         await Promise.all(emailPromises);
 
         res.json({ message: 'Entry submitted successfully and notifications sent' });
