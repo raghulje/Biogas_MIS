@@ -798,10 +798,11 @@ exports.saveAppTheme = async (req, res) => {
 exports.getSessions = async (req, res) => {
     try {
         const limit = Math.min(parseInt(req.query.limit, 10) || 200, 500);
+        // Fetch most recent LOGIN/LOGOUT events across all users (not by user_id first), so all users' sessions appear
         const logs = await UserActivityLog.findAll({
             where: { activity_type: ['LOGIN', 'LOGOUT'] },
-            order: [['user_id', 'ASC'], ['created_at', 'ASC']],
-            limit: limit * 2
+            order: [['created_at', 'DESC']],
+            limit: Math.min(limit * 4, 2000)
         });
         const userIds = [...new Set(logs.map(l => l.user_id).filter(Boolean))];
         const users = userIds.length ? await User.findAll({ where: { id: userIds }, attributes: ['id', 'name', 'email'] }) : [];
@@ -817,6 +818,10 @@ exports.getSessions = async (req, res) => {
                 metadata: row.metadata || null,
                 ip: row.ip_address || null
             });
+        }
+        // Sort each user's events by time ascending so LOGIN then LOGOUT pair correctly
+        for (const uid of Object.keys(byUser)) {
+            byUser[uid].sort((a, b) => new Date(a.at) - new Date(b.at));
         }
         const sessions = [];
         const lastLogins = {};

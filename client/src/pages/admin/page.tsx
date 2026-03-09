@@ -2889,7 +2889,7 @@ export default function AdminPage() {
                     Notification Scheduler
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#58595B', mt: 0.5 }}>
-                    Configure automated email notifications for MIS workflow
+                    Configure automated in-app notifications for MIS workflow
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

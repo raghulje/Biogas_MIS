@@ -914,7 +914,8 @@ exports.getDashboardData = async (req, res) => {
                 { model: MISUtilities, as: 'utilities' },
                 { model: MISPlantAvailability, as: 'plantAvailability' },
                 { model: MISHSEData, as: 'hse' },
-                { model: MISFeedMixingTank, as: 'feedMixingTank' }
+                { model: MISFeedMixingTank, as: 'feedMixingTank' },
+                { model: MISFuelUtilized, as: 'fuelUtilized' }
             ]
         });
 
@@ -924,6 +925,7 @@ exports.getDashboardData = async (req, res) => {
         const totalCBGSold = entries.reduce((sum, e) => sum + (e.compressedBiogas?.cbg_sold || 0), 0);
         const totalFOMProduced = entries.reduce((sum, e) => sum + (e.fertilizer?.fom_produced || 0), 0);
         const totalFOMSold = entries.reduce((sum, e) => sum + (e.fertilizer?.sold || 0), 0);
+        const totalLFOMSold = entries.reduce((sum, e) => sum + (n(e.fertilizer?.lagoon_liquid_sold) || 0), 0);
         const avgPlantAvailability = entries.length > 0
             ? entries.reduce((sum, e) => sum + (e.plantAvailability?.total_availability || 0), 0) / entries.length
             : 0;
@@ -934,6 +936,38 @@ exports.getDashboardData = async (req, res) => {
             if (!fmt) return sum;
             return sum + (n(fmt.cow_dung_qty) + n(fmt.pressmud_qty) + n(fmt.permeate_qty) + n(fmt.water_qty));
         }, 0);
+
+        // Averages based on number of entries (not calendar days) — for week, month, year, quarter, custom
+        const entryCount = Math.max(1, entries.length);
+
+        const avgFeed = totalFeed / entryCount;
+        const avgRawBiogas = totalRawBiogas / entryCount;
+        const avgCBGProduced = totalCBGProduced / entryCount;
+        const avgCBGSold = totalCBGSold / entryCount;
+        const avgFOMProduced = totalFOMProduced / entryCount;
+        const avgFOMSold = totalFOMSold / entryCount;
+        const avgLFOMSold = totalLFOMSold / entryCount;
+
+        // Per-entry metrics (input/output and sold per entry)
+        const feedPerEntry = totalFeed / entryCount;
+        const cbgProducedPerEntry = totalCBGProduced / entryCount;
+        const fomProducedPerEntry = totalFOMProduced / entryCount;
+        const lfomSoldPerEntry = totalLFOMSold / entryCount;
+        const cbgSoldPerEntry = totalCBGSold / entryCount;
+        const fomSoldPerEntry = totalFOMSold / entryCount;
+
+        // Petrol and Diesel: total and average per entry (from fuel utilized)
+        let totalPetrol = 0;
+        let totalDiesel = 0;
+        entries.forEach(e => {
+            (e.fuelUtilized || []).forEach(f => {
+                const qty = n(f.quantity);
+                if (String(f.fuel_type || '').toLowerCase() === 'petrol') totalPetrol += qty;
+                else if (String(f.fuel_type || '').toLowerCase() === 'diesel') totalDiesel += qty;
+            });
+        });
+        const petrolAvgPerEntry = totalPetrol / entryCount;
+        const dieselAvgPerEntry = totalDiesel / entryCount;
 
         // Daily trend data
         const dailyData = entries.map(e => ({
@@ -953,10 +987,29 @@ exports.getDashboardData = async (req, res) => {
                 totalCBGSold,
                 totalFOMProduced,
                 totalFOMSold,
+                totalLFOMSold,
                 avgPlantAvailability: avgPlantAvailability.toFixed(2),
                 totalElectricityConsumption,
                 totalHSEIncidents,
-                totalFeed
+                totalFeed,
+                entryCount,
+                avgFeed,
+                avgRawBiogas,
+                avgCBGProduced,
+                avgCBGSold,
+                avgFOMProduced,
+                avgFOMSold,
+                avgLFOMSold,
+                feedPerEntry,
+                cbgProducedPerEntry,
+                fomProducedPerEntry,
+                lfomSoldPerEntry,
+                cbgSoldPerEntry,
+                fomSoldPerEntry,
+                totalPetrol,
+                totalDiesel,
+                petrolAvgPerEntry,
+                dieselAvgPerEntry
             },
             trends: dailyData
         });

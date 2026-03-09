@@ -500,6 +500,9 @@ export default function DashboardPage() {
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
                             {formatNumber(Number(summary.totalFeed ?? 0))} tons
                           </Typography>
+                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
+                            Avg per day: {formatNumber(summary.avgFeed ?? 0)} tons ({summary.totalEntries ?? 0} days)
+                          </Typography>
                         </Box>
                         <AvgIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
                       </Box>
@@ -524,6 +527,9 @@ export default function DashboardPage() {
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
                             {formatNumber(summary.totalRawBiogas ?? 0)} m³
                           </Typography>
+                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
+                            Avg per day: {formatNumber(summary.avgRawBiogas ?? 0)} m³ ({summary.totalEntries ?? 0} days)
+                          </Typography>
                         </Box>
                         <BiogasIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
                       </Box>
@@ -547,6 +553,9 @@ export default function DashboardPage() {
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
                             {formatNumber(summary.totalCBGProduced ?? 0)} kg
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
+                            Avg per day: {formatNumber(summary.avgCBGProduced ?? 0)} kg ({summary.totalEntries ?? 0} days)
                           </Typography>
                         </Box>
                         <GasIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
@@ -576,6 +585,9 @@ export default function DashboardPage() {
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
                             {formatNumber(summary.totalCBGSold ?? 0)} kg
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
+                            Avg per day: {formatNumber(summary.avgCBGSold ?? 0)} kg ({summary.totalEntries ?? 0} days)
                           </Typography>
                         </Box>
                         <SellIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
@@ -650,6 +662,9 @@ export default function DashboardPage() {
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
                             {formatNumber(summary.totalFOMProduced ?? 0)} kg
                           </Typography>
+                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
+                            Avg per day: {formatNumber(summary.avgFOMProduced ?? 0)} kg
+                          </Typography>
                         </Box>
                         <FomIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
                       </Box>
@@ -674,9 +689,110 @@ export default function DashboardPage() {
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
                             {formatNumber(summary.totalFOMSold ?? 0)} kg
                           </Typography>
+                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
+                            Avg per day: {formatNumber(summary.avgFOMSold ?? 0)} kg
+                          </Typography>
                         </Box>
                         <StoreIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
                       </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Box>
+
+            {/* Input/Output per day & Sold per day & Petrol/Diesel */}
+            <Box
+              className="aos-fade-right aos-delay-450"
+              sx={{
+                mb: 1.5,
+                boxShadow: 'none',
+                border: '1px solid rgba(125, 194, 68, 0.36)',
+                borderRadius: '12px !important',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease',
+                backgroundColor: '#fff',
+                '&:hover': {
+                  boxShadow: '0 6px 24px rgba(34,139,34,0.12)',
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  color: '#ffffff',
+                  borderRadius: '12px 12px 0 0',
+                  minHeight: '56px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 2,
+                }}
+              >
+                <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Averages per Day · Sold per Day · Petrol/Diesel</Typography>
+              </Box>
+              <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+                <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 1.5 }}>Based on {summary.totalEntries ?? 0} days in selected period (week / month / year / quarter / custom).</Typography>
+                <Typography variant="subtitle2" sx={{ color: '#555', fontWeight: 600, mb: 1.5 }}>Input & Output produced per day (CBG, FOM, LFOM)</Typography>
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid item xs={6} sm={4} md={2}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(40, 121, 182, 0.06)', borderLeft: '3px solid #2879b6' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>Feed (Input) per day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#2879b6' }}>{formatNumber(summary.feedPerEntry ?? 0)} tons</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} sm={4} md={2}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(125, 194, 68, 0.08)', borderLeft: '3px solid #7dc244' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>CBG produced/day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#7dc244' }}>{formatNumber(summary.cbgProducedPerEntry ?? 0)} kg</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} sm={4} md={2}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(125, 194, 68, 0.08)', borderLeft: '3px solid #7dc244' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>FOM produced/day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#7dc244' }}>{formatNumber(summary.fomProducedPerEntry ?? 0)} kg</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} sm={4} md={2}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(245, 158, 11, 0.1)', borderLeft: '3px solid #F59E0B' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>LFOM sold/day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#b45309' }}>{formatNumber(summary.lfomSoldPerEntry ?? 0)}</Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+                <Typography variant="subtitle2" sx={{ color: '#555', fontWeight: 600, mb: 1.5 }}>Sold per day (plant wise)</Typography>
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid item xs={6} sm={4} md={2}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(238, 106, 49, 0.08)', borderLeft: '3px solid #ee6a31' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>CBG sold/day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#ee6a31' }}>{formatNumber(summary.cbgSoldPerEntry ?? 0)} kg</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} sm={4} md={2}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(238, 106, 49, 0.08)', borderLeft: '3px solid #ee6a31' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>FOM sold/day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#ee6a31' }}>{formatNumber(summary.fomSoldPerEntry ?? 0)} kg</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} sm={4} md={2}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(238, 106, 49, 0.08)', borderLeft: '3px solid #ee6a31' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>LFOM sold/day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#ee6a31' }}>{formatNumber(summary.lfomSoldPerEntry ?? 0)}</Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+                <Typography variant="subtitle2" sx={{ color: '#555', fontWeight: 600, mb: 1.5 }}>Petrol & Diesel — avg qty per day (customers)</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6} sm={4} md={3}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(34, 197, 94, 0.08)', borderLeft: '3px solid #22c55e' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>Petrol avg per day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#16a34a' }}>{formatNumber(summary.petrolAvgPerEntry ?? 0)}</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} sm={4} md={3}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(234, 179, 8, 0.12)', borderLeft: '3px solid #eab308' }}>
+                      <Typography variant="caption" sx={{ color: '#58595B' }}>Diesel avg per day</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#ca8a04' }}>{formatNumber(summary.dieselAvgPerEntry ?? 0)}</Typography>
                     </Box>
                   </Grid>
                 </Grid>

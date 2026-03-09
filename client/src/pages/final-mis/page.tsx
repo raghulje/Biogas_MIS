@@ -300,6 +300,19 @@ const FinalMISPage = () => {
           d03: d01Feed + d02Feed,
           total: d01Feed + d02Feed,
         },
+        // For summary card: same as dashboard "Total Feed Amount" — sum of cow dung + pressmud + permeate + water (tons)
+        totalFeedInputFromMixingTank: sum(
+          filteredEntries.map((e) => Number(e.feedMixingTank?.slurry?.total) || 0)
+        ),
+        totalFeedAmountTons: sum(
+          filteredEntries.map(
+            (e) =>
+              (Number(e.feedMixingTank?.cowDungFeed?.qty) || 0) +
+              (Number(e.feedMixingTank?.pressmudFeed?.qty) || 0) +
+              (Number(e.feedMixingTank?.permeateFeed?.qty) || 0) +
+              (Number(e.feedMixingTank?.waterQty) || 0)
+          )
+        ),
       },
       rawMaterialQuality: {
         pressMud: {
@@ -3959,9 +3972,7 @@ const FinalMISPage = () => {
             {[
               {
                 label: 'Total Feed Input',
-                value: `${aggregatedData.feeding.totalFeedInput.total.toFixed(
-                  0
-                )} m³`,
+                value: `${(aggregatedData.feeding.totalFeedAmountTons ?? 0).toFixed(2)} tons`,
                 icon: 'ri-drop-line',
                 color: '#2879b6',
               },

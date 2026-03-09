@@ -129,7 +129,7 @@ export const Layout = ({ children }: LayoutProps) => {
     { text: 'Customer Master', icon: <StoreIcon />, path: '/customers', visible: hasPermission('customer', 'read') },
     ...(hasAdminAccess ? [
       { text: 'Admin Panel', icon: <AdminIcon />, path: '/admin', visible: true },
-      { text: 'Email Notifications', icon: <NotificationsIcon />, path: '/admin/notifications', visible: true },
+      { text: 'In-App Notifications', icon: <NotificationsIcon />, path: '/admin/notifications', visible: true },
     ] : []),
   ].filter(item => item.visible);
 

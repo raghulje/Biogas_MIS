@@ -270,7 +270,7 @@ export default function NotificationConfigPage() {
         <Layout>
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' }, fontWeight: 700, color: '#2879b6' }}>
-                    Email Notifications
+                    In-App Notifications
                 </Typography>
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
