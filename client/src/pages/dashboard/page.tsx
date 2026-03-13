@@ -701,7 +701,8 @@ export default function DashboardPage() {
               </Box>
             </Box>
 
-            {/* Input/Output per day & Sold per day & Petrol/Diesel */}
+            {/* Input/Output per day & Sold per day & Petrol/Diesel — hidden for now */}
+            {false && (
             <Box
               className="aos-fade-right aos-delay-450"
               sx={{
@@ -798,6 +799,7 @@ export default function DashboardPage() {
                 </Grid>
               </Box>
             </Box>
+            )}
 
             {/* Utilities & HSE Summary */}
             <Box

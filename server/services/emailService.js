@@ -108,6 +108,64 @@ class EmailService {
     }
 
     /**
+     * Send one email to multiple recipients (all get the same message; more reliable than multiple sendEmail calls).
+     * @param {string[]} recipients - Array of email addresses
+     * @param {string} subject - Email subject
+     * @param {string} html - Email HTML body
+     * @param {Object} [meta] - Optional: { entity_type, entity_id } for audit
+     * @returns {Promise<boolean>} true if sent successfully
+     */
+    async sendEmailToMany(recipients, subject, html, meta = {}) {
+        const list = Array.isArray(recipients) ? recipients.filter(Boolean).map(s => String(s).trim()).filter(Boolean) : [];
+        if (list.length === 0) return false;
+        const logFields = (base) => ({
+            ...base,
+            audit_log_id: meta.audit_log_id ?? null,
+            entity_type: meta.entity_type ?? null,
+            entity_id: meta.entity_id ?? null
+        });
+        let transporter;
+        try {
+            transporter = await this.getTransporter();
+        } catch (error) {
+            console.error('Email Service Error: Could not get transporter', error);
+            await EmailLog.create(logFields({
+                recipient: list.join(', '),
+                subject,
+                status: 'failed',
+                error_message: error.message
+            }));
+            return false;
+        }
+        try {
+            const config = await SMTPConfig.findOne({ where: { is_active: true } });
+            const from = buildFrom(config);
+            const info = await transporter.sendMail({
+                from,
+                to: list,
+                subject,
+                html
+            });
+            console.log('Message sent to %d recipients: %s', list.length, info.messageId);
+            await EmailLog.create(logFields({
+                recipient: list.join(', '),
+                subject,
+                status: 'sent'
+            }));
+            return true;
+        } catch (error) {
+            console.error('Error sending email to multiple recipients:', error);
+            await EmailLog.create(logFields({
+                recipient: list.join(', '),
+                subject,
+                status: 'failed',
+                error_message: error.message
+            }));
+            return false;
+        }
+    }
+
+    /**
      * Send a test email using provided config (e.g. from SMTP test form).
      * Does not use stored config; config must have host, port, auth_user, auth_pass, from_email.
      * @param {Object} config - { host, port, secure, auth_user, auth_pass, from_email, from_name? }

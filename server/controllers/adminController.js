@@ -626,17 +626,26 @@ exports.saveNotificationSchedule = async (req, res) => {
 
 // --- Final MIS Report Email Config ---
 
+/** Normalize to_emails from DB or request into a clean array of email strings (no empty, trimmed). */
 function parseEmails(val) {
     if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
     if (typeof val === 'string') {
+        const s = val.trim();
+        if (!s) return [];
         try {
-            const a = JSON.parse(val);
-            return Array.isArray(a) ? a.map(String).map(s => s.trim()).filter(Boolean) : val.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+            const a = JSON.parse(s);
+            return Array.isArray(a) ? a.map(String).map(e => e.trim()).filter(Boolean) : s.split(/[,;\s]+/).map(e => e.trim()).filter(Boolean);
         } catch {
-            return val.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+            return s.split(/[,;\s]+/).map(e => e.trim()).filter(Boolean);
         }
     }
     return [];
+}
+
+/** Always store to_emails as a JSON array string so all recipients are persisted. */
+function toEmailsJson(val) {
+    const arr = parseEmails(val);
+    return JSON.stringify(arr);
 }
 
 exports.getFinalMISReportConfig = async (req, res) => {
@@ -674,11 +683,10 @@ exports.getFinalMISReportConfig = async (req, res) => {
 exports.saveFinalMISReportConfig = async (req, res) => {
     try {
         const { to_emails, subject, body, schedule_type, schedule_time, cron_expression, is_active } = req.body;
-        const toJson = (arr) => (Array.isArray(arr) ? JSON.stringify(arr) : (typeof arr === 'string' ? arr : '[]'));
         const [row] = await FinalMISReportConfig.findOrCreate({
             where: { id: 1 },
             defaults: {
-                to_emails: toJson(to_emails != null ? to_emails : []),
+                to_emails: toEmailsJson(to_emails != null ? to_emails : []),
                 subject: subject || 'Final MIS Report',
                 body: body || '',
                 schedule_type: schedule_type || 'monthly',
@@ -697,7 +705,7 @@ exports.saveFinalMISReportConfig = async (req, res) => {
                 is_active: is_active !== undefined ? is_active !== false : row.is_active,
             };
             if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'to_emails')) {
-                updateFields.to_emails = toJson(to_emails);
+                updateFields.to_emails = toEmailsJson(to_emails);
             }
             await row.update(updateFields);
         }
@@ -765,9 +773,7 @@ exports.sendTestFinalMISReport = async (req, res) => {
         const html = await finalMISReportEmailService.buildReportHtmlForRange(startDate, endDate, customBody);
 
         const meta = { entity_type: 'FinalMISReportConfig', entity_id: row?.id ? String(row.id) : null };
-        for (const email of toList) {
-            await emailService.sendEmail(email, subject, html, meta);
-        }
+        await emailService.sendEmailToMany(toList, subject, html, meta);
 
         if (row) {
             await row.update({ last_sent_at: new Date() });

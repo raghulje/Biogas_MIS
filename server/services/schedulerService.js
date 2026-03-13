@@ -5,14 +5,17 @@ const finalMISReportEmailService = require('./finalMISReportEmailService');
 const { Op } = require('sequelize');
 const reminderScheduler = require('./reminderScheduler');
 
+/** Parse to_emails (JSON array string or comma/semicolon list) into array of email strings. Must match adminController parseEmails. */
 function parseReportEmails(val) {
     if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
     if (typeof val === 'string') {
+        const s = val.trim();
+        if (!s) return [];
         try {
-            const a = JSON.parse(val);
-            return Array.isArray(a) ? a.map(String).map(s => s.trim()).filter(Boolean) : val.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+            const a = JSON.parse(s);
+            return Array.isArray(a) ? a.map(String).map(e => e.trim()).filter(Boolean) : s.split(/[,;\s]+/).map(e => e.trim()).filter(Boolean);
         } catch {
-            return val.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+            return s.split(/[,;\s]+/).map(e => e.trim()).filter(Boolean);
         }
     }
     return [];
@@ -336,9 +339,7 @@ class SchedulerService {
             const html = await finalMISReportEmailService.buildReportHtmlForRange(startDate, endDate, customBody);
 
             const meta = { entity_type: 'FinalMISReportConfig', entity_id: row.id ? String(row.id) : null };
-            for (const email of toList) {
-                await emailService.sendEmail(email, subject, html, meta);
-            }
+            await emailService.sendEmailToMany(toList, subject, html, meta);
 
             await row.update({ last_sent_at: new Date() });
             console.log(`Final MIS Report Sent to ${toList.length} recipients.`);
