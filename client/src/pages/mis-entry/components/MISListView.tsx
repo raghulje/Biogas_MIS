@@ -598,6 +598,9 @@ export default function MISListView({
                   CBG Produced
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                  CBG Sold
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Total Biogas
                 </TableCell>
                 <TableCell
@@ -651,6 +654,9 @@ export default function MISListView({
                     </TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>
                       {entry.compressedBiogas?.produced ?? 0} kg
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {entry.compressedBiogas?.cbgSold ?? 0} kg
                     </TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>
                       {entry.rawBiogas?.totalRawBiogas ?? 0} m³
@@ -781,6 +787,10 @@ export default function MISListView({
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">CBG Produced:</Typography>
                     <Typography variant="body2" fontWeight={600}>{entry.compressedBiogas?.produced ?? 0} kg</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" color="text.secondary">CBG Sold:</Typography>
+                    <Typography variant="body2" fontWeight={600}>{entry.compressedBiogas?.cbgSold ?? 0} kg</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">Total Biogas:</Typography>

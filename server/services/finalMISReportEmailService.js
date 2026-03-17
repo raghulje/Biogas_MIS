@@ -194,6 +194,18 @@ function aggregate(entries) {
         d03: d01Feed + d02Feed,
         total: d01Feed + d02Feed,
       },
+      // Same as Final MIS web card / dashboard: Feed Mixing Tank (tons), not digester m³
+      totalFeedAmountTons: sum(
+        entries.map((e) => {
+          const nn = (v) => Number(v || 0);
+          return (
+            nn(e.feedMixingTank?.cowDungFeed?.qty) +
+            nn(e.feedMixingTank?.pressmudFeed?.qty) +
+            nn(e.feedMixingTank?.permeateFeed?.qty) +
+            nn(e.feedMixingTank?.waterQty)
+          );
+        })
+      ),
     },
     rawMaterialQuality: {
       pressMud: {
@@ -515,7 +527,7 @@ function buildReportHtml(startDate, endDate, a, customBody) {
     <tr>
         <td style="background: #e0f2fe; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
             <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Total Feed Input</div>
-            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n0(a.feeding.totalFeedInput.total)} m3</div>
+            <div style="font-size: 24px; font-weight: 700; color: #334155;">${n2(a.feeding.totalFeedAmountTons ?? 0)} tons</div>
         </td>
         <td style="background: #f0fdf4; border-radius: 12px; padding: 20px; width: 25%; text-align: left;">
             <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">RBG Produced</div>

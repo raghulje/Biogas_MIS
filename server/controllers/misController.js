@@ -390,7 +390,7 @@ exports.getEntries = async (req, res) => {
             attributes: ['id', 'date', 'status', 'created_by', 'created_at'],
             include: [
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
-                { model: MISCompressedBiogas, as: 'compressedBiogas', attributes: ['produced'] },
+                { model: MISCompressedBiogas, as: 'compressedBiogas', attributes: ['produced', 'cbg_sold'] },
                 { model: MISRawBiogas, as: 'rawBiogas', attributes: ['total_raw_biogas'] }
             ],
             order: [['date', 'DESC']],
@@ -402,7 +402,7 @@ exports.getEntries = async (req, res) => {
             return {
                 ...json,
                 createdBy: json.creator ? json.creator.name : 'Unknown',
-                compressedBiogas: { produced: json.compressedBiogas?.produced || 0 },
+                compressedBiogas: { produced: json.compressedBiogas?.produced || 0, cbgSold: json.compressedBiogas?.cbg_sold || 0 },
                 rawBiogas: { totalRawBiogas: json.rawBiogas?.total_raw_biogas || 0 }
             };
         });
