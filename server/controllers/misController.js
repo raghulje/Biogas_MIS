@@ -63,6 +63,23 @@ const transformEntry = (entry) => {
                 vs: e.feedMixingTank.permeate_vs
             },
             waterQty: e.feedMixingTank.water_qty,
+            waterTs: e.feedMixingTank.water_ts,
+            waterVs: e.feedMixingTank.water_vs,
+            pulpFeed: {
+                qty: e.feedMixingTank.pulp_qty,
+                ts: e.feedMixingTank.pulp_ts,
+                vs: e.feedMixingTank.pulp_vs
+            },
+            maggieFeed: {
+                qty: e.feedMixingTank.maggie_qty,
+                ts: e.feedMixingTank.maggie_ts,
+                vs: e.feedMixingTank.maggie_vs
+            },
+            otherFeedSubstrate: {
+                qty: e.feedMixingTank.other_feed_substrate_qty,
+                ts: e.feedMixingTank.other_feed_substrate_ts,
+                vs: e.feedMixingTank.other_feed_substrate_vs
+            },
             slurry: {
                 total: e.feedMixingTank.slurry_total,
                 ts: e.feedMixingTank.slurry_ts,
@@ -241,7 +258,34 @@ exports.createEntry = async (req, res) => {
 
         if (rawMaterials) childPromises.push(MISRawMaterials.create({ entry_id: entryId, cow_dung_purchased: n(rawMaterials.cowDungPurchased), cow_dung_stock: n(rawMaterials.cowDungStock), old_press_mud_opening_balance: n(rawMaterials.oldPressMudOpeningBalance), old_press_mud_purchased: n(rawMaterials.oldPressMudPurchased), old_press_mud_degradation_loss: n(rawMaterials.oldPressMudDegradationLoss), old_press_mud_closing_stock: n(rawMaterials.oldPressMudClosingStock), new_press_mud_purchased: n(rawMaterials.newPressMudPurchased), press_mud_used: n(rawMaterials.pressMudUsed), total_press_mud_stock: n(rawMaterials.totalPressMudStock), audit_note: rawMaterials.auditNote }, { transaction: t }));
 
-        if (feedMixingTank) childPromises.push(MISFeedMixingTank.create({ entry_id: entryId, cow_dung_qty: n(feedMixingTank.cowDungFeed?.qty), cow_dung_ts: n(feedMixingTank.cowDungFeed?.ts), cow_dung_vs: n(feedMixingTank.cowDungFeed?.vs), pressmud_qty: n(feedMixingTank.pressmudFeed?.qty), pressmud_ts: n(feedMixingTank.pressmudFeed?.ts), pressmud_vs: n(feedMixingTank.pressmudFeed?.vs), permeate_qty: n(feedMixingTank.permeateFeed?.qty), permeate_ts: n(feedMixingTank.permeateFeed?.ts), permeate_vs: n(feedMixingTank.permeateFeed?.vs), water_qty: n(feedMixingTank.waterQty), slurry_total: n(feedMixingTank.slurry?.total), slurry_ts: n(feedMixingTank.slurry?.ts), slurry_vs: n(feedMixingTank.slurry?.vs), slurry_ph: n(feedMixingTank.slurry?.ph) }, { transaction: t }));
+        if (feedMixingTank) childPromises.push(MISFeedMixingTank.create({
+            entry_id: entryId,
+            cow_dung_qty: n(feedMixingTank.cowDungFeed?.qty),
+            cow_dung_ts: n(feedMixingTank.cowDungFeed?.ts),
+            cow_dung_vs: n(feedMixingTank.cowDungFeed?.vs),
+            pressmud_qty: n(feedMixingTank.pressmudFeed?.qty),
+            pressmud_ts: n(feedMixingTank.pressmudFeed?.ts),
+            pressmud_vs: n(feedMixingTank.pressmudFeed?.vs),
+            permeate_qty: n(feedMixingTank.permeateFeed?.qty),
+            permeate_ts: n(feedMixingTank.permeateFeed?.ts),
+            permeate_vs: n(feedMixingTank.permeateFeed?.vs),
+            water_qty: n(feedMixingTank.waterQty),
+            water_ts: n(feedMixingTank.waterTs),
+            water_vs: n(feedMixingTank.waterVs),
+            pulp_qty: n(feedMixingTank.pulpFeed?.qty),
+            pulp_ts: n(feedMixingTank.pulpFeed?.ts),
+            pulp_vs: n(feedMixingTank.pulpFeed?.vs),
+            maggie_qty: n(feedMixingTank.maggieFeed?.qty),
+            maggie_ts: n(feedMixingTank.maggieFeed?.ts),
+            maggie_vs: n(feedMixingTank.maggieFeed?.vs),
+            other_feed_substrate_qty: n(feedMixingTank.otherFeedSubstrate?.qty),
+            other_feed_substrate_ts: n(feedMixingTank.otherFeedSubstrate?.ts),
+            other_feed_substrate_vs: n(feedMixingTank.otherFeedSubstrate?.vs),
+            slurry_total: n(feedMixingTank.slurry?.total),
+            slurry_ts: n(feedMixingTank.slurry?.ts),
+            slurry_vs: n(feedMixingTank.slurry?.vs),
+            slurry_ph: n(feedMixingTank.slurry?.ph)
+        }, { transaction: t }));
 
         if (digesters && Array.isArray(digesters)) {
             const digesterPromises = digesters.map(d => MISDigesterData.create({
@@ -327,6 +371,28 @@ exports.getEntriesForReport = async (req, res) => {
         if (!startDate || !endDate) {
             return res.status(400).json({ message: 'startDate and endDate query params are required (YYYY-MM-DD)' });
         }
+        // Backward-compatible: select only feed mixing tank columns that exist (migration may not be applied yet)
+        let feedMixingTankAttributes = undefined;
+        try {
+            const qi = sequelize.getQueryInterface();
+            const table = await qi.describeTable('mis_feed_mixing_tank');
+            const keys = Object.keys(table || {});
+            const wanted = [
+                'id', 'entry_id',
+                'cow_dung_qty', 'cow_dung_ts', 'cow_dung_vs',
+                'pressmud_qty', 'pressmud_ts', 'pressmud_vs',
+                'permeate_qty', 'permeate_ts', 'permeate_vs',
+                'water_qty', 'water_ts', 'water_vs',
+                'pulp_qty', 'pulp_ts', 'pulp_vs',
+                'maggie_qty', 'maggie_ts', 'maggie_vs',
+                'other_feed_substrate_qty', 'other_feed_substrate_ts', 'other_feed_substrate_vs',
+                'slurry_total', 'slurry_ts', 'slurry_vs', 'slurry_ph',
+                'created_at', 'updated_at'
+            ];
+            feedMixingTankAttributes = wanted.filter((c) => keys.includes(c));
+        } catch (_e) {
+            // ignore and let Sequelize include default attributes
+        }
         const entries = await MISDailyEntry.findAll({
             where: {
                 date: { [Op.between]: [startDate, endDate] }
@@ -334,7 +400,7 @@ exports.getEntriesForReport = async (req, res) => {
             },
             include: [
                 { model: MISRawMaterials, as: 'rawMaterials' },
-                { model: MISFeedMixingTank, as: 'feedMixingTank' },
+                { model: MISFeedMixingTank, as: 'feedMixingTank', attributes: feedMixingTankAttributes || undefined },
                 { model: MISDigesterData, as: 'digesters' },
                 { model: MISSLSData, as: 'slsMachine' },
                 { model: MISRawBiogas, as: 'rawBiogas' },
@@ -416,10 +482,32 @@ exports.getEntries = async (req, res) => {
 
 exports.getEntryById = async (req, res) => {
     try {
+        // Backward-compatible: mis_feed_mixing_tank new columns may not exist yet in DB
+        let feedMixingTankAttributes = undefined;
+        try {
+            const qi = sequelize.getQueryInterface();
+            const table = await qi.describeTable('mis_feed_mixing_tank');
+            const keys = Object.keys(table || {});
+            const wanted = [
+                'id', 'entry_id',
+                'cow_dung_qty', 'cow_dung_ts', 'cow_dung_vs',
+                'pressmud_qty', 'pressmud_ts', 'pressmud_vs',
+                'permeate_qty', 'permeate_ts', 'permeate_vs',
+                'water_qty', 'water_ts', 'water_vs',
+                'pulp_qty', 'pulp_ts', 'pulp_vs',
+                'maggie_qty', 'maggie_ts', 'maggie_vs',
+                'other_feed_substrate_qty', 'other_feed_substrate_ts', 'other_feed_substrate_vs',
+                'slurry_total', 'slurry_ts', 'slurry_vs', 'slurry_ph',
+                'created_at', 'updated_at'
+            ];
+            feedMixingTankAttributes = wanted.filter((c) => keys.includes(c));
+        } catch (_e) {
+            // ignore and let Sequelize include default attributes
+        }
         const entry = await MISDailyEntry.findByPk(req.params.id, {
             include: [
                 { model: MISRawMaterials, as: 'rawMaterials' },
-                { model: MISFeedMixingTank, as: 'feedMixingTank' },
+                { model: MISFeedMixingTank, as: 'feedMixingTank', attributes: feedMixingTankAttributes || undefined },
                 { model: MISDigesterData, as: 'digesters' },
                 { model: MISSLSData, as: 'slsMachine' },
                 { model: MISRawBiogas, as: 'rawBiogas' },

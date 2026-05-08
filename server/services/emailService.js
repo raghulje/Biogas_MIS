@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { SMTPConfig, EmailLog } = require('../models');
+const { SMTPConfig, EmailLog, sequelize } = require('../models');
 
 function buildFrom(config) {
     const name = config.from_name && config.from_name.trim();
@@ -26,6 +26,36 @@ class EmailService {
     constructor() {
         this.transporter = null;
         this.lastConfigId = null;
+        this._emailLogColumns = null;
+    }
+
+    async getEmailLogColumns() {
+        if (this._emailLogColumns) return this._emailLogColumns;
+        try {
+            const qi = sequelize.getQueryInterface();
+            const table = await qi.describeTable('email_logs');
+            this._emailLogColumns = new Set(Object.keys(table || {}));
+        } catch (_e) {
+            // Fallback: assume legacy schema without audit/entity columns
+            this._emailLogColumns = new Set(['recipient', 'subject', 'status', 'error_message', 'sent_at']);
+        }
+        return this._emailLogColumns;
+    }
+
+    async safeCreateEmailLog(fields) {
+        try {
+            const cols = await this.getEmailLogColumns();
+            const payload = {};
+            for (const [k, v] of Object.entries(fields || {})) {
+                if (cols.has(k)) payload[k] = v;
+            }
+            // If even base columns are missing, skip silently
+            if (!payload.recipient && !payload.subject && !payload.status) return;
+            await EmailLog.create(payload);
+        } catch (e) {
+            // Never block email sending because logging failed
+            console.warn('EmailLog insert skipped:', e.message || e);
+        }
     }
 
     async getTransporter() {
@@ -67,7 +97,7 @@ class EmailService {
             transporter = await this.getTransporter();
         } catch (error) {
             console.error('Email Service Error: Could not get transporter', error);
-            await EmailLog.create(logFields({
+            await this.safeCreateEmailLog(logFields({
                 recipient: to,
                 subject: subject,
                 status: 'failed',
@@ -88,7 +118,7 @@ class EmailService {
 
             console.log('Message sent: %s', info.messageId);
 
-            await EmailLog.create(logFields({
+            await this.safeCreateEmailLog(logFields({
                 recipient: to,
                 subject: subject,
                 status: 'sent'
@@ -97,7 +127,7 @@ class EmailService {
             return true;
         } catch (error) {
             console.error('Error sending email:', error);
-            await EmailLog.create(logFields({
+            await this.safeCreateEmailLog(logFields({
                 recipient: to,
                 subject: subject,
                 status: 'failed',
@@ -129,7 +159,7 @@ class EmailService {
             transporter = await this.getTransporter();
         } catch (error) {
             console.error('Email Service Error: Could not get transporter', error);
-            await EmailLog.create(logFields({
+            await this.safeCreateEmailLog(logFields({
                 recipient: list.join(', '),
                 subject,
                 status: 'failed',
@@ -147,7 +177,7 @@ class EmailService {
                 html
             });
             console.log('Message sent to %d recipients: %s', list.length, info.messageId);
-            await EmailLog.create(logFields({
+            await this.safeCreateEmailLog(logFields({
                 recipient: list.join(', '),
                 subject,
                 status: 'sent'
@@ -155,7 +185,7 @@ class EmailService {
             return true;
         } catch (error) {
             console.error('Error sending email to multiple recipients:', error);
-            await EmailLog.create(logFields({
+            await this.safeCreateEmailLog(logFields({
                 recipient: list.join(', '),
                 subject,
                 status: 'failed',

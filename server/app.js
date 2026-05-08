@@ -149,16 +149,22 @@ async function startServer() {
             console.error('Failed to init scheduler:', e);
         }
 
-        // Attempt to listen; if port is in use, try next ports up to a limit
+        // Attempt to listen; if port is in use, try next ports up to a limit.
+        // IMPORTANT: ensure port increments numerically (avoid string concatenation like "3015" + 1 => "30151")
         const tryListen = (port, host = HOST, retries = 5) => {
+            const startPort = Number(port);
+            if (!Number.isFinite(startPort) || startPort < 0 || startPort >= 65536) {
+                return Promise.reject(new RangeError(`Invalid PORT: ${port}`));
+            }
             return new Promise((resolve, reject) => {
-                const srv = app.listen(port, host);
+                const srv = app.listen(startPort, host);
                 srv.on('listening', () => resolve(srv));
                 srv.on('error', (err) => {
                     if (err && err.code === 'EADDRINUSE' && retries > 0) {
-                        console.warn(`Port ${port} in use — retrying on port ${port + 1}...`);
+                        const nextPort = startPort + 1;
+                        console.warn(`Port ${startPort} in use — retrying on port ${nextPort}...`);
                         setTimeout(() => {
-                            tryListen(port + 1, host, retries - 1).then(resolve).catch(reject);
+                            tryListen(nextPort, host, retries - 1).then(resolve).catch(reject);
                         }, 200);
                     } else {
                         reject(err);

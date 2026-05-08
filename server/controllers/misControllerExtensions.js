@@ -148,6 +148,17 @@ exports.updateEntry = async (req, res) => {
                     permeate_ts: n(feedMixingTank.permeateFeed?.ts),
                     permeate_vs: n(feedMixingTank.permeateFeed?.vs),
                     water_qty: n(feedMixingTank.waterQty),
+                    water_ts: n(feedMixingTank.waterTs),
+                    water_vs: n(feedMixingTank.waterVs),
+                    pulp_qty: n(feedMixingTank.pulpFeed?.qty),
+                    pulp_ts: n(feedMixingTank.pulpFeed?.ts),
+                    pulp_vs: n(feedMixingTank.pulpFeed?.vs),
+                    maggie_qty: n(feedMixingTank.maggieFeed?.qty),
+                    maggie_ts: n(feedMixingTank.maggieFeed?.ts),
+                    maggie_vs: n(feedMixingTank.maggieFeed?.vs),
+                    other_feed_substrate_qty: n(feedMixingTank.otherFeedSubstrate?.qty),
+                    other_feed_substrate_ts: n(feedMixingTank.otherFeedSubstrate?.ts),
+                    other_feed_substrate_vs: n(feedMixingTank.otherFeedSubstrate?.vs),
                     slurry_total: n(feedMixingTank.slurry?.total),
                     slurry_ts: n(feedMixingTank.slurry?.ts),
                     slurry_vs: n(feedMixingTank.slurry?.vs),
@@ -166,6 +177,17 @@ exports.updateEntry = async (req, res) => {
                     permeate_ts: n(feedMixingTank.permeateFeed?.ts),
                     permeate_vs: n(feedMixingTank.permeateFeed?.vs),
                     water_qty: n(feedMixingTank.waterQty),
+                    water_ts: n(feedMixingTank.waterTs),
+                    water_vs: n(feedMixingTank.waterVs),
+                    pulp_qty: n(feedMixingTank.pulpFeed?.qty),
+                    pulp_ts: n(feedMixingTank.pulpFeed?.ts),
+                    pulp_vs: n(feedMixingTank.pulpFeed?.vs),
+                    maggie_qty: n(feedMixingTank.maggieFeed?.qty),
+                    maggie_ts: n(feedMixingTank.maggieFeed?.ts),
+                    maggie_vs: n(feedMixingTank.maggieFeed?.vs),
+                    other_feed_substrate_qty: n(feedMixingTank.otherFeedSubstrate?.qty),
+                    other_feed_substrate_ts: n(feedMixingTank.otherFeedSubstrate?.ts),
+                    other_feed_substrate_vs: n(feedMixingTank.otherFeedSubstrate?.vs),
                     slurry_total: n(feedMixingTank.slurry?.total),
                     slurry_ts: n(feedMixingTank.slurry?.ts),
                     slurry_vs: n(feedMixingTank.slurry?.vs),
@@ -857,6 +879,40 @@ exports.exportEntries = async (req, res) => {
 
 const calendarUtils = require('../utils/calendarUtils');
 
+async function getExistingFeedMixingTankAttributes() {
+    try {
+        const qi = sequelize.getQueryInterface();
+        const table = await qi.describeTable('mis_feed_mixing_tank');
+        const keys = Object.keys(table || {});
+        // Always include PK + FK if present
+        const base = ['id', 'entry_id'];
+        const wanted = [
+            ...base,
+            'cow_dung_qty', 'cow_dung_ts', 'cow_dung_vs',
+            'pressmud_qty', 'pressmud_ts', 'pressmud_vs',
+            'permeate_qty', 'permeate_ts', 'permeate_vs',
+            'water_qty', 'water_ts', 'water_vs',
+            'pulp_qty', 'pulp_ts', 'pulp_vs',
+            'maggie_qty', 'maggie_ts', 'maggie_vs',
+            'other_feed_substrate_qty', 'other_feed_substrate_ts', 'other_feed_substrate_vs',
+            'slurry_total', 'slurry_ts', 'slurry_vs', 'slurry_ph',
+            'created_at', 'updated_at'
+        ];
+        return wanted.filter((c) => keys.includes(c));
+    } catch (_e) {
+        // Fallback to old schema if describeTable fails
+        return [
+            'id', 'entry_id',
+            'cow_dung_qty', 'cow_dung_ts', 'cow_dung_vs',
+            'pressmud_qty', 'pressmud_ts', 'pressmud_vs',
+            'permeate_qty', 'permeate_ts', 'permeate_vs',
+            'water_qty',
+            'slurry_total', 'slurry_ts', 'slurry_vs', 'slurry_ph',
+            'created_at', 'updated_at'
+        ];
+    }
+}
+
 // DASHBOARD DATA - uses MIS entry data; supports period (day/week/month/year) or custom startDate/endDate
 // Week = calendar week (Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc.). Uses date-fns via calendarUtils.
 exports.getDashboardData = async (req, res) => {
@@ -902,6 +958,7 @@ exports.getDashboardData = async (req, res) => {
             }
         }
 
+        const feedMixingTankAttributes = await getExistingFeedMixingTankAttributes();
         const entries = await MISDailyEntry.findAll({
             where: {
                 date: { [Op.between]: [startStr, endStr] }
@@ -914,27 +971,45 @@ exports.getDashboardData = async (req, res) => {
                 { model: MISUtilities, as: 'utilities' },
                 { model: MISPlantAvailability, as: 'plantAvailability' },
                 { model: MISHSEData, as: 'hse' },
-                { model: MISFeedMixingTank, as: 'feedMixingTank' },
-                { model: MISFuelUtilized, as: 'fuelUtilized' }
+                { model: MISFeedMixingTank, as: 'feedMixingTank', attributes: feedMixingTankAttributes },
+                // IMPORTANT: cbgSales and fuelUtilized are hasMany. Load them separately to avoid join cartesian
+                // duplication (which can inflate totals like CBG Sold when both are included together).
+                { model: MISCBGSale, as: 'cbgSales', attributes: ['quantity'], separate: true },
+                { model: MISFuelUtilized, as: 'fuelUtilized', separate: true }
             ]
         });
 
         // Calculate metrics
-        const totalRawBiogas = entries.reduce((sum, e) => sum + (e.rawBiogas?.total_raw_biogas || 0), 0);
-        const totalCBGProduced = entries.reduce((sum, e) => sum + (e.compressedBiogas?.produced || 0), 0);
-        const totalCBGSold = entries.reduce((sum, e) => sum + (e.compressedBiogas?.cbg_sold || 0), 0);
-        const totalFOMProduced = entries.reduce((sum, e) => sum + (e.fertilizer?.fom_produced || 0), 0);
-        const totalFOMSold = entries.reduce((sum, e) => sum + (e.fertilizer?.sold || 0), 0);
-        const totalLFOMSold = entries.reduce((sum, e) => sum + (n(e.fertilizer?.lagoon_liquid_sold) || 0), 0);
+        const totalRawBiogas = entries.reduce((sum, e) => sum + n(e.rawBiogas?.total_raw_biogas), 0);
+        const totalCBGProduced = entries.reduce((sum, e) => sum + n(e.compressedBiogas?.produced), 0);
+        // Prefer sales rows (most reliable). Fallback to compressedBiogas.cbg_sold if sales rows not present.
+        const totalCBGSoldFromSales = entries.reduce((sum, e) => {
+            const rows = Array.isArray(e.cbgSales) ? e.cbgSales : [];
+            return sum + rows.reduce((s, r) => s + n(r.quantity), 0);
+        }, 0);
+        const totalCBGSoldFromCompressed = entries.reduce((sum, e) => sum + n(e.compressedBiogas?.cbg_sold), 0);
+        const totalCBGSold = totalCBGSoldFromSales > 0 ? totalCBGSoldFromSales : totalCBGSoldFromCompressed;
+
+        const totalFOMProduced = entries.reduce((sum, e) => sum + n(e.fertilizer?.fom_produced), 0);
+        const totalFOMSold = entries.reduce((sum, e) => sum + n(e.fertilizer?.sold), 0);
+        const totalLFOMSold = entries.reduce((sum, e) => sum + n(e.fertilizer?.lagoon_liquid_sold), 0);
         const avgPlantAvailability = entries.length > 0
-            ? entries.reduce((sum, e) => sum + (e.plantAvailability?.total_availability || 0), 0) / entries.length
+            ? entries.reduce((sum, e) => sum + n(e.plantAvailability?.total_availability), 0) / entries.length
             : 0;
-        const totalElectricityConsumption = entries.reduce((sum, e) => sum + (e.utilities?.electricity_consumption || 0), 0);
-        const totalHSEIncidents = entries.reduce((sum, e) => sum + (e.hse?.safety_lti || 0) + (e.hse?.near_misses || 0), 0);
+        const totalElectricityConsumption = entries.reduce((sum, e) => sum + n(e.utilities?.electricity_consumption), 0);
+        const totalHSEIncidents = entries.reduce((sum, e) => sum + n(e.hse?.safety_lti) + n(e.hse?.near_misses), 0);
         const totalFeed = entries.reduce((sum, e) => {
             const fmt = e.feedMixingTank;
             if (!fmt) return sum;
-            return sum + (n(fmt.cow_dung_qty) + n(fmt.pressmud_qty) + n(fmt.permeate_qty) + n(fmt.water_qty));
+            return sum + (
+                n(fmt.cow_dung_qty) +
+                n(fmt.pressmud_qty) +
+                n(fmt.permeate_qty) +
+                n(fmt.water_qty) +
+                n(fmt.pulp_qty) +
+                n(fmt.maggie_qty) +
+                n(fmt.other_feed_substrate_qty)
+            );
         }, 0);
 
         // Averages based on number of entries (not calendar days) — for week, month, year, quarter, custom
@@ -972,10 +1047,12 @@ exports.getDashboardData = async (req, res) => {
         // Daily trend data
         const dailyData = entries.map(e => ({
             date: e.date,
-            rawBiogas: e.rawBiogas?.total_raw_biogas || 0,
-            cbgProduced: e.compressedBiogas?.produced || 0,
-            cbgSold: e.compressedBiogas?.cbg_sold || 0,
-            plantAvailability: e.plantAvailability?.total_availability || 0
+            rawBiogas: n(e.rawBiogas?.total_raw_biogas),
+            cbgProduced: n(e.compressedBiogas?.produced),
+            cbgSold: (Array.isArray(e.cbgSales) && e.cbgSales.length > 0)
+                ? e.cbgSales.reduce((s, r) => s + n(r.quantity), 0)
+                : n(e.compressedBiogas?.cbg_sold),
+            plantAvailability: n(e.plantAvailability?.total_availability)
         }));
 
         res.json({

@@ -495,7 +495,7 @@ export default function DashboardPage() {
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
                           <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            Total Feed Amount
+                            Total Feed
                           </Typography>
                           <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
                             {formatNumber(Number(summary.totalFeed ?? 0))} tons
