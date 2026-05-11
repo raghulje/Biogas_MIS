@@ -9,6 +9,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /** Transient SMTP failures (rate limits, TLS blips) — retries within one scheduler tick. */
 const FINAL_MIS_SMTP_ATTEMPTS = 4;
 const FINAL_MIS_SMTP_RETRY_DELAY_MS = 15000;
+const SCHEDULED_EMAIL_ATTEMPTS = 3;
+const SCHEDULED_EMAIL_RETRY_DELAY_MS = 7000;
 
 /** Parse to_emails (JSON array string or comma/semicolon list) into array of email strings. Must match adminController parseEmails. */
 function parseReportEmails(val) {
@@ -151,6 +153,21 @@ class SchedulerService {
         return `${y}-${m}-${day}`;
     }
 
+    async sendScheduledEmailWithRetry(to, subject, body, meta, tag = 'scheduler') {
+        let ok = false;
+        for (let attempt = 1; attempt <= SCHEDULED_EMAIL_ATTEMPTS; attempt++) {
+            ok = await emailService.sendEmail(to, subject, body, meta);
+            if (ok) return true;
+            if (attempt < SCHEDULED_EMAIL_ATTEMPTS) {
+                console.warn(
+                    `[${tag}] SMTP attempt ${attempt}/${SCHEDULED_EMAIL_ATTEMPTS} failed for ${to}; retrying in ${SCHEDULED_EMAIL_RETRY_DELAY_MS / 1000}s...`
+                );
+                await sleep(SCHEDULED_EMAIL_RETRY_DELAY_MS);
+            }
+        }
+        return false;
+    }
+
     async executeJob(scheduler) {
         const entryDate = this.getEntryDateForCheck();
         console.log(`Executing scheduler job_type='${scheduler.job_type}' for entry_date=${entryDate} (previous day)`);
@@ -197,7 +214,10 @@ class SchedulerService {
                     for (const email of noEntryEmails) {
                         const addr = String(email).trim();
                         if (addr) {
-                            try { await emailService.sendEmail(addr, subject, body, meta); } catch (err) { console.error('No-entry reminder email failed for', addr, err.message); }
+                            try {
+                                const ok = await this.sendScheduledEmailWithRetry(addr, subject, body, meta, 'daily_reminder_no_entry');
+                                if (!ok) console.error('No-entry reminder email failed after retries for', addr);
+                            } catch (err) { console.error('No-entry reminder email failed for', addr, err.message); }
                         }
                     }
                 }
@@ -215,7 +235,8 @@ class SchedulerService {
                         const subject = template?.subject || 'MIS Entry Reminder: Please Submit Entry';
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { name: op.name, date: entryDate })
                             : `<p>Hello ${op.name},</p><p>The MIS entry for ${entryDate} is in Draft status. Please submit it.</p>`;
-                        await emailService.sendEmail(op.email, subject, body, meta);
+                        const ok = await this.sendScheduledEmailWithRetry(op.email, subject, body, meta, 'daily_reminder_pending_submission');
+                        if (!ok) console.error('Operator reminder failed after retries for', op.email);
                     }
                 }
 
@@ -227,7 +248,8 @@ class SchedulerService {
                         const subject = template?.subject || 'MIS Entry Submitted';
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { name: mgr.name, date: entryDate })
                             : `<p>Hello ${mgr.name},</p><p>An MIS entry for ${entryDate} has been submitted for review.</p>`;
-                        await emailService.sendEmail(mgr.email, subject, body, meta);
+                        const ok = await this.sendScheduledEmailWithRetry(mgr.email, subject, body, meta, 'daily_reminder_submitted_notify');
+                        if (!ok) console.error('Manager submit notify failed after retries for', mgr.email);
                     }
                 }
             } else if (scheduler.job_type === 'mis_creation_check') {
@@ -275,7 +297,8 @@ class SchedulerService {
                     for (const email of uniqueEmails) {
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
                             : `<p>Hello,</p><p>The MIS entry for ${entryDate} has NOT been created yet. Please create it (data for this date is available from the next day).</p>`;
-                        await emailService.sendEmail(email, subject, body, meta);
+                        const ok = await this.sendScheduledEmailWithRetry(email, subject, body, meta, 'mis_creation_check_not_created');
+                        if (!ok) console.error('MIS not-created email failed after retries for', email);
                     }
                 } else if (!entrySubmitted) {
                     const template = await EmailTemplate.findOne({ where: { name: 'mis_not_submitted' } });
@@ -283,7 +306,8 @@ class SchedulerService {
                     for (const email of uniqueEmails) {
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
                             : `<p>Hello,</p><p>The MIS entry for ${entryDate} is created but NOT submitted. Please submit it immediately.</p>`;
-                        await emailService.sendEmail(email, subject, body, meta);
+                        const ok = await this.sendScheduledEmailWithRetry(email, subject, body, meta, 'mis_creation_check_not_submitted');
+                        if (!ok) console.error('MIS not-submitted email failed after retries for', email);
                     }
                 }
 
@@ -321,7 +345,8 @@ class SchedulerService {
                     for (const email of uniqueEmails) {
                         const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate })
                             : `<p>Hello Manager,</p><p>The MIS entry for ${entryDate} is overdue (not submitted). Please check with the team.</p>`;
-                        await emailService.sendEmail(email, subject, body, meta);
+                        const ok = await this.sendScheduledEmailWithRetry(email, subject, body, meta, 'mis_escalation_check');
+                        if (!ok) console.error('MIS escalation email failed after retries for', email);
                     }
                 }
             }

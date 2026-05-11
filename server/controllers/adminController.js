@@ -693,6 +693,11 @@ exports.getFinalMISReportConfig = async (req, res) => {
 exports.saveFinalMISReportConfig = async (req, res) => {
     try {
         const { to_emails, subject, body, schedule_type, schedule_time, cron_expression, is_active } = req.body;
+        if (schedule_type === 'custom') {
+            return res.status(400).json({
+                message: 'Custom cron schedule is currently disabled for Final MIS. Use Daily/Weekly/Monthly/Quarterly.'
+            });
+        }
         const [row] = await FinalMISReportConfig.findOrCreate({
             where: { id: 1 },
             defaults: {

@@ -3,6 +3,10 @@ const { NotificationSchedule, MISDailyEntry, User, Role } = require('../models')
 const emailService = require('./emailService');
 const { Op } = require('sequelize');
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const REMINDER_SMTP_ATTEMPTS = 3;
+const REMINDER_SMTP_RETRY_DELAY_MS = 7000;
+
 class ReminderScheduler {
   constructor() {
     this.jobs = new Map(); // jobKey -> cron job
@@ -27,10 +31,10 @@ class ReminderScheduler {
   async _scheduleFor(row) {
     if (!row) return;
     const scheduleId = row.id;
-    const misEnd = row.mis_end_time;
+    const reminderStart = row.reminder_start_time || row.mis_end_time;
     const interval = Number(row.reminder_interval_minutes) || 60;
     const count = Number(row.reminder_count) || 0;
-    const [endH, endM] = String(misEnd || '00:00').split(':').map(s => Number(s));
+    const [endH, endM] = String(reminderStart || '00:00').split(':').map(s => Number(s));
     const base = new Date();
     base.setHours(endH || 0, endM || 0, 0, 0);
 
@@ -62,6 +66,21 @@ class ReminderScheduler {
       console.log(`Scheduled reminder job ${jobKey} at ${h}:${String(m).padStart(2, '0')} (cron: ${cronExpr})`);
     }
     this.scheduleJobs.set(scheduleId, jobKeys);
+  }
+
+  async sendReminderWithRetry(to, subject, body, meta, scheduleId, reminderIndex) {
+    let ok = false;
+    for (let attempt = 1; attempt <= REMINDER_SMTP_ATTEMPTS; attempt++) {
+      ok = await emailService.sendEmail(to, subject, body, meta);
+      if (ok) return true;
+      if (attempt < REMINDER_SMTP_ATTEMPTS) {
+        console.warn(
+          `Reminder SMTP attempt ${attempt}/${REMINDER_SMTP_ATTEMPTS} failed for ${to} [schedule ${scheduleId} #${reminderIndex}]; retrying in ${REMINDER_SMTP_RETRY_DELAY_MS / 1000}s...`
+        );
+        await sleep(REMINDER_SMTP_RETRY_DELAY_MS);
+      }
+    }
+    return false;
   }
 
   async refreshAll() {
@@ -170,8 +189,12 @@ class ReminderScheduler {
       for (const to of toList) {
         try {
           const body = template ? await emailService.replaceTemplateVariables(template.body, { date: entryDate }) : `<p>Please submit MIS for ${entryDate} (data for this date is available from the next day).</p>`;
-          await emailService.sendEmail(to, subject, body, meta);
-          console.log(`Reminder email sent to ${to} [schedule ${scheduleRow.id} #${reminderIndex}]`);
+          const ok = await this.sendReminderWithRetry(to, subject, body, meta, scheduleRow.id, reminderIndex);
+          if (ok) {
+            console.log(`Reminder email sent to ${to} [schedule ${scheduleRow.id} #${reminderIndex}]`);
+          } else {
+            console.error(`Reminder email failed after retries for ${to} [schedule ${scheduleRow.id} #${reminderIndex}]`);
+          }
         } catch (e) {
           console.error('Failed to send reminder to', to, e.message);
         }

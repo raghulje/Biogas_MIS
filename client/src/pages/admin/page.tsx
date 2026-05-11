@@ -405,7 +405,6 @@ function FinalMISReportEmailPanel({
   const [body, setBody] = useState('');
   const [scheduleType, setScheduleType] = useState<string>('monthly');
   const [scheduleTime, setScheduleTime] = useState('09:00');
-  const [cronExpression, setCronExpression] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [lastSuccessfulPeriodEnd, setLastSuccessfulPeriodEnd] = useState<string | null>(null);
   const [scheduleFailurePeriodEnd, setScheduleFailurePeriodEnd] = useState<string | null>(null);
@@ -429,7 +428,6 @@ function FinalMISReportEmailPanel({
         setBody(data.body || '');
         setScheduleType(data.schedule_type || 'monthly');
         setScheduleTime(data.schedule_time || '09:00');
-        setCronExpression(data.cron_expression || '');
         setIsActive(data.is_active !== false);
         setLastSuccessfulPeriodEnd(data.last_successful_period_end || null);
         setScheduleFailurePeriodEnd(data.schedule_failure_period_end || null);
@@ -463,7 +461,6 @@ function FinalMISReportEmailPanel({
         body,
         schedule_type: scheduleType,
         schedule_time: scheduleTime,
-        cron_expression: scheduleType === 'custom' ? cronExpression : undefined,
         is_active: isActive,
       });
       setMessage({ type: 'success', text: 'Final MIS Report email settings saved.' });
@@ -621,36 +618,19 @@ function FinalMISReportEmailPanel({
                   <MenuItem value="weekly">Weekly (previous week, Monday run)</MenuItem>
                   <MenuItem value="monthly">Monthly (previous month, 1st run)</MenuItem>
                   <MenuItem value="quarterly">Quarterly (previous quarter)</MenuItem>
-                  <MenuItem value="custom">Custom (cron expression)</MenuItem>
                 </TextField>
               </Grid>
-              {scheduleType !== 'custom' && (
-                <Grid item xs={12} sm={3}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    label="Time (24h)"
-                    value={scheduleTime}
-                    onChange={(e) => setScheduleTime(e.target.value)}
-                    placeholder="09:00"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-              )}
-              {scheduleType === 'custom' && (
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    label="Cron expression"
-                    value={cronExpression}
-                    onChange={(e) => setCronExpression(e.target.value)}
-                    placeholder="0 9 * * 1"
-                    helperText="e.g. 0 9 * * 1 = Monday 9:00"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-              )}
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Time (24h)"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  placeholder="09:00"
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              </Grid>
               <Grid item xs={12} sm={2}>
                 <FormControlLabel
                   control={<Checkbox checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
