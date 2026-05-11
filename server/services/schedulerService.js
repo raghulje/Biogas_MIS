@@ -97,6 +97,10 @@ class SchedulerService {
             console.error('Reminder Scheduler init failed:', e);
         }
         // Final MIS Report: every 15 minutes (after scheduled time, retries until success same period)
+        if (this.finalMISReportHourlyJob) {
+            this.finalMISReportHourlyJob.stop();
+            this.finalMISReportHourlyJob = null;
+        }
         this.finalMISReportHourlyJob = cron.schedule('*/15 * * * *', async () => {
             try {
                 await this.runFinalMISReportCheck();
@@ -396,7 +400,14 @@ class SchedulerService {
             if (!due) return;
 
             const periodEnd = String(endDate || '').trim();
-            const alreadySent = row.last_successful_period_end && row.last_successful_period_end === periodEnd;
+            const storedEnd = row.last_successful_period_end;
+            const storedYmd =
+                storedEnd instanceof Date && !Number.isNaN(storedEnd.getTime())
+                    ? finalMISReportEmailService.toLocalYMD(storedEnd)
+                    : String(storedEnd || '')
+                          .trim()
+                          .slice(0, 10);
+            const alreadySent = storedYmd && storedYmd === periodEnd;
             if (alreadySent) return;
 
             const toList = parseReportEmails(row.to_emails);
@@ -443,14 +454,25 @@ class SchedulerService {
                 }
             }
             if (ok) {
+                // Persist idempotency first. If a later migration (failure-tracking columns) is missing,
+                // a single wide UPDATE would throw after SMTP succeeded — then every 15m cron resends.
                 await row.update({
                     last_sent_at: new Date(),
                     last_successful_period_end: periodEnd,
-                    schedule_failure_period_end: null,
-                    schedule_failure_summary: null,
-                    schedule_failure_last_attempt_at: null,
-                    delivery_alert_sent_for_period: null,
                 });
+                try {
+                    await row.update({
+                        schedule_failure_period_end: null,
+                        schedule_failure_summary: null,
+                        schedule_failure_last_attempt_at: null,
+                        delivery_alert_sent_for_period: null,
+                    });
+                } catch (clearErr) {
+                    console.error(
+                        'Final MIS: could not clear schedule failure fields (run DB migrations if columns missing):',
+                        clearErr.message || clearErr
+                    );
+                }
                 console.log(`Final MIS Report sent to ${toList.length} recipient(s), period end ${periodEnd}.`);
             } else {
                 const summary = String(lastErr).slice(0, 500);

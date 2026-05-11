@@ -688,4 +688,6 @@ module.exports = {
   getDateRangeForSchedule,
   isDueNow,
   isScheduledFinalMISAttemptDue,
+  /** YYYY-MM-DD in local TZ — exported for scheduler idempotency comparisons */
+  toLocalYMD,
 };
