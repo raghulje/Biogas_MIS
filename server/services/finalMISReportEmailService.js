@@ -558,6 +558,14 @@ async function buildReportHtmlForRange(startDate, endDate, customBody = '') {
   return buildReportHtml(startDate, endDate, aggregated, customBody);
 }
 
+/** YYYY-MM-DD in the server's local timezone (not UTC) — matches MIS entry `date` for plant-local days. */
+function toLocalYMD(d) {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${day}`;
+}
+
 function getDateRangeForSchedule(scheduleType, scheduleTime, cronExpression) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -569,7 +577,7 @@ function getDateRangeForSchedule(scheduleType, scheduleTime, cronExpression) {
     case 'daily': {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      const s = yesterday.toISOString().slice(0, 10);
+      const s = toLocalYMD(yesterday);
       return { startDate: s, endDate: s };
     }
     case 'weekly': {
@@ -578,8 +586,8 @@ function getDateRangeForSchedule(scheduleType, scheduleTime, cronExpression) {
       const lastWeekStart = new Date(lastWeekEnd);
       lastWeekStart.setDate(lastWeekStart.getDate() - 6);
       return {
-        startDate: lastWeekStart.toISOString().slice(0, 10),
-        endDate: lastWeekEnd.toISOString().slice(0, 10),
+        startDate: toLocalYMD(lastWeekStart),
+        endDate: toLocalYMD(lastWeekEnd),
       };
     }
     case 'monthly': {
@@ -608,6 +616,53 @@ function getDateRangeForSchedule(scheduleType, scheduleTime, cronExpression) {
   }
 }
 
+function minutesSinceMidnight(d) {
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function scheduledMinutesFromTimeString(scheduleTime) {
+  const parts = (scheduleTime || '09:00').split(':');
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const hh = Number.isFinite(h) ? h : 9;
+  const mm = Number.isFinite(m) ? m : 0;
+  return hh * 60 + mm;
+}
+
+/**
+ * True when local clock is on or after schedule_time today (not exact minute).
+ * Used with hourly/15-min cron so failed sends retry the same calendar window until success.
+ */
+function isPastScheduleTimeToday(scheduleTime) {
+  const now = new Date();
+  return minutesSinceMidnight(now) >= scheduledMinutesFromTimeString(scheduleTime);
+}
+
+/**
+ * Whether the scheduler should attempt Final MIS email now (broad window + calendar rules).
+ * Replaces exact-minute isDueNow for production reliability behind reverse proxies / transient SMTP.
+ */
+function isScheduledFinalMISAttemptDue(scheduleType, scheduleTime) {
+  if (!isPastScheduleTimeToday(scheduleTime)) return false;
+  const now = new Date();
+  switch (scheduleType) {
+    case 'daily':
+      return true;
+    case 'weekly':
+      return now.getDay() === 1;
+    case 'monthly':
+      return now.getDate() === 1;
+    case 'quarterly': {
+      const d = now.getDate();
+      const month = now.getMonth();
+      return d === 1 && (month === 0 || month === 3 || month === 6 || month === 9);
+    }
+    default:
+      return false;
+  }
+}
+
+/** @deprecated Prefer isScheduledFinalMISAttemptDue — kept for tests / tooling */
 function isDueNow(scheduleType, scheduleTime) {
   const now = new Date();
   const [h, m] = (scheduleTime || '09:00').split(':').map(Number);
@@ -615,7 +670,7 @@ function isDueNow(scheduleType, scheduleTime) {
   const minute = now.getMinutes();
   if (hour !== h || minute !== (m || 0)) return false;
   if (scheduleType === 'daily') return true;
-  if (scheduleType === 'weekly') return now.getDay() === 1; // Monday
+  if (scheduleType === 'weekly') return now.getDay() === 1;
   if (scheduleType === 'monthly') return now.getDate() === 1;
   if (scheduleType === 'quarterly') {
     const d = now.getDate();
@@ -632,4 +687,5 @@ module.exports = {
   buildReportHtmlForRange,
   getDateRangeForSchedule,
   isDueNow,
+  isScheduledFinalMISAttemptDue,
 };

@@ -1,14 +1,19 @@
+// Load .env before other modules so TZ (and DB) apply to schedulers and Date logic.
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+if (process.env.TZ && String(process.env.TZ).trim()) {
+    process.env.TZ = String(process.env.TZ).trim();
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
-const path = require('path');
 const fs = require('fs');
 const db = require('./models');
 const routes = require('./routes');
 const schedulerService = require('./services/schedulerService');
-require('dotenv').config();
 
 // Global crash protection: log unhandled rejections and uncaught exceptions (do not exit)
 process.on('unhandledRejection', (reason, promise) => {
@@ -49,7 +54,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Routes
 // Health check (useful for load balancers / reverse proxies)
 app.get('/api/health', (_req, res) => {
-    return res.json({ status: 'ok', env: process.env.NODE_ENV || 'development' });
+    const now = new Date();
+    return res.json({
+        status: 'ok',
+        env: process.env.NODE_ENV || 'development',
+        /** Helps verify Final MIS schedule vs India: set TZ=Asia/Kolkata in server/.env and restart. */
+        tz: process.env.TZ || null,
+        server_local_string: now.toString(),
+        server_utc_iso: now.toISOString(),
+    });
 });
 
 app.use('/api', routes);

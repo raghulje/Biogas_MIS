@@ -245,7 +245,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                   variant="h6"
                   sx={{
                     fontWeight: 700,
-                    color: '#2879b6',
+                    color: '#2563EB',
                     mb: 3,
                     fontSize: { xs: '1rem', sm: '1.125rem' },
                   }}
@@ -258,7 +258,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     .map((_, i) => i)
                     .filter((i) => (cbgSalesRows[i]?.customerType || '') === productType);
                   const customersForType = customers.filter((c: any) => (c.type || '') === productType);
-                  const productAccent = productType === 'CBG' ? '#2879b6' : productType === 'FOM' ? '#7dc244' : '#F59E21';
+                  const productAccent = productType === 'CBG' ? '#2563EB' : productType === 'FOM' ? '#7dc244' : '#F59E21';
 
                   return (
                     <Box
@@ -465,7 +465,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                   variant="h6"
                   sx={{
                     fontWeight: 700,
-                    color: '#2879b6',
+                    color: '#2563EB',
                     mb: 3,
                     fontSize: { xs: '1rem', sm: '1.125rem' },
                   }}
@@ -478,7 +478,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     .map((_, i) => i)
                     .filter((i) => (fuelUtilizedRows[i]?.fuelType || '') === fuelType);
                   const customersForType = customers.filter((c: any) => (c.type || '') === fuelType);
-                  const fuelAccent = fuelType === 'Petrol' ? '#2879b6' : '#e65100';
+                  const fuelAccent = fuelType === 'Petrol' ? '#2563EB' : '#e65100';
 
                   return (
                     <Box
@@ -685,7 +685,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                 component="div"
                 sx={{
                   fontWeight: 700,
-                  color: '#2879b6',
+                  color: '#2563EB',
                   pt: 3,
                   px: 3,
                   pb: 2,

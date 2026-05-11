@@ -76,4 +76,7 @@ router.get('/email-templates/:id/variables', permissionMiddleware('config', 'rea
 router.get('/audit-logs', permissionMiddleware('audit', 'read'), adminController.getAuditLogs);
 router.get('/sessions', permissionMiddleware('audit', 'read'), adminController.getSessions);
 
+// Outbound email delivery logs (SMTP)
+router.get('/email-logs', permissionMiddleware('config', 'read'), adminController.getEmailLogs);
+
 module.exports = router;

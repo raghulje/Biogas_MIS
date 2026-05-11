@@ -269,7 +269,7 @@ export default function NotificationConfigPage() {
     return (
         <Layout>
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
-                <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' }, fontWeight: 700, color: '#2879b6' }}>
+                <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' }, fontWeight: 700, color: '#2563EB' }}>
                     In-App Notifications
                 </Typography>
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -511,8 +511,8 @@ export default function NotificationConfigPage() {
                                                         disableRipple
                                                         size={isPhone ? 'medium' : 'small'}
                                                         sx={{
-                                                            color: '#2879b6',
-                                                            '&.Mui-checked': { color: '#2879b6' }
+                                                            color: '#2563EB',
+                                                            '&.Mui-checked': { color: '#2563EB' }
                                                         }}
                                                     />
                                                 </ListItemIcon>
@@ -591,7 +591,7 @@ export default function NotificationConfigPage() {
                                         {users.map(user => (
                                             <ListItem key={user.id} button onClick={() => handleToggleApprovedEditor(user.email)}>
                                                 <ListItemIcon>
-                                                    <Checkbox edge="start" checked={approvedEditors.includes(user.email)} disableRipple size={isPhone ? 'medium' : 'small'} sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }} />
+                                                    <Checkbox edge="start" checked={approvedEditors.includes(user.email)} disableRipple size={isPhone ? 'medium' : 'small'} sx={{ color: '#2563EB', '&.Mui-checked': { color: '#2563EB' } }} />
                                                 </ListItemIcon>
                                                 <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
                                             </ListItem>
@@ -628,7 +628,7 @@ export default function NotificationConfigPage() {
                                                         checked={submitEmails.includes(user.email)}
                                                         disableRipple
                                                         size={isPhone ? 'medium' : 'small'}
-                                                        sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
+                                                        sx={{ color: '#2563EB', '&.Mui-checked': { color: '#2563EB' } }}
                                                     />
                                                 </ListItemIcon>
                                                 <ListItemText

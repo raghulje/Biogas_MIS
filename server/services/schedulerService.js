@@ -5,6 +5,11 @@ const finalMISReportEmailService = require('./finalMISReportEmailService');
 const { Op } = require('sequelize');
 const reminderScheduler = require('./reminderScheduler');
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+/** Transient SMTP failures (rate limits, TLS blips) — retries within one scheduler tick. */
+const FINAL_MIS_SMTP_ATTEMPTS = 4;
+const FINAL_MIS_SMTP_RETRY_DELAY_MS = 15000;
+
 /** Parse to_emails (JSON array string or comma/semicolon list) into array of email strings. Must match adminController parseEmails. */
 function parseReportEmails(val) {
     if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
@@ -21,10 +26,59 @@ function parseReportEmails(val) {
     return [];
 }
 
+function parseJsonEmailField(val) {
+    if (val == null) return [];
+    if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
+    try {
+        const a = JSON.parse(val);
+        return Array.isArray(a) ? a.map(String).map(e => e.trim()).filter(Boolean) : [];
+    } catch {
+        return String(val).split(/[,;]/).map(e => e.trim()).filter(Boolean);
+    }
+}
+
+/** One email per failed period so ops are notified if SMTP is flaky (uses same SMTP — if SMTP is dead, see DB banner + logs). */
+async function sendScheduledFinalMISFailureAlert(periodEnd, errorSummary) {
+    const mainRow = await FinalMISReportConfig.findByPk(1);
+    if (!mainRow || mainRow.delivery_alert_sent_for_period === periodEnd) return;
+
+    let escalation = [];
+    try {
+        const cfgRow = await MISEmailConfig.findByPk(1);
+        if (cfgRow) escalation = parseJsonEmailField(cfgRow.escalation_notify_emails);
+    } catch (_e) {
+        /* ignore */
+    }
+    const reportRecipients = parseReportEmails(mainRow.to_emails);
+    const merged = [...new Set([...escalation, ...reportRecipients].filter(Boolean))];
+    if (!merged.length) return;
+
+    const esc = String(errorSummary || 'Unknown error')
+        .slice(0, 450)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    const alertHtml = `<p><strong>Scheduled Final MIS report was not delivered.</strong></p>
+<p>Report period end: <strong>${periodEnd}</strong><br/>
+Last error: ${esc}</p>
+<p>Open <strong>Admin → Email delivery logs</strong> and verify <strong>SMTP</strong>. The scheduler will keep retrying until this period&apos;s report sends successfully.</p>
+<p><em>This alert does not include the MIS report attachment/body.</em></p>`;
+
+    const subj = `[ALERT] Final MIS scheduled email failed — period ${periodEnd}`;
+    const meta = { entity_type: 'FinalMISReportDeliveryAlert', entity_id: '1' };
+    const r = await emailService.sendEmailToMany(merged, subj, alertHtml, meta);
+    if (r.ok) {
+        await mainRow.update({ delivery_alert_sent_for_period: periodEnd });
+        console.log(`Final MIS failure alert sent for period ${periodEnd} (${merged.length} recipient(s)).`);
+    }
+}
+
 class SchedulerService {
     constructor() {
         this.jobs = new Map();
         this.finalMISReportHourlyJob = null;
+        /** Avoid overlapping Final MIS runs (15-min cron + slow HTML build + SMTP retries). */
+        this._finalMISReportRunLock = false;
     }
 
     async init() {
@@ -40,15 +94,15 @@ class SchedulerService {
         } catch (e) {
             console.error('Reminder Scheduler init failed:', e);
         }
-        // Final MIS Report: run every hour and send if config is due
-        this.finalMISReportHourlyJob = cron.schedule('0 * * * *', async () => {
+        // Final MIS Report: every 15 minutes (after scheduled time, retries until success same period)
+        this.finalMISReportHourlyJob = cron.schedule('*/15 * * * *', async () => {
             try {
                 await this.runFinalMISReportCheck();
             } catch (e) {
                 console.error('Final MIS Report scheduled job failed:', e);
             }
         });
-        console.log('Final MIS Report hourly check scheduled.');
+        console.log('Final MIS Report check scheduled (every 15 minutes).');
     }
 
     scheduleJob(scheduler) {
@@ -295,6 +349,8 @@ class SchedulerService {
         await this.init();
     }
     async runFinalMISReportCheck() {
+        if (this._finalMISReportRunLock) return;
+        this._finalMISReportRunLock = true;
         try {
             const { FinalMISReportConfig } = require('../models');
             const row = await FinalMISReportConfig.findByPk(1);
@@ -306,13 +362,17 @@ class SchedulerService {
                 cron_expression: row.cron_expression,
             };
 
-            const due = finalMISReportEmailService.isDueNow(config.schedule_type, config.schedule_time);
-            if (!due) return;
-
             const dateRange = finalMISReportEmailService.getDateRangeForSchedule(config.schedule_type, config.schedule_time);
             if (!dateRange) return;
 
             const { startDate, endDate } = dateRange;
+
+            const due = finalMISReportEmailService.isScheduledFinalMISAttemptDue(config.schedule_type, config.schedule_time);
+            if (!due) return;
+
+            const periodEnd = String(endDate || '').trim();
+            const alreadySent = row.last_successful_period_end && row.last_successful_period_end === periodEnd;
+            if (alreadySent) return;
 
             const toList = parseReportEmails(row.to_emails);
             if (!toList.length) return;
@@ -338,14 +398,56 @@ class SchedulerService {
 
             const html = await finalMISReportEmailService.buildReportHtmlForRange(startDate, endDate, customBody);
 
-            const meta = { entity_type: 'FinalMISReportConfig', entity_id: row.id ? String(row.id) : null };
-            await emailService.sendEmailToMany(toList, subject, html, meta);
-
-            await row.update({ last_sent_at: new Date() });
-            console.log(`Final MIS Report Sent to ${toList.length} recipients.`);
+            const meta = {
+                entity_type: 'FinalMISReportConfig',
+                entity_id: row.id ? String(row.id) : null,
+                report_period: `${startDate} to ${endDate}`,
+            };
+            let ok = false;
+            let lastErr = 'Send failed';
+            for (let attempt = 1; attempt <= FINAL_MIS_SMTP_ATTEMPTS; attempt++) {
+                const r = await emailService.sendEmailToMany(toList, subject, html, meta);
+                ok = r.ok;
+                if (!r.ok && r.error) lastErr = r.error;
+                if (ok) break;
+                if (attempt < FINAL_MIS_SMTP_ATTEMPTS) {
+                    console.warn(
+                        `Final MIS Report SMTP attempt ${attempt}/${FINAL_MIS_SMTP_ATTEMPTS} failed; retrying in ${FINAL_MIS_SMTP_RETRY_DELAY_MS / 1000}s…`
+                    );
+                    await sleep(FINAL_MIS_SMTP_RETRY_DELAY_MS);
+                }
+            }
+            if (ok) {
+                await row.update({
+                    last_sent_at: new Date(),
+                    last_successful_period_end: periodEnd,
+                    schedule_failure_period_end: null,
+                    schedule_failure_summary: null,
+                    schedule_failure_last_attempt_at: null,
+                    delivery_alert_sent_for_period: null,
+                });
+                console.log(`Final MIS Report sent to ${toList.length} recipient(s), period end ${periodEnd}.`);
+            } else {
+                const summary = String(lastErr).slice(0, 500);
+                await row.update({
+                    schedule_failure_period_end: periodEnd,
+                    schedule_failure_summary: summary,
+                    schedule_failure_last_attempt_at: new Date(),
+                });
+                console.error(
+                    `Final MIS Report email failed after ${FINAL_MIS_SMTP_ATTEMPTS} attempts (period end ${periodEnd}). Will retry on next cron tick.`
+                );
+                try {
+                    await sendScheduledFinalMISFailureAlert(periodEnd, summary);
+                } catch (e) {
+                    console.error('sendScheduledFinalMISFailureAlert:', e);
+                }
+            }
 
         } catch (error) {
             console.error('runFinalMISReportCheck Error:', error);
+        } finally {
+            this._finalMISReportRunLock = false;
         }
     }
 }

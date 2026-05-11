@@ -64,7 +64,7 @@ export default function AuditLogsPage() {
   return (
     <Layout>
       <Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6', mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#2563EB', mb: 3 }}>
           Audit Logs
         </Typography>
 
@@ -96,11 +96,11 @@ export default function AuditLogsPage() {
               <Table>
                 <TableHead sx={{ backgroundColor: 'rgba(40, 121, 182, 0.05)' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Timestamp</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>User</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Action</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Details</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Timestamp</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>User</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Action</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Details</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

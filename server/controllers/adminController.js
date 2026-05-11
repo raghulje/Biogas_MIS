@@ -1,7 +1,7 @@
 const {
     User, Role, Permission, RolePermission,
     SMTPConfig, EmailScheduler, AuditLog, EmailTemplate, NotificationSchedule,
-    UserActivityLog, MISEmailConfig, FinalMISReportConfig,
+    UserActivityLog, MISEmailConfig, FinalMISReportConfig, EmailLog,
     sequelize
 } = require('../models');
 const emailService = require('../services/emailService');
@@ -660,6 +660,11 @@ exports.getFinalMISReportConfig = async (req, res) => {
                 schedule_time: '09:00',
                 cron_expression: '',
                 is_active: false,
+                last_successful_period_end: null,
+                schedule_failure_period_end: null,
+                schedule_failure_summary: null,
+                schedule_failure_last_attempt_at: null,
+                delivery_alert_sent_for_period: null,
             });
         }
         const to_emails = parseEmails(row.to_emails);
@@ -673,6 +678,11 @@ exports.getFinalMISReportConfig = async (req, res) => {
             cron_expression: row.cron_expression || '',
             is_active: row.is_active !== false,
             last_sent_at: row.last_sent_at,
+            last_successful_period_end: row.last_successful_period_end || null,
+            schedule_failure_period_end: row.schedule_failure_period_end || null,
+            schedule_failure_summary: row.schedule_failure_summary || null,
+            schedule_failure_last_attempt_at: row.schedule_failure_last_attempt_at || null,
+            delivery_alert_sent_for_period: row.delivery_alert_sent_for_period || null,
         });
     } catch (e) {
         console.error('getFinalMISReportConfig:', e);
@@ -721,6 +731,11 @@ exports.saveFinalMISReportConfig = async (req, res) => {
             cron_expression: updated?.cron_expression || '',
             is_active: updated?.is_active !== false,
             last_sent_at: updated?.last_sent_at,
+            last_successful_period_end: updated?.last_successful_period_end || null,
+            schedule_failure_period_end: updated?.schedule_failure_period_end || null,
+            schedule_failure_summary: updated?.schedule_failure_summary || null,
+            schedule_failure_last_attempt_at: updated?.schedule_failure_last_attempt_at || null,
+            delivery_alert_sent_for_period: updated?.delivery_alert_sent_for_period || null,
         });
     } catch (e) {
         console.error('saveFinalMISReportConfig:', e);
@@ -743,6 +758,46 @@ function replacePlaceholders(text, map) {
     });
 }
 
+/**
+ * Build Final MIS HTML and send test email (can take minutes for large date ranges — run outside HTTP request to avoid proxy 504).
+ */
+async function runSendTestFinalMISReportJob(startDate, endDate) {
+    const row = await FinalMISReportConfig.findByPk(1);
+    const toList = row ? parseEmails(row.to_emails) : [];
+    if (toList.length === 0) {
+        console.warn('runSendTestFinalMISReportJob: no recipients, skipping');
+        return;
+    }
+
+    const replacements = {
+        '{{report_period}}': `${startDate} to ${endDate}`,
+        '{{from_date}}': startDate,
+        '{{to_date}}': endDate,
+        '{{generated_datetime}}': new Date().toLocaleString()
+    };
+
+    const subjectRaw = row?.subject || 'Final MIS Report for {{report_period}}';
+    const subject = `[TEST] ${replacePlaceholders(subjectRaw, replacements)}`;
+    const bodyRaw = row?.body || '';
+    const customBody = replacePlaceholders(bodyRaw, replacements);
+
+    const html = await finalMISReportEmailService.buildReportHtmlForRange(startDate, endDate, customBody);
+
+    const meta = {
+        entity_type: 'FinalMISReportConfig',
+        entity_id: row?.id ? String(row.id) : null,
+        report_period: `${startDate} to ${endDate}`,
+    };
+    const r = await emailService.sendEmailToMany(toList, subject, html, meta);
+
+    if (r.ok && row) {
+        await row.update({ last_sent_at: new Date() });
+        console.log(`sendTestFinalMISReport (background): sent to ${toList.length} recipient(s), ${startDate}–${endDate}`);
+    } else {
+        console.error('sendTestFinalMISReport (background): SMTP send failed — see email_logs', r.error || '');
+    }
+}
+
 exports.sendTestFinalMISReport = async (req, res) => {
     try {
         const { startDate, endDate } = req.body;
@@ -755,33 +810,26 @@ exports.sendTestFinalMISReport = async (req, res) => {
             return res.status(400).json({ message: 'Add at least one recipient in Final MIS Report Email config before sending.' });
         }
 
-        const replacements = {
-            '{{report_period}}': `${startDate} to ${endDate}`,
-            '{{from_date}}': startDate,
-            '{{to_date}}': endDate,
-            '{{generated_datetime}}': new Date().toLocaleString()
-        };
+        // Respond immediately so reverse proxies (nginx, etc.) do not return 504 while HTML is built and mail is sent.
+        res.status(202).json({
+            queued: true,
+            message:
+                'Test report queued. It is being generated and emailed in the background (large date ranges can take several minutes). Check your inbox and Admin → Email delivery logs for Sent/Failed status.',
+            startDate,
+            endDate,
+            recipients: toList.length,
+        });
 
-        let subjectRaw = row?.subject || 'Final MIS Report for {{report_period}}';
-        // If it's the test button, we might want to append (Test) but better to just use the subject as is to verify placeholders.
-        // But user might want to distinguish. Let's prepend [TEST].
-        let subject = `[TEST] ${replacePlaceholders(subjectRaw, replacements)}`;
-
-        let bodyRaw = row?.body || '';
-        const customBody = replacePlaceholders(bodyRaw, replacements);
-
-        const html = await finalMISReportEmailService.buildReportHtmlForRange(startDate, endDate, customBody);
-
-        const meta = { entity_type: 'FinalMISReportConfig', entity_id: row?.id ? String(row.id) : null };
-        await emailService.sendEmailToMany(toList, subject, html, meta);
-
-        if (row) {
-            await row.update({ last_sent_at: new Date() });
-        }
-        res.json({ message: 'Test report sent successfully', recipients: toList.length });
+        setImmediate(() => {
+            runSendTestFinalMISReportJob(startDate, endDate).catch((e) => {
+                console.error('sendTestFinalMISReport (background):', e);
+            });
+        });
     } catch (e) {
         console.error('sendTestFinalMISReport:', e);
-        res.status(500).json({ message: e.message || 'Failed to send test report' });
+        if (!res.headersSent) {
+            res.status(500).json({ message: e.message || 'Failed to send test report' });
+        }
     }
 };
 
@@ -799,6 +847,43 @@ exports.saveAppTheme = async (req, res) => {
 };
 
 // --- Logs ---
+
+/** Outbound email attempts (SMTP send), including Final MIS and MIS reminders. */
+exports.getEmailLogs = async (req, res) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
+        const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+        const entity_type = typeof req.query.entity_type === 'string' && req.query.entity_type.trim()
+            ? req.query.entity_type.trim()
+            : null;
+        const where = entity_type ? { entity_type } : {};
+        const { count, rows } = await EmailLog.findAndCountAll({
+            where,
+            order: [['sent_at', 'DESC']],
+            limit,
+            offset,
+            raw: true,
+        });
+        res.json({
+            total: count,
+            limit,
+            offset,
+            logs: rows.map((r) => ({
+                id: r.id,
+                recipient: r.recipient,
+                subject: r.subject,
+                status: r.status,
+                error_message: r.error_message || null,
+                sent_at: r.sent_at,
+                entity_type: r.entity_type || null,
+                entity_id: r.entity_id || null,
+            })),
+        });
+    } catch (e) {
+        console.error('getEmailLogs:', e);
+        res.status(500).json({ message: 'Failed to load email logs' });
+    }
+};
 
 /** Build sessions (login + logout pairs) and last-login per user from UserActivityLog */
 exports.getSessions = async (req, res) => {

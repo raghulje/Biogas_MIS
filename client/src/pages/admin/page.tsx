@@ -407,6 +407,10 @@ function FinalMISReportEmailPanel({
   const [scheduleTime, setScheduleTime] = useState('09:00');
   const [cronExpression, setCronExpression] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [lastSuccessfulPeriodEnd, setLastSuccessfulPeriodEnd] = useState<string | null>(null);
+  const [scheduleFailurePeriodEnd, setScheduleFailurePeriodEnd] = useState<string | null>(null);
+  const [scheduleFailureSummary, setScheduleFailureSummary] = useState<string | null>(null);
+  const [scheduleFailureLastAttemptAt, setScheduleFailureLastAttemptAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const [testStartDate, setTestStartDate] = useState(() => {
@@ -416,8 +420,9 @@ function FinalMISReportEmailPanel({
   });
   const [testEndDate, setTestEndDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-  const loadConfig = useCallback(() => {
-    adminService.getFinalMISReportConfig().then((data: any) => {
+  const loadConfig = useCallback(async () => {
+    try {
+      const data: any = await adminService.getFinalMISReportConfig();
       if (data) {
         setToEmails(Array.isArray(data.to_emails) ? data.to_emails : []);
         setSubject(data.subject || 'Final MIS Report');
@@ -426,8 +431,14 @@ function FinalMISReportEmailPanel({
         setScheduleTime(data.schedule_time || '09:00');
         setCronExpression(data.cron_expression || '');
         setIsActive(data.is_active !== false);
+        setLastSuccessfulPeriodEnd(data.last_successful_period_end || null);
+        setScheduleFailurePeriodEnd(data.schedule_failure_period_end || null);
+        setScheduleFailureSummary(data.schedule_failure_summary || null);
+        setScheduleFailureLastAttemptAt(data.schedule_failure_last_attempt_at || null);
       }
-    }).catch(() => { });
+    } catch {
+      /* ignore */
+    }
   }, []);
   useEffect(() => { loadConfig(); }, [loadConfig]);
   const theme = useTheme();
@@ -456,6 +467,7 @@ function FinalMISReportEmailPanel({
         is_active: isActive,
       });
       setMessage({ type: 'success', text: 'Final MIS Report email settings saved.' });
+      await loadConfig();
     } catch (e: any) {
       setMessage({ type: 'error', text: e?.response?.data?.message || 'Failed to save.' });
     } finally {
@@ -471,13 +483,23 @@ function FinalMISReportEmailPanel({
     setSendingTest(true);
     setMessage(null);
     try {
-      await adminService.sendTestFinalMISReport(testStartDate, testEndDate);
-      setMessage({ type: 'success', text: `Test report sent for ${testStartDate} to ${testEndDate}.` });
+      const result = await adminService.sendTestFinalMISReport(testStartDate, testEndDate);
+      if (result?.queued) {
+        setMessage({
+          type: 'success',
+          text:
+            result.message ||
+            `Test report queued for ${testStartDate} to ${testEndDate}. It will arrive shortly; open Email delivery logs if you need Sent/Failed details.`,
+        });
+      } else {
+        setMessage({ type: 'success', text: `Test report sent for ${testStartDate} to ${testEndDate}.` });
+      }
     } catch (e: any) {
       setMessage({ type: 'error', text: e?.response?.data?.message || 'Failed to send test.' });
     } finally {
       setSendingTest(false);
     }
+    loadConfig();
   };
 
   return (
@@ -491,6 +513,31 @@ function FinalMISReportEmailPanel({
       {message && (
         <Alert severity={message.type as any} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
+        </Alert>
+      )}
+      {scheduleFailurePeriodEnd && (
+        <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+            Scheduled report not delivered yet
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Period end <strong>{scheduleFailurePeriodEnd}</strong>
+            {scheduleFailureLastAttemptAt && (
+              <> — last attempt {new Date(scheduleFailureLastAttemptAt).toLocaleString()}</>
+            )}
+            . The scheduler will keep retrying. Fix SMTP if needed; check <strong>Email delivery logs</strong>.
+            {scheduleFailureSummary && (
+              <>
+                {' '}
+                <Typography component="span" variant="body2" sx={{ display: 'block', mt: 1, fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                  {scheduleFailureSummary}
+                </Typography>
+              </>
+            )}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            A one-time alert email may have been sent to Final MIS recipients and MIS Entry escalation addresses (if configured) when this failure was first detected.
+          </Typography>
         </Alert>
       )}
       <Grid container spacing={3}>
@@ -612,8 +659,13 @@ function FinalMISReportEmailPanel({
               </Grid>
             </Grid>
             <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
-              Report is sent at the configured time. The server checks every hour; for daily at 09:00, the report runs at 09:00 for the previous day.
+              The server checks every 15 minutes. After your send time (e.g. 09:00), it retries the same report period until SMTP succeeds (including several quick retries per attempt). For daily, the report covers the previous calendar day in the server&apos;s timezone. Test emails do not update &quot;last successful period&quot; below. If scheduled delivery fails, a one-time alert email goes to Final MIS recipients plus addresses under <strong>MIS Entry Email → Escalation notify</strong> (if set).
             </Typography>
+            {lastSuccessfulPeriodEnd && (
+              <Typography variant="caption" display="block" sx={{ mt: 1, color: '#139B49', fontWeight: 600 }}>
+                Last successful scheduled report (period end date): {lastSuccessfulPeriodEnd}
+              </Typography>
+            )}
           </Card>
         </Grid>
         <Grid item xs={12}>
@@ -642,6 +694,153 @@ function FinalMISReportEmailPanel({
       >
         Save Final MIS Report Email Settings
       </Button>
+    </Box>
+  );
+}
+
+function EmailDeliveryLogsPanel() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [rows, setRows] = useState<
+    {
+      id: number;
+      recipient: string;
+      subject: string;
+      status: string;
+      error_message: string | null;
+      sent_at: string;
+      entity_type: string | null;
+      entity_id: string | null;
+    }[]
+  >([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [entityFilter, setEntityFilter] = useState<string>('');
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 25;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminService.getEmailLogs({
+        limit: rowsPerPage,
+        offset: page * rowsPerPage,
+        entity_type: entityFilter || undefined,
+      });
+      setRows(Array.isArray(data.logs) ? data.logs : []);
+      setTotal(typeof data.total === 'number' ? data.total : 0);
+    } catch {
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, entityFilter]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const formatSource = (t: string | null) => {
+    if (t === 'FinalMISReportConfig') return 'Final MIS report';
+    if (t === 'FinalMISReportDeliveryAlert') return 'Final MIS failure alert';
+    if (t === 'MISDailyEntry') return 'MIS entry / reminder';
+    return t || '—';
+  };
+
+  return (
+    <Box>
+      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', mb: 1 }}>
+        Email delivery logs
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Each row is one SMTP attempt logged by the server (sent or failed). Final MIS scheduled sends include the report date range in the subject when available. If you see failures, open SMTP Configuration and check the server console.
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 2 }}>
+        <TextField
+          select
+          size="small"
+          label="Source"
+          value={entityFilter}
+          onChange={(e) => {
+            setEntityFilter(e.target.value);
+            setPage(0);
+          }}
+          sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        >
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="FinalMISReportConfig">Final MIS report</MenuItem>
+          <MenuItem value="FinalMISReportDeliveryAlert">Final MIS failure alert</MenuItem>
+          <MenuItem value="MISDailyEntry">MIS entry / reminders</MenuItem>
+        </TextField>
+        <Button
+          variant="outlined"
+          startIcon={loading ? <CircularProgress size={18} /> : <RefreshIcon />}
+          onClick={() => load()}
+          disabled={loading}
+          sx={{ textTransform: 'none', borderRadius: '12px' }}
+        >
+          Refresh
+        </Button>
+      </Box>
+      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxWidth: '100%' }}>
+        <Table size="small" sx={{ minWidth: isMobile ? 600 : undefined }}>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: 'rgba(40, 121, 182, 0.06)' }}>
+              <TableCell sx={{ fontWeight: 600 }}>Time (server)</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Recipients</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Subject / period</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Source</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Error</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.length === 0 && !loading && (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    No log rows yet, or nothing matches this filter.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+            {rows.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell sx={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+                  {r.sent_at ? new Date(r.sent_at).toLocaleString() : '—'}
+                </TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>
+                  <Chip
+                    size="small"
+                    label={r.status === 'sent' ? 'Sent' : 'Failed'}
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: r.status === 'sent' ? 'rgba(19, 155, 73, 0.12)' : 'rgba(238, 106, 49, 0.12)',
+                      color: r.status === 'sent' ? '#139B49' : '#ee6a31',
+                    }}
+                  />
+                </TableCell>
+                <TableCell sx={{ verticalAlign: 'top', maxWidth: 220, wordBreak: 'break-word' }}>{r.recipient || '—'}</TableCell>
+                <TableCell sx={{ verticalAlign: 'top', maxWidth: 360, wordBreak: 'break-word' }}>{r.subject || '—'}</TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>{formatSource(r.entity_type)}</TableCell>
+                <TableCell sx={{ verticalAlign: 'top', maxWidth: 280, wordBreak: 'break-word', color: 'error.main', fontSize: '0.8rem' }}>
+                  {r.error_message || '—'}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_, p) => setPage(p)}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[rowsPerPage]}
+          labelDisplayedRows={({ from, to, count }) => `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`}
+        />
+      </TableContainer>
     </Box>
   );
 }
@@ -1841,6 +2040,7 @@ export default function AdminPage() {
               {/* Scheduler Configuration tab hidden for now */}
               <Tab label="MIS Entry Email" />
               <Tab label="Final MIS Report Email" />
+              <Tab label="Email delivery logs" />
             </Tabs>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: isPhone ? 'column' : 'row', alignItems: isPhone ? 'stretch' : 'center', gap: 2, p: 2 }}>
@@ -2740,9 +2940,18 @@ export default function AdminPage() {
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#333842' }}>
                   SMTP Settings
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Configure the mail server used for notifications and test emails. Save your settings, then use &quot;Send Test Email&quot; to verify.
                 </Typography>
+                <Alert severity="info" sx={{ mb: 2, borderRadius: '12px' }}>
+                  <Typography variant="body2">
+                    <strong>Gmail / Google Workspace:</strong> error 535 &quot;BadCredentials&quot; from gsmtp means Google rejected the password. Use an{' '}
+                    <a href="https://support.google.com/accounts/answer/185833" target="_blank" rel="noopener noreferrer">
+                      App Password
+                    </a>{' '}
+                    (requires 2-Step Verification on that Google account), not your normal login password. SMTP username must be the full mailbox address. Port <strong>587</strong> with TLS usually works (leave &quot;SSL&quot; unchecked unless using port 465).
+                  </Typography>
+                </Alert>
                 {message && (
                   <Alert
                     severity={message.type}
@@ -3183,6 +3392,11 @@ export default function AdminPage() {
           <TabPanel value={tabValue} index={5}>
             <CardContent sx={{ p: 3 }}>
               <FinalMISReportEmailPanel message={message} setMessage={setMessage} />
+            </CardContent>
+          </TabPanel>
+          <TabPanel value={tabValue} index={6}>
+            <CardContent sx={{ p: 3 }}>
+              <EmailDeliveryLogsPanel />
             </CardContent>
           </TabPanel>
         </Card>

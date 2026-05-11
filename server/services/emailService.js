@@ -143,11 +143,15 @@ class EmailService {
      * @param {string} subject - Email subject
      * @param {string} html - Email HTML body
      * @param {Object} [meta] - Optional: { entity_type, entity_id } for audit
-     * @returns {Promise<boolean>} true if sent successfully
+     * @returns {Promise<{ ok: boolean, error?: string }>}
      */
     async sendEmailToMany(recipients, subject, html, meta = {}) {
         const list = Array.isArray(recipients) ? recipients.filter(Boolean).map(s => String(s).trim()).filter(Boolean) : [];
-        if (list.length === 0) return false;
+        if (list.length === 0) return { ok: false, error: 'No recipients' };
+        let logSubject = meta.report_period
+            ? `${subject} [Report period: ${meta.report_period}]`
+            : subject;
+        if (logSubject.length > 255) logSubject = logSubject.slice(0, 252) + '...';
         const logFields = (base) => ({
             ...base,
             audit_log_id: meta.audit_log_id ?? null,
@@ -161,11 +165,11 @@ class EmailService {
             console.error('Email Service Error: Could not get transporter', error);
             await this.safeCreateEmailLog(logFields({
                 recipient: list.join(', '),
-                subject,
+                subject: logSubject,
                 status: 'failed',
                 error_message: error.message
             }));
-            return false;
+            return { ok: false, error: error.message || 'Could not get SMTP transporter' };
         }
         try {
             const config = await SMTPConfig.findOne({ where: { is_active: true } });
@@ -179,19 +183,19 @@ class EmailService {
             console.log('Message sent to %d recipients: %s', list.length, info.messageId);
             await this.safeCreateEmailLog(logFields({
                 recipient: list.join(', '),
-                subject,
+                subject: logSubject,
                 status: 'sent'
             }));
-            return true;
+            return { ok: true };
         } catch (error) {
             console.error('Error sending email to multiple recipients:', error);
             await this.safeCreateEmailLog(logFields({
                 recipient: list.join(', '),
-                subject,
+                subject: logSubject,
                 status: 'failed',
                 error_message: error.message
             }));
-            return false;
+            return { ok: false, error: error.message || 'SMTP send failed' };
         }
     }
 

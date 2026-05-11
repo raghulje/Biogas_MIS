@@ -178,7 +178,7 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
         </Grid>
 
         {/* Total row (computed) */}
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: '#2879b6' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: '#2563EB' }}>
           Total
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>

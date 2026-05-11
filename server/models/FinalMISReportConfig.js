@@ -45,6 +45,29 @@ module.exports = (sequelize, DataTypes) => {
         last_sent_at: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        last_successful_period_end: {
+            type: DataTypes.STRING(10),
+            allowNull: true,
+            comment: 'YYYY-MM-DD end of report period last delivered by scheduler (idempotency + retries)'
+        },
+        schedule_failure_period_end: {
+            type: DataTypes.STRING(10),
+            allowNull: true,
+            comment: 'Period end (YYYY-MM-DD) for last failed scheduled delivery attempt'
+        },
+        schedule_failure_summary: {
+            type: DataTypes.STRING(512),
+            allowNull: true
+        },
+        schedule_failure_last_attempt_at: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        delivery_alert_sent_for_period: {
+            type: DataTypes.STRING(10),
+            allowNull: true,
+            comment: 'One-time failure alert email sent for this period end'
         }
     }, {
         sequelize,

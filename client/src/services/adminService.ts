@@ -90,6 +90,12 @@ export const adminService = {
         return response.data;
     },
 
+    /** Outbound SMTP attempts (Final MIS, MIS reminders, etc.) */
+    getEmailLogs: async (params?: { limit?: number; offset?: number; entity_type?: string }) => {
+        const response = await api.get('/email-logs', { params });
+        return response.data;
+    },
+
     // Email Templates
     getTemplates: async () => {
         const response = await api.get('/email-templates');
@@ -174,7 +180,7 @@ export const adminService = {
     },
     sendTestFinalMISReport: async (startDate: string, endDate: string) => {
         const response = await api.post('/final-mis-report-config/send-test', { startDate, endDate });
-        return response.data;
+        return { ...response.data, _httpStatus: response.status };
     },
     saveAppTheme: async (theme: string) => {
         const response = await api.put('/app-config/theme', { theme });

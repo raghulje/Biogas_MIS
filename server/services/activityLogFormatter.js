@@ -31,6 +31,7 @@ const ENTITY_MAPPING = {
     Permission: 'Permission',
     EmailScheduler: 'Email Scheduler',
     FinalMISReportConfig: 'Final MIS Report Config',
+    FinalMISReportDeliveryAlert: 'Final MIS delivery alert',
     MISEmailConfig: 'MIS Email Config'
 };
 
