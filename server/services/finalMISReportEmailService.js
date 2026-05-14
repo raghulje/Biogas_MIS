@@ -63,8 +63,29 @@ function mapToFrontendStructure(api) {
         ts: n(api.feedMixingTank?.pressmud_ts || api.feedMixingTank?.slurry_ts),
         vs: n(api.feedMixingTank?.pressmud_vs || api.feedMixingTank?.slurry_vs)
       },
-      permeateFeed: { qty: n(api.feedMixingTank?.permeate_qty) },
+      permeateFeed: {
+        qty: n(api.feedMixingTank?.permeate_qty),
+        ts: n(api.feedMixingTank?.permeate_ts),
+        vs: n(api.feedMixingTank?.permeate_vs)
+      },
       waterQty: n(api.feedMixingTank?.water_qty),
+      waterTs: n(api.feedMixingTank?.water_ts),
+      waterVs: n(api.feedMixingTank?.water_vs),
+      pulpFeed: {
+        qty: n(api.feedMixingTank?.pulp_qty),
+        ts: n(api.feedMixingTank?.pulp_ts),
+        vs: n(api.feedMixingTank?.pulp_vs)
+      },
+      maggieFeed: {
+        qty: n(api.feedMixingTank?.maggie_qty),
+        ts: n(api.feedMixingTank?.maggie_ts),
+        vs: n(api.feedMixingTank?.maggie_vs)
+      },
+      otherFeedSubstrate: {
+        qty: n(api.feedMixingTank?.other_feed_substrate_qty),
+        ts: n(api.feedMixingTank?.other_feed_substrate_ts),
+        vs: n(api.feedMixingTank?.other_feed_substrate_vs)
+      },
       slurry: {
         total: n(api.feedMixingTank?.slurry_total),
         ts: n(api.feedMixingTank?.slurry_ts),
@@ -145,79 +166,113 @@ function aggregate(entries) {
 
   const sum = (arr) => arr.reduce((a, b) => a + b, 0);
   const avg = (arr) => (arr.length > 0 ? sum(arr) / arr.length : 0);
+  const averagePresent = (values) => {
+    const valid = values.filter((value) => value !== null && value !== undefined);
+    return valid.length > 0 ? sum(valid) / valid.length : null;
+  };
+  const maybeNumber = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const splitFeedTotals = (totalQty) => {
+    const total = Number(totalQty || 0);
+    return { d01: total / 2, d02: total / 2, d03: total, total };
+  };
+  const buildFeedTotals = (getQty) =>
+    splitFeedTotals(sum(entries.map((entry) => Number(getQty(entry) || 0))));
+  const buildQuality = (getTs, getVs, getPh) => ({
+    ts: averagePresent(entries.map((entry) => maybeNumber(getTs(entry)))),
+    vs: averagePresent(entries.map((entry) => maybeNumber(getVs(entry)))),
+    ph: getPh ? averagePresent(entries.map((entry) => maybeNumber(getPh(entry)))) : null,
+  });
 
   // Mimic the frontend useMemo logic
   const d01Feed = sum(entries.map((e) => e.digesters[0]?.feeding.totalSlurryFeed || 0));
   const d02Feed = sum(entries.map((e) => e.digesters[1]?.feeding.totalSlurryFeed || 0));
   const d01Discharge = sum(entries.map((e) => e.digesters[0]?.discharge.totalSlurryOut || 0));
   const d02Discharge = sum(entries.map((e) => e.digesters[1]?.discharge.totalSlurryOut || 0));
+  const totalFeedInputFromForm = sum(
+    entries.map((e) => {
+      const nn = (v) => Number(v || 0);
+      return (
+        nn(e.feedMixingTank?.cowDungFeed?.qty) +
+        nn(e.feedMixingTank?.pressmudFeed?.qty) +
+        nn(e.feedMixingTank?.permeateFeed?.qty) +
+        nn(e.feedMixingTank?.waterQty) +
+        nn(e.feedMixingTank?.pulpFeed?.qty) +
+        nn(e.feedMixingTank?.maggieFeed?.qty) +
+        nn(e.feedMixingTank?.otherFeedSubstrate?.qty)
+      );
+    })
+  );
+  const totalFeedInputFromMixingTank = sum(entries.map((e) => Number(e.feedMixingTank?.slurry?.total) || 0));
+  const totalFeedInputFromDigesters = {
+    d01: d01Feed,
+    d02: d02Feed,
+    d03: d01Feed + d02Feed,
+    total: d01Feed + d02Feed,
+  };
+  const totalFeedInput =
+    totalFeedInputFromForm > 0
+      ? splitFeedTotals(totalFeedInputFromForm)
+      : totalFeedInputFromMixingTank > 0
+      ? splitFeedTotals(totalFeedInputFromMixingTank)
+      : totalFeedInputFromDigesters;
 
   return {
     recordCount: entries.length,
     dateRange: `${entries[0].date} to ${entries[entries.length - 1].date}`,
     // D-01 and D-02 are the only digesters; D-03 column = Total = D-01 + D-02
     feeding: {
-      pressMud: {
-        d01: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)),
-        d02: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)),
-        d03: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty)),
-        total: sum(entries.map((e) => e.feedMixingTank.pressmudFeed.qty)),
-      },
-      cowDung: {
-        d01: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)),
-        d02: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)),
-        d03: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty)),
-        total: sum(entries.map((e) => e.feedMixingTank.cowDungFeed.qty)),
-      },
-      otherFeedstock: { d01: 0, d02: 0, d03: 0, total: 0 },
-      decanterPermeate: {
-        d01: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)),
-        d02: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)),
-        d03: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty)),
-        total: sum(entries.map((e) => e.feedMixingTank.permeateFeed.qty)),
-      },
-      water: {
-        d01: sum(entries.map((e) => e.feedMixingTank.waterQty / 2)),
-        d02: sum(entries.map((e) => e.feedMixingTank.waterQty / 2)),
-        d03: sum(entries.map((e) => e.feedMixingTank.waterQty)),
-        total: sum(entries.map((e) => e.feedMixingTank.waterQty)),
-      },
+      pressMud: buildFeedTotals((e) => e.feedMixingTank.pressmudFeed.qty),
+      cowDung: buildFeedTotals((e) => e.feedMixingTank.cowDungFeed.qty),
+      decanterPermeate: buildFeedTotals((e) => e.feedMixingTank.permeateFeed.qty),
+      water: buildFeedTotals((e) => e.feedMixingTank.waterQty),
+      pulp: buildFeedTotals((e) => e.feedMixingTank.pulpFeed?.qty),
+      maggie: buildFeedTotals((e) => e.feedMixingTank.maggieFeed?.qty),
+      otherFeedSubstrate: buildFeedTotals((e) => e.feedMixingTank.otherFeedSubstrate?.qty),
       digester03Slurry: {
         d01: d01Discharge,
         d02: d02Discharge,
         d03: d01Discharge + d02Discharge,
         total: d01Discharge + d02Discharge,
       },
-      totalFeedInput: {
-        d01: d01Feed,
-        d02: d02Feed,
-        d03: d01Feed + d02Feed,
-        total: d01Feed + d02Feed,
-      },
+      totalFeedInput,
       // Same as Final MIS web card / dashboard: Feed Mixing Tank (tons), not digester m³
-      totalFeedAmountTons: sum(
-        entries.map((e) => {
-          const nn = (v) => Number(v || 0);
-          return (
-            nn(e.feedMixingTank?.cowDungFeed?.qty) +
-            nn(e.feedMixingTank?.pressmudFeed?.qty) +
-            nn(e.feedMixingTank?.permeateFeed?.qty) +
-            nn(e.feedMixingTank?.waterQty)
-          );
-        })
-      ),
+      totalFeedAmountTons: totalFeedInputFromForm,
     },
     rawMaterialQuality: {
-      pressMud: {
-        ts: avg(entries.map((e) => e.feedMixingTank.pressmudFeed.ts)),
-        vs: avg(entries.map((e) => e.feedMixingTank.pressmudFeed.vs)),
-        ph: avg(entries.map((e) => e.feedMixingTank.slurry.ph)),
-      },
-      cowDung: {
-        ts: avg(entries.map((e) => e.feedMixingTank.cowDungFeed.ts)),
-        vs: avg(entries.map((e) => e.feedMixingTank.cowDungFeed.vs)),
-        ph: avg(entries.map((e) => e.feedMixingTank.slurry.ph)),
-      },
+      pressMud: buildQuality(
+        (e) => e.feedMixingTank.pressmudFeed.ts,
+        (e) => e.feedMixingTank.pressmudFeed.vs,
+        (e) => e.feedMixingTank.slurry.ph
+      ),
+      cowDung: buildQuality(
+        (e) => e.feedMixingTank.cowDungFeed.ts,
+        (e) => e.feedMixingTank.cowDungFeed.vs,
+        (e) => e.feedMixingTank.slurry.ph
+      ),
+      decanterPermeate: buildQuality(
+        (e) => e.feedMixingTank.permeateFeed.ts,
+        (e) => e.feedMixingTank.permeateFeed.vs
+      ),
+      water: buildQuality(
+        (e) => e.feedMixingTank.waterTs,
+        (e) => e.feedMixingTank.waterVs
+      ),
+      pulp: buildQuality(
+        (e) => e.feedMixingTank.pulpFeed?.ts,
+        (e) => e.feedMixingTank.pulpFeed?.vs
+      ),
+      maggie: buildQuality(
+        (e) => e.feedMixingTank.maggieFeed?.ts,
+        (e) => e.feedMixingTank.maggieFeed?.vs
+      ),
+      otherFeedSubstrate: buildQuality(
+        (e) => e.feedMixingTank.otherFeedSubstrate?.ts,
+        (e) => e.feedMixingTank.otherFeedSubstrate?.vs
+      ),
     },
     digesterPerformance: {
       d01: {
@@ -347,6 +402,18 @@ function buildReportHtml(startDate, endDate, a, customBody) {
   const n2 = (v) => Number(v || 0).toFixed(2);
   const n1 = (v) => Number(v || 0).toFixed(1);
   const n0 = (v) => Number(v || 0).toFixed(0);
+  const q1 = (v) => (v === null || v === undefined || Number.isNaN(Number(v)) ? '-' : Number(v).toFixed(1));
+  const feedstockRows = [
+    { name: 'Press Mud (tpd)', data: a.feeding.pressMud, quality: a.rawMaterialQuality.pressMud },
+    { name: 'Cow Dung (tpd)', data: a.feeding.cowDung, quality: a.rawMaterialQuality.cowDung },
+    { name: 'Decanter permeate (m3)', data: a.feeding.decanterPermeate, quality: a.rawMaterialQuality.decanterPermeate },
+    { name: 'Water (m3)', data: a.feeding.water, quality: a.rawMaterialQuality.water },
+    { name: 'Pulp (tpd)', data: a.feeding.pulp, quality: a.rawMaterialQuality.pulp },
+    { name: 'Maggie (tpd)', data: a.feeding.maggie, quality: a.rawMaterialQuality.maggie },
+    { name: 'Other Feed Substrate (tpd)', data: a.feeding.otherFeedSubstrate, quality: a.rawMaterialQuality.otherFeedSubstrate },
+    { name: 'Digester 03 slurry (m3)', data: a.feeding.digester03Slurry, quality: null },
+    { name: 'Total Feed Input (m3)', data: a.feeding.totalFeedInput, quality: null },
+  ];
 
   const intro = customBody && customBody.trim() ? `<div class="meta">${customBody}</div>` : '';
 
@@ -363,8 +430,8 @@ function buildReportHtml(startDate, endDate, a, customBody) {
     <tr>
         <td class="bg-accent3">Name of the Feedstock's</td>
         <td colspan="4" class="bg-accent3 text-center">Feeding Data</td>
-        <td colspan="4"></td>
-        <td colspan="3" class="bg-accent3 text-center">Raw material Quality Data</td>
+        <td class="bg-accent1"></td>
+        <td colspan="6" class="bg-accent3 text-center">Raw material Quality Data</td>
     </tr>
     <tr>
         <td class="bg-accent2"></td>
@@ -372,20 +439,14 @@ function buildReportHtml(startDate, endDate, a, customBody) {
         <td class="bg-accent2 text-center">D-02</td>
         <td class="bg-accent2 text-center">D-03</td>
         <td class="bg-accent2 text-center">Total</td>
-        <td colspan="4"></td>
-        <td class="bg-accent2 text-center">TS%</td>
-        <td class="bg-accent2 text-center">VS%</td>
-        <td class="bg-accent2 text-center">pH</td>
+        <td class="bg-accent1"></td>
+        <td colspan="2" class="bg-accent2 text-center">TS%</td>
+        <td colspan="2" class="bg-accent2 text-center">VS%</td>
+        <td colspan="2" class="bg-accent2 text-center">pH</td>
     </tr>
   </thead>
   <tbody>
-    <tr><td>Press Mud (tpd)</td><td class="text-center">${n2(a.feeding.pressMud.d01)}</td><td class="text-center">${n2(a.feeding.pressMud.d02)}</td><td class="text-center">${n2(a.feeding.pressMud.d03)}</td><td class="text-center font-bold">${n2(a.feeding.pressMud.total)}</td><td colspan="4"></td><td class="text-center">${n1(a.rawMaterialQuality.pressMud.ts)}</td><td class="text-center">${n1(a.rawMaterialQuality.pressMud.vs)}</td><td class="text-center">${n1(a.rawMaterialQuality.pressMud.ph)}</td></tr>
-    <tr><td>Cow Dung (tpd)</td><td class="text-center">${n2(a.feeding.cowDung.d01)}</td><td class="text-center">${n2(a.feeding.cowDung.d02)}</td><td class="text-center">${n2(a.feeding.cowDung.d03)}</td><td class="text-center font-bold">${n2(a.feeding.cowDung.total)}</td><td colspan="4"></td><td class="text-center">${n1(a.rawMaterialQuality.cowDung.ts)}</td><td class="text-center">${n1(a.rawMaterialQuality.cowDung.vs)}</td><td class="text-center">${n1(a.rawMaterialQuality.cowDung.ph)}</td></tr>
-    <tr><td>Other feedstock (tpd)</td><td class="text-center">0.00</td><td class="text-center">0.00</td><td class="text-center">0.00</td><td class="text-center font-bold">0.00</td><td colspan="7"></td></tr>
-    <tr><td>Decanter permeate (m3)</td><td class="text-center">${n2(a.feeding.decanterPermeate.d01)}</td><td class="text-center">${n2(a.feeding.decanterPermeate.d02)}</td><td class="text-center">${n2(a.feeding.decanterPermeate.d03)}</td><td class="text-center font-bold">${n2(a.feeding.decanterPermeate.total)}</td><td colspan="7"></td></tr>
-    <tr><td>Water (m3)</td><td class="text-center">${n2(a.feeding.water.d01)}</td><td class="text-center">${n2(a.feeding.water.d02)}</td><td class="text-center">${n2(a.feeding.water.d03)}</td><td class="text-center font-bold">${n2(a.feeding.water.total)}</td><td colspan="7"></td></tr>
-    <tr><td>Digester 03 slurry (m3)</td><td class="text-center">${n2(a.feeding.digester03Slurry.d01)}</td><td class="text-center">${n2(a.feeding.digester03Slurry.d02)}</td><td class="text-center">${n2(a.feeding.digester03Slurry.d03)}</td><td class="text-center font-bold">${n2(a.feeding.digester03Slurry.total)}</td><td colspan="7"></td></tr>
-    <tr><td>Total Feed Input (m3)</td><td class="text-center">${n2(a.feeding.totalFeedInput.d01)}</td><td class="text-center">${n2(a.feeding.totalFeedInput.d02)}</td><td class="text-center">${n2(a.feeding.totalFeedInput.d03)}</td><td class="text-center font-bold">${n2(a.feeding.totalFeedInput.total)}</td><td colspan="7"></td></tr>
+    ${feedstockRows.map((row) => `<tr><td>${row.name}</td><td class="text-center">${n2(row.data.d01)}</td><td class="text-center">${n2(row.data.d02)}</td><td class="text-center">${n2(row.data.d03)}</td><td class="text-center font-bold">${n2(row.data.total)}</td><td class="bg-accent1"></td><td colspan="2" class="text-center">${q1(row.quality?.ts)}</td><td colspan="2" class="text-center">${q1(row.quality?.vs)}</td><td colspan="2" class="text-center">${q1(row.quality?.ph)}</td></tr>`).join('')}
     
     <!-- Spacing -->
     <tr><td colspan="12" style="background: #f8fafc; padding: 8px;"></td></tr>

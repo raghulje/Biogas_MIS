@@ -23,6 +23,11 @@ export interface MISEntry {
     pressmudFeed: { qty: number; ts: number; vs: number };
     permeateFeed: { qty: number; ts: number; vs: number };
     waterQty: number;
+    waterTs?: number;
+    waterVs?: number;
+    pulpFeed?: { qty: number; ts: number; vs: number };
+    maggieFeed?: { qty: number; ts: number; vs: number };
+    otherFeedSubstrate?: { qty: number; ts: number; vs: number };
     slurry: { total: number; ts: number; vs: number; ph: number };
   };
   digesters: Array<{

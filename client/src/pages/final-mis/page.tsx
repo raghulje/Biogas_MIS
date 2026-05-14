@@ -53,7 +53,18 @@ function mapApiEntryToMISEntry(api: any): MISEntry {
       oldPressMudDegradationLoss: 0, oldPressMudClosingStock: 0, newPressMudPurchased: 0, pressMudUsed: 0,
       totalPressMudStock: 0, auditNote: '',
     },
-    feedMixingTank: api.feedMixingTank ?? { cowDungFeed: { qty: 0, ts: 0, vs: 0 }, pressmudFeed: { qty: 0, ts: 0, vs: 0 }, permeateFeed: { qty: 0, ts: 0, vs: 0 }, waterQty: 0, slurry: { total: 0, ts: 0, vs: 0, ph: 0 } },
+    feedMixingTank: api.feedMixingTank ?? {
+      cowDungFeed: { qty: 0, ts: 0, vs: 0 },
+      pressmudFeed: { qty: 0, ts: 0, vs: 0 },
+      permeateFeed: { qty: 0, ts: 0, vs: 0 },
+      waterQty: 0,
+      waterTs: 0,
+      waterVs: 0,
+      pulpFeed: { qty: 0, ts: 0, vs: 0 },
+      maggieFeed: { qty: 0, ts: 0, vs: 0 },
+      otherFeedSubstrate: { qty: 0, ts: 0, vs: 0 },
+      slurry: { total: 0, ts: 0, vs: 0, ph: 0 },
+    },
     digesters: Array.isArray(api.digesters) ? api.digesters : [],
     slsMachine: api.slsMachine ?? { waterConsumption: 0, polyElectrolyte: 0, solution: 0, slurryFeed: 0, wetCakeProduction: 0, wetCakeTs: 0, wetCakeVs: 0, liquidProduced: 0, liquidTs: 0, liquidVs: 0, liquidSentToLagoon: 0 },
     rawBiogas: api.rawBiogas ?? { digester01Gas: 0, digester02Gas: 0, digester03Gas: 0, totalRawBiogas: 0, rbgFlared: 0, gasYield: 0 },
@@ -108,6 +119,25 @@ function getDateRangeForFilter(
     default:
       return { startDate, endDate };
   }
+}
+
+type FeedRowData = { d01: number; d02: number; d03: number; total: number };
+type FeedQualityData = { ts: number | null; vs: number | null; ph: number | null };
+
+function splitFeedTotals(totalQty: number): FeedRowData {
+  const total = Number(totalQty || 0);
+  return { d01: total / 2, d02: total / 2, d03: total, total };
+}
+
+function maybeNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatMaybeFixed(value: number | null | undefined, digits: number): string {
+  const parsed = maybeNumber(value);
+  return parsed === null ? '-' : parsed.toFixed(digits);
 }
 
 const FinalMISPage = () => {
@@ -207,6 +237,21 @@ const FinalMISPage = () => {
 
     const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
     const avg = (arr: number[]) => (arr.length > 0 ? sum(arr) / arr.length : 0);
+    const averagePresent = (values: Array<number | null>) => {
+      const valid = values.filter((value): value is number => value !== null);
+      return valid.length > 0 ? sum(valid) / valid.length : null;
+    };
+    const buildFeedTotals = (getQty: (entry: MISEntry) => unknown) =>
+      splitFeedTotals(sum(filteredEntries.map((entry) => Number(getQty(entry) || 0))));
+    const buildQuality = (
+      getTs: (entry: MISEntry) => unknown,
+      getVs: (entry: MISEntry) => unknown,
+      getPh?: (entry: MISEntry) => unknown
+    ): FeedQualityData => ({
+      ts: averagePresent(filteredEntries.map((entry) => maybeNumber(getTs(entry)))),
+      vs: averagePresent(filteredEntries.map((entry) => maybeNumber(getVs(entry)))),
+      ph: getPh ? averagePresent(filteredEntries.map((entry) => maybeNumber(getPh(entry)))) : null,
+    });
 
     // D-01 and D-02 are the only digesters; D-03 column = Total = D-01 + D-02
     const d01Feed = sum(
@@ -221,6 +266,33 @@ const FinalMISPage = () => {
     const d02Discharge = sum(
       filteredEntries.map((e) => e.digesters[1]?.discharge?.totalSlurryOut || 0)
     );
+    const totalFeedInputFromForm = sum(
+      filteredEntries.map(
+        (e) =>
+          (Number(e.feedMixingTank?.cowDungFeed?.qty) || 0) +
+          (Number(e.feedMixingTank?.pressmudFeed?.qty) || 0) +
+          (Number(e.feedMixingTank?.permeateFeed?.qty) || 0) +
+          (Number(e.feedMixingTank?.waterQty) || 0) +
+          (Number(e.feedMixingTank?.pulpFeed?.qty) || 0) +
+          (Number(e.feedMixingTank?.maggieFeed?.qty) || 0) +
+          (Number(e.feedMixingTank?.otherFeedSubstrate?.qty) || 0)
+      )
+    );
+    const totalFeedInputFromMixingTank = sum(
+      filteredEntries.map((e) => Number(e.feedMixingTank?.slurry?.total) || 0)
+    );
+    const totalFeedInputFromDigesters = {
+      d01: d01Feed,
+      d02: d02Feed,
+      d03: d01Feed + d02Feed,
+      total: d01Feed + d02Feed,
+    };
+    const totalFeedInput =
+      totalFeedInputFromForm > 0
+        ? splitFeedTotals(totalFeedInputFromForm)
+        : totalFeedInputFromMixingTank > 0
+        ? splitFeedTotals(totalFeedInputFromMixingTank)
+        : totalFeedInputFromDigesters;
 
     return {
       recordCount: filteredEntries.length,
@@ -235,108 +307,55 @@ const FinalMISPage = () => {
                 ? `${selectedQuarter} ${selectedYear}`
                 : selectedYear,
       feeding: {
-        pressMud: {
-          d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)
-          ),
-          d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty / 2)
-          ),
-          d03: sum(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty)
-          ),
-          total: sum(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.qty)
-          ),
-        },
-        cowDung: {
-          d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)
-          ),
-          d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty / 2)
-          ),
-          d03: sum(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty)
-          ),
-          total: sum(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.qty)
-          ),
-        },
-        otherFeedstock: { d01: 0, d02: 0, d03: 0, total: 0 },
-        decanterPermeate: {
-          d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)
-          ),
-          d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty / 2)
-          ),
-          d03: sum(
-            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty)
-          ),
-          total: sum(
-            filteredEntries.map((e) => e.feedMixingTank.permeateFeed.qty)
-          ),
-        },
-        water: {
-          d01: sum(
-            filteredEntries.map((e) => e.feedMixingTank.waterQty / 2)
-          ),
-          d02: sum(
-            filteredEntries.map((e) => e.feedMixingTank.waterQty / 2)
-          ),
-          d03: sum(filteredEntries.map((e) => e.feedMixingTank.waterQty)),
-          total: sum(filteredEntries.map((e) => e.feedMixingTank.waterQty)),
-        },
+        pressMud: buildFeedTotals((e) => e.feedMixingTank.pressmudFeed.qty),
+        cowDung: buildFeedTotals((e) => e.feedMixingTank.cowDungFeed.qty),
+        decanterPermeate: buildFeedTotals((e) => e.feedMixingTank.permeateFeed.qty),
+        water: buildFeedTotals((e) => e.feedMixingTank.waterQty),
+        pulp: buildFeedTotals((e) => e.feedMixingTank.pulpFeed?.qty),
+        maggie: buildFeedTotals((e) => e.feedMixingTank.maggieFeed?.qty),
+        otherFeedSubstrate: buildFeedTotals((e) => e.feedMixingTank.otherFeedSubstrate?.qty),
         digester03Slurry: {
           d01: d01Discharge,
           d02: d02Discharge,
           d03: d01Discharge + d02Discharge,
           total: d01Discharge + d02Discharge,
         },
-        totalFeedInput: {
-          d01: d01Feed,
-          d02: d02Feed,
-          d03: d01Feed + d02Feed,
-          total: d01Feed + d02Feed,
-        },
+        totalFeedInput,
         // For summary card: same as dashboard "Total Feed Amount" — sum of cow dung + pressmud + permeate + water (tons)
-        totalFeedInputFromMixingTank: sum(
-          filteredEntries.map((e) => Number(e.feedMixingTank?.slurry?.total) || 0)
-        ),
-        totalFeedAmountTons: sum(
-          filteredEntries.map(
-            (e) =>
-              (Number(e.feedMixingTank?.cowDungFeed?.qty) || 0) +
-              (Number(e.feedMixingTank?.pressmudFeed?.qty) || 0) +
-              (Number(e.feedMixingTank?.permeateFeed?.qty) || 0) +
-              (Number(e.feedMixingTank?.waterQty) || 0)
-          )
-        ),
+        totalFeedInputFromMixingTank,
+        totalFeedAmountTons: totalFeedInputFromForm,
       },
       rawMaterialQuality: {
-        pressMud: {
-          ts: avg(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.ts)
-          ),
-          vs: avg(
-            filteredEntries.map((e) => e.feedMixingTank.pressmudFeed.vs)
-          ),
-          ph: avg(
-            filteredEntries.map((e) => e.feedMixingTank.slurry.ph)
-          ),
-        },
-        cowDung: {
-          ts: avg(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.ts)
-          ),
-          vs: avg(
-            filteredEntries.map((e) => e.feedMixingTank.cowDungFeed.vs)
-          ),
-          ph: avg(
-            filteredEntries.map((e) => e.feedMixingTank.slurry.ph)
-          ),
-        },
+        pressMud: buildQuality(
+          (e) => e.feedMixingTank.pressmudFeed.ts,
+          (e) => e.feedMixingTank.pressmudFeed.vs,
+          (e) => e.feedMixingTank.slurry.ph
+        ),
+        cowDung: buildQuality(
+          (e) => e.feedMixingTank.cowDungFeed.ts,
+          (e) => e.feedMixingTank.cowDungFeed.vs,
+          (e) => e.feedMixingTank.slurry.ph
+        ),
+        decanterPermeate: buildQuality(
+          (e) => e.feedMixingTank.permeateFeed.ts,
+          (e) => e.feedMixingTank.permeateFeed.vs
+        ),
+        water: buildQuality(
+          (e) => e.feedMixingTank.waterTs,
+          (e) => e.feedMixingTank.waterVs
+        ),
+        pulp: buildQuality(
+          (e) => e.feedMixingTank.pulpFeed?.ts,
+          (e) => e.feedMixingTank.pulpFeed?.vs
+        ),
+        maggie: buildQuality(
+          (e) => e.feedMixingTank.maggieFeed?.ts,
+          (e) => e.feedMixingTank.maggieFeed?.vs
+        ),
+        otherFeedSubstrate: buildQuality(
+          (e) => e.feedMixingTank.otherFeedSubstrate?.ts,
+          (e) => e.feedMixingTank.otherFeedSubstrate?.vs
+        ),
       },
       digesterPerformance: {
         d01: {
@@ -644,6 +663,57 @@ const FinalMISPage = () => {
     endDate,
   ]);
 
+  const feedstockRows = useMemo(() => {
+    if (!aggregatedData) return [];
+    return [
+      {
+        name: 'Press Mud (tpd)',
+        data: aggregatedData.feeding.pressMud,
+        quality: aggregatedData.rawMaterialQuality.pressMud,
+      },
+      {
+        name: 'Cow Dung (tpd)',
+        data: aggregatedData.feeding.cowDung,
+        quality: aggregatedData.rawMaterialQuality.cowDung,
+      },
+      {
+        name: 'Decanter permeate (m3)',
+        data: aggregatedData.feeding.decanterPermeate,
+        quality: aggregatedData.rawMaterialQuality.decanterPermeate,
+      },
+      {
+        name: 'Water (m3)',
+        data: aggregatedData.feeding.water,
+        quality: aggregatedData.rawMaterialQuality.water,
+      },
+      {
+        name: 'Pulp (tpd)',
+        data: aggregatedData.feeding.pulp,
+        quality: aggregatedData.rawMaterialQuality.pulp,
+      },
+      {
+        name: 'Maggie (tpd)',
+        data: aggregatedData.feeding.maggie,
+        quality: aggregatedData.rawMaterialQuality.maggie,
+      },
+      {
+        name: 'Other Feed Substrate (tpd)',
+        data: aggregatedData.feeding.otherFeedSubstrate,
+        quality: aggregatedData.rawMaterialQuality.otherFeedSubstrate,
+      },
+      {
+        name: 'Digester 03 slurry (m3)',
+        data: aggregatedData.feeding.digester03Slurry,
+        quality: null,
+      },
+      {
+        name: 'Total Feed Input (m3)',
+        data: aggregatedData.feeding.totalFeedInput,
+        quality: null,
+      },
+    ];
+  }, [aggregatedData]);
+
   // Export to Excel with exact structure
   const handleExportExcel = () => {
     if (!aggregatedData) return;
@@ -699,105 +769,20 @@ const FinalMISPage = () => {
         'VS%',
         'pH',
       ],
-      // Feedstock Rows
-      [
-        'Press Mud (tpd)',
-        aggregatedData.feeding.pressMud.d01.toFixed(2),
-        aggregatedData.feeding.pressMud.d02.toFixed(2),
-        aggregatedData.feeding.pressMud.d03.toFixed(2),
-        aggregatedData.feeding.pressMud.total.toFixed(2),
+      ...feedstockRows.map((row) => [
+        row.name,
+        row.data.d01.toFixed(2),
+        row.data.d02.toFixed(2),
+        row.data.d03.toFixed(2),
+        row.data.total.toFixed(2),
         '',
         '',
         '',
         '',
-        aggregatedData.rawMaterialQuality.pressMud.ts.toFixed(1),
-        aggregatedData.rawMaterialQuality.pressMud.vs.toFixed(1),
-        aggregatedData.rawMaterialQuality.pressMud.ph.toFixed(1),
-      ],
-      [
-        'Cow Dung (tpd)',
-        aggregatedData.feeding.cowDung.d01.toFixed(2),
-        aggregatedData.feeding.cowDung.d02.toFixed(2),
-        aggregatedData.feeding.cowDung.d03.toFixed(2),
-        aggregatedData.feeding.cowDung.total.toFixed(2),
-        '',
-        '',
-        '',
-        '',
-        aggregatedData.rawMaterialQuality.cowDung.ts.toFixed(1),
-        aggregatedData.rawMaterialQuality.cowDung.vs.toFixed(1),
-        aggregatedData.rawMaterialQuality.cowDung.ph.toFixed(1),
-      ],
-      [
-        'Other feedstock (tpd)',
-        aggregatedData.feeding.otherFeedstock.d01.toFixed(2),
-        aggregatedData.feeding.otherFeedstock.d02.toFixed(2),
-        aggregatedData.feeding.otherFeedstock.d03.toFixed(2),
-        aggregatedData.feeding.otherFeedstock.total.toFixed(2),
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-      ],
-      [
-        'Decanter permeate (m3)',
-        aggregatedData.feeding.decanterPermeate.d01.toFixed(2),
-        aggregatedData.feeding.decanterPermeate.d02.toFixed(2),
-        aggregatedData.feeding.decanterPermeate.d03.toFixed(2),
-        aggregatedData.feeding.decanterPermeate.total.toFixed(2),
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-      ],
-      [
-        'water (m3)',
-        aggregatedData.feeding.water.d01.toFixed(2),
-        aggregatedData.feeding.water.d02.toFixed(2),
-        aggregatedData.feeding.water.d03.toFixed(2),
-        aggregatedData.feeding.water.total.toFixed(2),
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-      ],
-      [
-        'Digester 03 slurry (m3)',
-        aggregatedData.feeding.digester03Slurry.d01.toFixed(2),
-        aggregatedData.feeding.digester03Slurry.d02.toFixed(2),
-        aggregatedData.feeding.digester03Slurry.d03.toFixed(2),
-        aggregatedData.feeding.digester03Slurry.total.toFixed(2),
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-      ],
-      [
-        'Total Feed Input (m3)',
-        aggregatedData.feeding.totalFeedInput.d01.toFixed(2),
-        aggregatedData.feeding.totalFeedInput.d02.toFixed(2),
-        aggregatedData.feeding.totalFeedInput.d03.toFixed(2),
-        aggregatedData.feeding.totalFeedInput.total.toFixed(2),
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-      ],
+        formatMaybeFixed(row.quality?.ts, 1),
+        formatMaybeFixed(row.quality?.vs, 1),
+        formatMaybeFixed(row.quality?.ph, 1),
+      ]),
       // Empty Row
       ['', '', '', '', '', '', '', '', '', '', '', ''],
       // Digester Performance Report Header
@@ -2106,15 +2091,15 @@ const FinalMISPage = () => {
                       Feeding Data
                     </td>
                     <td
-                      colSpan={4}
+                      colSpan={1}
                       style={{
-                        background: '#fff',
+                        background: colors.accent1,
                         padding: '12px 16px',
                         borderBottom: `1px solid ${colors.border}`,
                       }}
                     ></td>
                     <td
-                      colSpan={3}
+                      colSpan={6}
                       style={{
                         background: colors.accent3,
                         padding: '12px 16px',
@@ -2186,14 +2171,14 @@ const FinalMISPage = () => {
                       Total
                     </td>
                     <td
-                      colSpan={4}
                       style={{
-                        background: '#fff',
+                        background: colors.accent1,
                         padding: '10px 16px',
                         borderBottom: `1px solid ${colors.border}`,
                       }}
                     ></td>
                     <td
+                      colSpan={2}
                       style={{
                         background: colors.accent2,
                         padding: '10px 16px',
@@ -2206,6 +2191,7 @@ const FinalMISPage = () => {
                       TS%
                     </td>
                     <td
+                      colSpan={2}
                       style={{
                         background: colors.accent2,
                         padding: '10px 16px',
@@ -2218,6 +2204,7 @@ const FinalMISPage = () => {
                       VS%
                     </td>
                     <td
+                      colSpan={2}
                       style={{
                         background: colors.accent2,
                         padding: '10px 16px',
@@ -2232,43 +2219,7 @@ const FinalMISPage = () => {
                   </tr>
 
                   {/* Feedstock Rows */}
-                  {[
-                    {
-                      name: 'Press Mud (tpd)',
-                      data: aggregatedData.feeding.pressMud,
-                      quality: aggregatedData.rawMaterialQuality.pressMud,
-                    },
-                    {
-                      name: 'Cow Dung (tpd)',
-                      data: aggregatedData.feeding.cowDung,
-                      quality: aggregatedData.rawMaterialQuality.cowDung,
-                    },
-                    {
-                      name: 'Other feedstock (tpd)',
-                      data: aggregatedData.feeding.otherFeedstock,
-                      quality: null,
-                    },
-                    {
-                      name: 'Decanter permeate (m3)',
-                      data: aggregatedData.feeding.decanterPermeate,
-                      quality: null,
-                    },
-                    {
-                      name: 'water (m3)',
-                      data: aggregatedData.feeding.water,
-                      quality: null,
-                    },
-                    {
-                      name: 'Digester 03 slurry (m3)',
-                      data: aggregatedData.feeding.digester03Slurry,
-                      quality: null,
-                    },
-                    {
-                      name: 'Total Feed Input (m3)',
-                      data: aggregatedData.feeding.totalFeedInput,
-                      quality: null,
-                    },
-                  ].map((row, idx) => (
+                  {feedstockRows.map((row, idx) => (
                     <tr
                       key={idx}
                       style={{
@@ -2328,23 +2279,24 @@ const FinalMISPage = () => {
                         {row.data.total.toFixed(2)}
                       </td>
                       <td
-                        colSpan={4}
                         style={{
+                          background: colors.accent1,
                           padding: '10px 16px',
                           borderBottom: `1px solid ${colors.border}`,
                         }}
                       ></td>
                       <td
+                        colSpan={2}
                         style={{
                           padding: '10px 16px',
-                          textAlign: 'center',
-                          color: colors.text,
                           borderBottom: `1px solid ${colors.border}`,
+                          textAlign: 'center',
                         }}
                       >
-                        {row.quality?.ts?.toFixed(1) || '-'}
+                        {formatMaybeFixed(row.quality?.ts, 1)}
                       </td>
                       <td
+                        colSpan={2}
                         style={{
                           padding: '10px 16px',
                           textAlign: 'center',
@@ -2352,9 +2304,10 @@ const FinalMISPage = () => {
                           borderBottom: `1px solid ${colors.border}`,
                         }}
                       >
-                        {row.quality?.vs?.toFixed(1) || '-'}
+                        {formatMaybeFixed(row.quality?.vs, 1)}
                       </td>
                       <td
+                        colSpan={2}
                         style={{
                           padding: '10px 16px',
                           textAlign: 'center',
@@ -2362,7 +2315,7 @@ const FinalMISPage = () => {
                           borderBottom: `1px solid ${colors.border}`,
                         }}
                       >
-                        {row.quality?.ph?.toFixed(1) || '-'}
+                        {formatMaybeFixed(row.quality?.ph, 1)}
                       </td>
                     </tr>
                   ))}
