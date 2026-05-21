@@ -1022,13 +1022,8 @@ exports.getDashboardData = async (req, res) => {
         // Calculate metrics
         const totalRawBiogas = entries.reduce((sum, e) => sum + n(e.rawBiogas?.total_raw_biogas), 0);
         const totalCBGProduced = entries.reduce((sum, e) => sum + n(e.compressedBiogas?.produced), 0);
-        // Prefer sales rows (most reliable). Fallback to compressedBiogas.cbg_sold if sales rows not present.
-        const totalCBGSoldFromSales = entries.reduce((sum, e) => {
-            const rows = Array.isArray(e.cbgSales) ? e.cbgSales : [];
-            return sum + rows.reduce((s, r) => s + n(r.quantity), 0);
-        }, 0);
-        const totalCBGSoldFromCompressed = entries.reduce((sum, e) => sum + n(e.compressedBiogas?.cbg_sold), 0);
-        const totalCBGSold = totalCBGSoldFromSales > 0 ? totalCBGSoldFromSales : totalCBGSoldFromCompressed;
+        // Per entry: sum all customer sale rows, else stored cbg_sold (same as Excel export).
+        const totalCBGSold = entries.reduce((sum, e) => sum + totalCbgSoldForEntry(e), 0);
 
         const totalFOMProduced = entries.reduce((sum, e) => sum + n(e.fertilizer?.fom_produced), 0);
         const totalFOMSold = entries.reduce((sum, e) => sum + n(e.fertilizer?.sold), 0);
@@ -1089,9 +1084,7 @@ exports.getDashboardData = async (req, res) => {
             date: e.date,
             rawBiogas: n(e.rawBiogas?.total_raw_biogas),
             cbgProduced: n(e.compressedBiogas?.produced),
-            cbgSold: (Array.isArray(e.cbgSales) && e.cbgSales.length > 0)
-                ? e.cbgSales.reduce((s, r) => s + n(r.quantity), 0)
-                : n(e.compressedBiogas?.cbg_sold),
+            cbgSold: totalCbgSoldForEntry(e),
             plantAvailability: n(e.plantAvailability?.total_availability)
         }));
 
