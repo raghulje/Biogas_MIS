@@ -25,6 +25,7 @@ const {
     sequelize
 } = require('../models');
 const auditService = require('../services/auditService');
+const finalMISReportEmailService = require('../services/finalMISReportEmailService');
 const XLSX = require('xlsx');
 const { Op } = require('sequelize');
 
@@ -1422,6 +1423,32 @@ exports.getCBGSalesBreakdown = async (req, res) => {
     } catch (error) {
         console.error('CBG Sales Breakdown Error:', error);
         res.status(500).json({ message: 'Error fetching breakdown', error: error.message });
+    }
+};
+
+/** Download Final MIS HTML report for one entry's date (same layout as scheduled/email report). */
+exports.downloadEntryFinalMisReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const entry = await MISDailyEntry.findByPk(id, { attributes: ['id', 'date'] });
+        if (!entry) {
+            return res.status(404).json({ message: 'Entry not found' });
+        }
+        const dateStr =
+            typeof entry.date === 'string'
+                ? entry.date.slice(0, 10)
+                : entry.date instanceof Date
+                  ? entry.date.toISOString().slice(0, 10)
+                  : String(entry.date).slice(0, 10);
+
+        const html = await finalMISReportEmailService.buildReportHtmlForRange(dateStr, dateStr, '');
+        const filename = `Final_MIS_Report_${dateStr}.html`;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(html);
+    } catch (error) {
+        console.error('downloadEntryFinalMisReport Error:', error);
+        res.status(500).json({ message: 'Error generating Final MIS report', error: error.message });
     }
 };
 

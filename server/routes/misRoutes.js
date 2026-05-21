@@ -18,6 +18,7 @@ router.get('/mis-entries/import-template', permissionMiddleware('mis_entry', 're
 router.post('/mis-entries/import', permissionMiddleware('mis_entry', 'import'), upload.single('file'), misExtensions.importEntries);
 router.get('/mis-entries/export', permissionMiddleware('mis_entry', 'read'), misExtensions.exportEntries);
 router.get('/mis-entries', permissionMiddleware('mis_entry', 'read'), misController.getEntries);
+router.get('/mis-entries/:id/final-report', permissionMiddleware('mis_entry', 'read'), misExtensions.downloadEntryFinalMisReport);
 router.get('/mis-entries/:id', permissionMiddleware('mis_entry', 'read'), misController.getEntryById);
 router.put('/mis-entries/:id', permissionMiddleware('mis_entry', 'update'), misExtensions.updateEntry);
 router.delete('/mis-entries/:id', permissionMiddleware('mis_entry', 'delete'), misExtensions.deleteEntry);

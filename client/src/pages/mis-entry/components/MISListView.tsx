@@ -39,6 +39,7 @@ import {
   Refresh as RefreshIcon,
   FileUpload as ImportIcon,
   FileDownload as ExportIcon,
+  Print as PrintIcon,
   CheckBox as CheckBoxIcon,
   CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon,
   IndeterminateCheckBox as IndeterminateCheckBoxIcon,
@@ -106,6 +107,7 @@ export default function MISListView({
   const [entryToDelete, setEntryToDelete] = useState<MISEntry | null>(null);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [reportDownloadingId, setReportDownloadingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
@@ -136,6 +138,26 @@ export default function MISListView({
   };
 
 
+
+  const handleDownloadFinalMisReport = async (entry: MISEntry) => {
+    setReportDownloadingId(entry.id);
+    try {
+      const { misService } = await import('../../../services/misService');
+      const blob = await misService.downloadEntryFinalMisReport(entry.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const datePart = entry.date ? String(entry.date).slice(0, 10) : 'report';
+      a.download = `Final_MIS_Report_${datePart}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error(error);
+      onImportError?.({ response: { data: { message: MESSAGES.FINAL_MIS_REPORT_DOWNLOAD_FAILED } } } });
+    } finally {
+      setReportDownloadingId(null);
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -677,6 +699,25 @@ export default function MISListView({
                             <ViewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        <Tooltip title="Download Final MIS Report (same as email)">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDownloadFinalMisReport(entry)}
+                            disabled={reportDownloadingId === entry.id}
+                            sx={{
+                              color: '#1D9AD4',
+                              backgroundColor: 'rgba(29, 154, 212, 0.1)',
+                              borderRadius: '10px',
+                              '&:hover': { backgroundColor: 'rgba(29, 154, 212, 0.2)' },
+                            }}
+                          >
+                            {reportDownloadingId === entry.id ? (
+                              <CircularProgress size={18} color="inherit" />
+                            ) : (
+                              <PrintIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
                         {canUpdate && (
                           <Tooltip title="Edit Entry">
                             <IconButton
@@ -811,6 +852,16 @@ export default function MISListView({
                     sx={{ borderRadius: '10px', borderColor: '#2879b6', color: '#2879b6' }}
                   >
                     View
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={reportDownloadingId === entry.id ? <CircularProgress size={16} /> : <PrintIcon />}
+                    onClick={() => handleDownloadFinalMisReport(entry)}
+                    disabled={reportDownloadingId === entry.id}
+                    sx={{ borderRadius: '10px', borderColor: '#1D9AD4', color: '#1D9AD4' }}
+                  >
+                    Report
                   </Button>
                   {canUpdate && (
                     <Button

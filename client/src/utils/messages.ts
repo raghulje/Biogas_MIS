@@ -10,6 +10,7 @@ const MESSAGES = {
   IMPORT_SUCCESS: 'Import completed successfully',
   IMPORT_FAILED: 'Failed to import file',
   EXPORT_FAILED: 'Export failed',
+  FINAL_MIS_REPORT_DOWNLOAD_FAILED: 'Failed to download Final MIS report',
   IMPORT_DATA_SUCCESS: 'Data imported successfully',
   IMPORT_DATA_FAILED_PREFIX: 'Import failed: ',
 

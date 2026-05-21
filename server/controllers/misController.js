@@ -465,19 +465,30 @@ exports.getEntries = async (req, res) => {
             include: [
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
                 { model: MISCompressedBiogas, as: 'compressedBiogas', attributes: ['produced', 'cbg_sold'] },
-                { model: MISRawBiogas, as: 'rawBiogas', attributes: ['total_raw_biogas'] }
+                { model: MISRawBiogas, as: 'rawBiogas', attributes: ['total_raw_biogas'] },
+                { model: MISCBGSale, as: 'cbgSales', attributes: ['quantity'], separate: true },
             ],
             order: [['date', 'DESC']],
             limit: 500
         });
+
+        const sumCbgSold = (json) => {
+            const rows = Array.isArray(json.cbgSales) ? json.cbgSales : [];
+            const fromSales = rows.reduce((s, r) => s + Number(r.quantity || 0), 0);
+            if (fromSales > 0) return fromSales;
+            return Number(json.compressedBiogas?.cbg_sold || 0);
+        };
 
         const mapped = entries.map(e => {
             const json = e.toJSON();
             return {
                 ...json,
                 createdBy: json.creator ? json.creator.name : 'Unknown',
-                compressedBiogas: { produced: json.compressedBiogas?.produced || 0, cbgSold: json.compressedBiogas?.cbg_sold || 0 },
-                rawBiogas: { totalRawBiogas: json.rawBiogas?.total_raw_biogas || 0 }
+                compressedBiogas: {
+                    produced: json.compressedBiogas?.produced || 0,
+                    cbgSold: sumCbgSold(json),
+                },
+                rawBiogas: { totalRawBiogas: json.rawBiogas?.total_raw_biogas || 0 },
             };
         });
 

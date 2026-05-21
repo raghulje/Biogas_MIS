@@ -72,6 +72,11 @@ export const misService = {
         const response = await api.get('/mis-entries/export', { params, responseType: 'blob' });
         return response.data;
     },
+    /** Final MIS HTML report for one entry (same as email report), downloadable from list Print icon */
+    downloadEntryFinalMisReport: async (id: number | string) => {
+        const response = await api.get(`/mis-entries/${id}/final-report`, { responseType: 'blob' });
+        return response.data;
+    },
     hardDeleteEntry: async (id: number) => {
         const response = await api.delete(`/mis-entries/${id}/hard`);
         return response.data;
