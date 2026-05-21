@@ -30,14 +30,7 @@ const XLSX = require('xlsx');
 const { Op } = require('sequelize');
 
 const n = (val) => (val === '' || val === null || val === undefined ? 0 : parseFloat(val));
-
-/** Total CBG sold (kg): sum all customer sale rows, else stored compressed_biogas.cbg_sold */
-function totalCbgSoldForEntry(entry) {
-    const rows = Array.isArray(entry.cbgSales) ? entry.cbgSales : [];
-    const fromSales = rows.reduce((sum, r) => sum + n(r.quantity), 0);
-    if (fromSales > 0) return fromSales;
-    return n(entry.compressedBiogas?.cbg_sold);
-}
+const { MIS_EXPORT_HEADERS, entryToExportRow, totalCbgSoldForEntry } = require('../utils/misExportMapper');
 
 function sumCbgSalesPayload(cbgSales) {
     if (!Array.isArray(cbgSales)) return 0;
@@ -569,22 +562,7 @@ exports.hardDeleteEntry = async (req, res) => {
 // GET IMPORT TEMPLATE - Excel with all section headers
 exports.getImportTemplate = async (req, res) => {
     try {
-        const headers = [
-            'Date', 'Status', 'BreakdownRemark', 'CreatedBy',
-            'CowDungPurchased', 'CowDungStock', 'OldPressMudOpeningBalance', 'OldPressMudPurchased', 'OldPressMudDegradationLoss', 'OldPressMudClosingStock', 'NewPressMudPurchased', 'PressMudUsed', 'TotalPressMudStock', 'AuditNote',
-            'CowDungQty', 'CowDungTS', 'CowDungVS', 'PressmudQty', 'PressmudTS', 'PressmudVS', 'PermeateQty', 'PermeateTS', 'PermeateVS', 'WaterQty', 'SlurryTotal', 'SlurryTS', 'SlurryVS', 'SlurryPH',
-            'Digester01_FeedingSlurry', 'Digester01_FeedingTS', 'Digester01_FeedingVS', 'Digester01_DischargeSlurry', 'Digester01_DischargeTS', 'Digester01_DischargeVS', 'Digester01_PH', 'Digester01_Temp', 'Digester01_HRT', 'Digester01_OLR',
-            'Digester02_FeedingSlurry', 'Digester02_FeedingTS', 'Digester02_FeedingVS', 'Digester02_DischargeSlurry', 'Digester02_DischargeTS', 'Digester02_DischargeVS', 'Digester02_PH', 'Digester02_Temp', 'Digester02_HRT', 'Digester02_OLR',
-            'Digester03_FeedingSlurry', 'Digester03_FeedingTS', 'Digester03_FeedingVS', 'Digester03_DischargeSlurry', 'Digester03_DischargeTS', 'Digester03_DischargeVS', 'Digester03_PH', 'Digester03_Temp', 'Digester03_HRT', 'Digester03_OLR',
-            'Digester01Gas', 'Digester02Gas', 'Digester03Gas', 'TotalRawBiogas', 'RbgFlared', 'GasYield',
-            'RBG_CH4', 'RBG_CO2', 'RBG_H2S', 'RBG_O2', 'RBG_N2',
-            'CBGProduced', 'CBG_CH4', 'CBG_CO2', 'CBG_H2S', 'CBG_O2', 'CBG_N2', 'ConversionRatio', 'Ch4Slippage', 'CbgStock', 'CbgSold',
-            'Compressor1Hours', 'Compressor2Hours', 'TotalHours',
-            'ElectricityConsumption', 'SpecificPowerConsumption',
-            'FOMProduced', 'Inventory', 'Sold', 'WeightedAverage', 'Revenue1', 'LagoonLiquidSold', 'Revenue2', 'LooseFomSold', 'Revenue3',
-            'WorkingHours', 'ScheduledDowntime', 'UnscheduledDowntime', 'TotalAvailability',
-            'SafetyLTI', 'NearMisses', 'FirstAid', 'ReportableIncidents', 'MTI', 'OtherIncidents', 'Fatalities'
-        ];
+        const headers = MIS_EXPORT_HEADERS;
         const emptyRow = headers.reduce((acc, h) => ({ ...acc, [h]: '' }), {});
         const worksheet = XLSX.utils.json_to_sheet([emptyRow], { header: headers });
         const workbook = XLSX.utils.book_new();
@@ -648,9 +626,13 @@ exports.importEntries = async (req, res) => {
                     '';
                 const reviewComment = String(remarkRaw).trim().slice(0, 2000) || null;
 
+                const shiftRaw = String(row.Shift || row.shift || 'General').trim();
+                const shift = ['Shift-1', 'Shift-2', 'General'].includes(shiftRaw) ? shiftRaw : 'General';
+
                 const entry = await MISDailyEntry.create({
                     date: dateStr,
                     status,
+                    shift,
                     created_by: createdById,
                     review_comment: reviewComment,
                 }, { transaction: t });
@@ -682,6 +664,17 @@ exports.importEntries = async (req, res) => {
                     permeate_ts: n(row.PermeateTS),
                     permeate_vs: n(row.PermeateVS),
                     water_qty: n(row.WaterQty),
+                    water_ts: n(row.WaterTS),
+                    water_vs: n(row.WaterVS),
+                    pulp_qty: n(row.PulpQty),
+                    pulp_ts: n(row.PulpTS),
+                    pulp_vs: n(row.PulpVS),
+                    maggie_qty: n(row.MaggieQty),
+                    maggie_ts: n(row.MaggieTS),
+                    maggie_vs: n(row.MaggieVS),
+                    other_feed_substrate_qty: n(row.OtherFeedSubstrateQty),
+                    other_feed_substrate_ts: n(row.OtherFeedSubstrateTS),
+                    other_feed_substrate_vs: n(row.OtherFeedSubstrateVS),
                     slurry_total: n(row.SlurryTotal),
                     slurry_ts: n(row.SlurryTS),
                     slurry_vs: n(row.SlurryVS),
@@ -703,7 +696,20 @@ exports.importEntries = async (req, res) => {
                         ph: n(row[p + 'PH']),
                         temp: n(row[p + 'Temp']),
                         hrt: n(row[p + 'HRT']),
-                        olr: n(row[p + 'OLR'])
+                        olr: n(row[p + 'OLR']),
+                        lignin: n(row[p + 'Lignin']),
+                        vfa: n(row[p + 'VFA']),
+                        alkalinity: n(row[p + 'Alkalinity']),
+                        vfa_alk_ratio: n(row[p + 'VfaAlkRatio']),
+                        ash: n(row[p + 'Ash']),
+                        density: n(row[p + 'Density']),
+                        pressure: n(row[p + 'Pressure']),
+                        slurry_level: n(row[p + 'SlurryLevel']),
+                        vs_destruction: n(row[p + 'VsDestruction']),
+                        balloon_level: n(row[p + 'BalloonLevel']),
+                        agitator_condition: row[p + 'AgitatorCondition'] != null ? String(row[p + 'AgitatorCondition']).slice(0, 100) : null,
+                        foaming_level: n(row[p + 'FoamingLevel']),
+                        remarks: row[p + 'Remarks'] != null ? String(row[p + 'Remarks']).slice(0, 500) : null
                     }, { transaction: t });
                 }
 
@@ -862,47 +868,25 @@ exports.exportEntries = async (req, res) => {
                 { model: MISPlantAvailability, as: 'plantAvailability' },
                 { model: MISHSEData, as: 'hse' },
                 { model: User, as: 'creator', attributes: ['name'] },
-                { model: MISCBGSale, as: 'cbgSales', attributes: ['quantity'], separate: true },
+                {
+                    model: MISCBGSale,
+                    as: 'cbgSales',
+                    attributes: ['customer_id', 'quantity'],
+                    include: [{ model: Customer, as: 'customer', attributes: ['name'] }],
+                    separate: true
+                },
+                {
+                    model: MISFuelUtilized,
+                    as: 'fuelUtilized',
+                    include: [{ model: Customer, as: 'customer', attributes: ['name'] }],
+                    separate: true
+                },
             ],
             order: [['date', 'DESC']]
         });
 
-        // Flatten data for Excel
-        const excelData = entries.map(e => ({
-            Date: e.date,
-            Status: e.status,
-            BreakdownRemark: e.review_comment || '',
-            CreatedBy: e.creator?.name || '',
-            // Raw Materials
-            CowDungPurchased: e.rawMaterials?.cow_dung_purchased || 0,
-            CowDungStock: e.rawMaterials?.cow_dung_stock || 0,
-            PressMudUsed: e.rawMaterials?.press_mud_used || 0,
-            // Feed Mixing Tank
-            CowDungQty: e.feedMixingTank?.cow_dung_qty || 0,
-            PressmudQty: e.feedMixingTank?.pressmud_qty || 0,
-            WaterQty: e.feedMixingTank?.water_qty || 0,
-            SlurryTotal: e.feedMixingTank?.slurry_total || 0,
-            // Raw Biogas
-            TotalRawBiogas: e.rawBiogas?.total_raw_biogas || 0,
-            GasYield: e.rawBiogas?.gas_yield || 0,
-            // Compressed Biogas
-            CBGProduced: e.compressedBiogas?.produced || 0,
-            CBGSold: totalCbgSoldForEntry(e),
-            // Fertilizer
-            FOMProduced: e.fertilizer?.fom_produced || 0,
-            FOMSold: e.fertilizer?.sold || 0,
-            // Utilities
-            ElectricityConsumption: e.utilities?.electricity_consumption || 0,
-            // Plant Availability
-            WorkingHours: e.plantAvailability?.working_hours || 0,
-            TotalAvailability: e.plantAvailability?.total_availability || 0,
-            // HSE
-            SafetyLTI: e.hse?.safety_lti || 0,
-            NearMisses: e.hse?.near_misses || 0,
-            // Add more fields as needed
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const excelData = entries.map(entryToExportRow);
+        const worksheet = XLSX.utils.json_to_sheet(excelData, { header: MIS_EXPORT_HEADERS });
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'MIS Entries');
 

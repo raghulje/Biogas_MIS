@@ -153,7 +153,7 @@ export default function MISListView({
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error(error);
-      onImportError?.({ response: { data: { message: MESSAGES.FINAL_MIS_REPORT_DOWNLOAD_FAILED } } } });
+      onImportError?.({ response: { data: { message: MESSAGES.FINAL_MIS_REPORT_DOWNLOAD_FAILED } } });
     } finally {
       setReportDownloadingId(null);
     }
