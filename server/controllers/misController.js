@@ -341,6 +341,14 @@ exports.createEntry = async (req, res) => {
 
         await Promise.all(childPromises);
 
+        if (cbgSales && Array.isArray(cbgSales) && cbgSales.length > 0) {
+            const totalSold = cbgSales.reduce((sum, s) => sum + n(s.quantity), 0);
+            const cbgRow = await MISCompressedBiogas.findOne({ where: { entry_id: entryId }, transaction: t });
+            if (cbgRow) {
+                await cbgRow.update({ cbg_sold: totalSold }, { transaction: t });
+            }
+        }
+
         await t.commit();
         await auditService.log(userId, 'CREATE_MIS_ENTRY', 'MISDailyEntry', entry.id, null, entry, req);
         res.status(201).json({ message: 'Entry created successfully', id: entry.id });

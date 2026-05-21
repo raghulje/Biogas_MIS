@@ -30,6 +30,28 @@ const { Op } = require('sequelize');
 
 const n = (val) => (val === '' || val === null || val === undefined ? 0 : parseFloat(val));
 
+/** Total CBG sold (kg): sum all customer sale rows, else stored compressed_biogas.cbg_sold */
+function totalCbgSoldForEntry(entry) {
+    const rows = Array.isArray(entry.cbgSales) ? entry.cbgSales : [];
+    const fromSales = rows.reduce((sum, r) => sum + n(r.quantity), 0);
+    if (fromSales > 0) return fromSales;
+    return n(entry.compressedBiogas?.cbg_sold);
+}
+
+function sumCbgSalesPayload(cbgSales) {
+    if (!Array.isArray(cbgSales)) return 0;
+    return cbgSales.reduce((sum, s) => sum + n(s.quantity), 0);
+}
+
+async function syncCompressedBiogasSold(entryId, totalSold, transaction) {
+    const row = await MISCompressedBiogas.findOne({ where: { entry_id: entryId }, transaction });
+    if (row) {
+        await row.update({ cbg_sold: totalSold }, { transaction });
+    } else if (totalSold > 0) {
+        await MISCompressedBiogas.create({ entry_id: entryId, cbg_sold: totalSold }, { transaction });
+    }
+}
+
 // UPDATE ENTRY - Full nested update support
 exports.updateEntry = async (req, res) => {
     const t = await sequelize.transaction();
@@ -404,14 +426,21 @@ exports.updateEntry = async (req, res) => {
         // CBG Sales - delete existing and recreate
         if (cbgSales && Array.isArray(cbgSales)) {
             await MISCBGSale.destroy({ where: { entry_id: id }, transaction: t });
-            const salesPromises = cbgSales
-                .filter(s => s.customerId && s.quantity)
-                .map(s => MISCBGSale.create({
-                    entry_id: id,
-                    customer_id: parseInt(s.customerId),
-                    quantity: parseFloat(s.quantity) || 0
-                }, { transaction: t }));
+            const validSales = cbgSales.filter(
+                (s) => s.customerId && s.quantity != null && s.quantity !== ''
+            );
+            const salesPromises = validSales.map((s) =>
+                MISCBGSale.create(
+                    {
+                        entry_id: id,
+                        customer_id: parseInt(s.customerId, 10),
+                        quantity: parseFloat(s.quantity) || 0,
+                    },
+                    { transaction: t }
+                )
+            );
             await Promise.all(salesPromises);
+            await syncCompressedBiogasSold(id, sumCbgSalesPayload(validSales), t);
         }
 
         // Fuel Utilized - delete existing and recreate
@@ -540,7 +569,7 @@ exports.hardDeleteEntry = async (req, res) => {
 exports.getImportTemplate = async (req, res) => {
     try {
         const headers = [
-            'Date', 'Status', 'CreatedBy',
+            'Date', 'Status', 'BreakdownRemark', 'CreatedBy',
             'CowDungPurchased', 'CowDungStock', 'OldPressMudOpeningBalance', 'OldPressMudPurchased', 'OldPressMudDegradationLoss', 'OldPressMudClosingStock', 'NewPressMudPurchased', 'PressMudUsed', 'TotalPressMudStock', 'AuditNote',
             'CowDungQty', 'CowDungTS', 'CowDungVS', 'PressmudQty', 'PressmudTS', 'PressmudVS', 'PermeateQty', 'PermeateTS', 'PermeateVS', 'WaterQty', 'SlurryTotal', 'SlurryTS', 'SlurryVS', 'SlurryPH',
             'Digester01_FeedingSlurry', 'Digester01_FeedingTS', 'Digester01_FeedingVS', 'Digester01_DischargeSlurry', 'Digester01_DischargeTS', 'Digester01_DischargeVS', 'Digester01_PH', 'Digester01_Temp', 'Digester01_HRT', 'Digester01_OLR',
@@ -610,10 +639,19 @@ exports.importEntries = async (req, res) => {
                     if (creator) createdById = creator.id;
                 }
 
+                const remarkRaw =
+                    row.BreakdownRemark ??
+                    row.BreakdownRemarks ??
+                    row.Remarks ??
+                    row.remarks ??
+                    '';
+                const reviewComment = String(remarkRaw).trim().slice(0, 2000) || null;
+
                 const entry = await MISDailyEntry.create({
                     date: dateStr,
                     status,
-                    created_by: createdById
+                    created_by: createdById,
+                    review_comment: reviewComment,
                 }, { transaction: t });
                 const entryId = entry.id;
 
@@ -822,7 +860,8 @@ exports.exportEntries = async (req, res) => {
                 { model: MISManpowerData, as: 'manpower' },
                 { model: MISPlantAvailability, as: 'plantAvailability' },
                 { model: MISHSEData, as: 'hse' },
-                { model: User, as: 'creator', attributes: ['name'] }
+                { model: User, as: 'creator', attributes: ['name'] },
+                { model: MISCBGSale, as: 'cbgSales', attributes: ['quantity'], separate: true },
             ],
             order: [['date', 'DESC']]
         });
@@ -831,6 +870,7 @@ exports.exportEntries = async (req, res) => {
         const excelData = entries.map(e => ({
             Date: e.date,
             Status: e.status,
+            BreakdownRemark: e.review_comment || '',
             CreatedBy: e.creator?.name || '',
             // Raw Materials
             CowDungPurchased: e.rawMaterials?.cow_dung_purchased || 0,
@@ -846,7 +886,7 @@ exports.exportEntries = async (req, res) => {
             GasYield: e.rawBiogas?.gas_yield || 0,
             // Compressed Biogas
             CBGProduced: e.compressedBiogas?.produced || 0,
-            CBGSold: e.compressedBiogas?.cbg_sold || 0,
+            CBGSold: totalCbgSoldForEntry(e),
             // Fertilizer
             FOMProduced: e.fertilizer?.fom_produced || 0,
             FOMSold: e.fertilizer?.sold || 0,
