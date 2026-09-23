@@ -1,6 +1,7 @@
 export type TrendPoint = {
   date?: string;
   label?: string;
+  totalFeed?: number;
   rawBiogas?: number;
   cbgProduced?: number;
   cbgSold?: number;
@@ -29,6 +30,9 @@ export function normalizeTrendPoint(point: TrendPoint): TrendPoint {
   return {
     ...point,
     date: point.date != null ? String(point.date).slice(0, 10) : point.date,
+    totalFeed: numberValue(
+      raw.totalFeed ?? raw.total_feed ?? raw.feed,
+    ),
     rawBiogas: numberValue(
       raw.rawBiogas ?? raw.raw_biogas ?? raw.totalRawBiogas ?? raw.total_raw_biogas,
     ),
@@ -41,12 +45,13 @@ function sumBucket(items: TrendPoint[]): TrendPoint {
   return items.reduce<TrendPoint>(
     (total, item) => {
       const point = normalizeTrendPoint(item);
+      total.totalFeed = numberValue(total.totalFeed) + numberValue(point.totalFeed);
       total.rawBiogas = numberValue(total.rawBiogas) + numberValue(point.rawBiogas);
       total.cbgProduced = numberValue(total.cbgProduced) + numberValue(point.cbgProduced);
       total.cbgSold = numberValue(total.cbgSold) + numberValue(point.cbgSold);
       return total;
     },
-    { rawBiogas: 0, cbgProduced: 0, cbgSold: 0 },
+    { totalFeed: 0, rawBiogas: 0, cbgProduced: 0, cbgSold: 0 },
   );
 }
 
@@ -73,6 +78,7 @@ function expandDayToHours(day: TrendPoint | null) {
   return weights.map((weight, index) => ({
     date: day?.date,
     label: `${String(index + 6).padStart(2, '0')}:00`,
+    totalFeed: numberValue(day?.totalFeed) * (weight / totalWeight),
     rawBiogas: numberValue(day?.rawBiogas) * (weight / totalWeight),
     cbgProduced: numberValue(day?.cbgProduced) * (weight / totalWeight),
     cbgSold: numberValue(day?.cbgSold) * (weight / totalWeight),
@@ -97,6 +103,7 @@ function fillDays(sorted: TrendPoint[], maximumDays: number) {
     points.push({
       date: key,
       label: cursor.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      totalFeed: numberValue(point?.totalFeed),
       rawBiogas: numberValue(point?.rawBiogas),
       cbgProduced: numberValue(point?.cbgProduced),
       cbgSold: numberValue(point?.cbgSold),
@@ -169,7 +176,7 @@ export function buildPeriodSeries(
     if (empty) {
       return {
         points: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((label) => ({
-          label, rawBiogas: 0, cbgProduced: 0, cbgSold: 0,
+          label, totalFeed: 0, rawBiogas: 0, cbgProduced: 0, cbgSold: 0,
         })),
         granularity: 'day',
         empty,
@@ -181,7 +188,7 @@ export function buildPeriodSeries(
   if (filterType === 'month') {
     return {
       points: empty
-        ? [1, 2, 3, 4].map((week) => ({ label: `Week ${week}`, rawBiogas: 0, cbgProduced: 0, cbgSold: 0 }))
+        ? [1, 2, 3, 4].map((week) => ({ label: `Week ${week}`, totalFeed: 0, rawBiogas: 0, cbgProduced: 0, cbgSold: 0 }))
         : aggregateByWeekOfMonth(sorted),
       granularity: 'week',
       empty,

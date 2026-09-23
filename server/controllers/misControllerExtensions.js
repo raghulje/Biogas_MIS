@@ -1018,10 +1018,10 @@ exports.getDashboardData = async (req, res) => {
             : 0;
         const totalElectricityConsumption = entries.reduce((sum, e) => sum + n(e.utilities?.electricity_consumption), 0);
         const totalHSEIncidents = entries.reduce((sum, e) => sum + n(e.hse?.safety_lti) + n(e.hse?.near_misses), 0);
-        const totalFeed = entries.reduce((sum, e) => {
+        const totalFeedForEntry = (e) => {
             const fmt = e.feedMixingTank;
-            if (!fmt) return sum;
-            return sum + (
+            if (!fmt) return 0;
+            return (
                 n(fmt.cow_dung_qty) +
                 n(fmt.pressmud_qty) +
                 n(fmt.permeate_qty) +
@@ -1030,7 +1030,8 @@ exports.getDashboardData = async (req, res) => {
                 n(fmt.maggie_qty) +
                 n(fmt.other_feed_substrate_qty)
             );
-        }, 0);
+        };
+        const totalFeed = entries.reduce((sum, e) => sum + totalFeedForEntry(e), 0);
 
         // Averages based on number of entries (not calendar days) — for week, month, year, quarter, custom
         const entryCount = Math.max(1, entries.length);
@@ -1067,6 +1068,7 @@ exports.getDashboardData = async (req, res) => {
         // Daily trend data
         const dailyData = entries.map(e => ({
             date: e.date,
+            totalFeed: totalFeedForEntry(e),
             rawBiogas: n(e.rawBiogas?.total_raw_biogas),
             cbgProduced: n(e.compressedBiogas?.produced),
             cbgSold: totalCbgSoldForEntry(e),

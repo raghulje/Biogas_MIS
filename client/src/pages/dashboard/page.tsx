@@ -61,6 +61,7 @@ const minYear = 2020;
 const SHOW_DAILY_AVERAGES = false;
 
 const CHART_COLORS = {
+  feed: '#8B5CF6',
   raw: '#2879B6',
   produced: '#10B981',
   sold: '#F97316',
@@ -269,23 +270,27 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
   const chart = useMemo(() => {
     const data = periodSeries.points.length
       ? periodSeries.points
-      : [{ label: '—', rawBiogas: 0, cbgProduced: 0, cbgSold: 0 }];
+      : [{ label: '—', totalFeed: 0, rawBiogas: 0, cbgProduced: 0, cbgSold: 0 }];
+    const feed = data.map((point) => Number(point.totalFeed ?? 0) || 0);
     const raw = data.map((point) => Number(point.rawBiogas ?? 0) || 0);
     const produced = data.map((point) => Number(point.cbgProduced ?? 0) || 0);
     const sold = data.map((point) => Number(point.cbgSold ?? 0) || 0);
     const width = 960;
     const height = 220;
     const left = 48;
-    const right = width - 34;
+    const right = width - 52;
     const top = 28;
     const bottom = height - 40;
     const maximum = Math.max(...raw, ...produced, ...sold, 1);
+    const feedMaximum = Math.max(...feed, 1);
     const xAt = (index: number) => left + (index / Math.max(data.length - 1, 1)) * (right - left);
     const yAt = (value: number) => bottom - (value / maximum) * (bottom - top);
+    const feedYAt = (value: number) => bottom - (value / feedMaximum) * (bottom - top);
     const xValues = data.map((_, index) => xAt(index));
 
     return {
-      data, width, height, left, right, top, bottom, maximum, xAt, yAt,
+      data, width, height, left, right, top, bottom, maximum, feedMaximum, xAt, yAt, feedYAt,
+      feedPath: monotoneCubicPath(xValues, feed.map(feedYAt)),
       rawPath: monotoneCubicPath(xValues, raw.map(yAt)),
       producedPath: monotoneCubicPath(xValues, produced.map(yAt)),
       soldPath: monotoneCubicPath(xValues, sold.map(yAt)),
@@ -300,7 +305,8 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
     : String(Math.round(value));
   const granularity = `${periodSeries.granularity[0].toUpperCase()}${periodSeries.granularity.slice(1)}ly`;
   const legend = [
-    { label: 'Raw Biogas', color: CHART_COLORS.raw },
+    { label: 'Total Feed', color: CHART_COLORS.feed },
+    { label: 'Total Raw Biogas', color: CHART_COLORS.raw },
     { label: 'CBG Produced', color: CHART_COLORS.produced },
     { label: 'CBG Sold', color: CHART_COLORS.sold },
   ];
@@ -383,6 +389,7 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
                   <g key={ratio}>
                     <line x1={chart.left} x2={chart.right} y1={y} y2={y} stroke="rgba(148,163,184,0.28)" strokeWidth="1" strokeDasharray="4 5" />
                     <text x={chart.left - 10} y={y + 4} fontSize="11" fontFamily="Inter, system-ui, sans-serif" fontWeight="500" textAnchor="end" fill="#777">{formatAxis(tick)}</text>
+                    <text x={chart.right + 10} y={y + 4} fontSize="11" fontFamily="Inter, system-ui, sans-serif" fontWeight="600" textAnchor="start" fill={CHART_COLORS.feed}>{formatAxis(chart.feedMaximum * ratio)}</text>
                   </g>
                 );
               })}
@@ -391,6 +398,7 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
               <path d={chart.soldPath} fill="none" stroke={CHART_COLORS.sold} strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
               <path d={chart.producedPath} fill="none" stroke={CHART_COLORS.produced} strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
               <path d={chart.rawPath} fill="none" stroke={CHART_COLORS.raw} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+              <path d={chart.feedPath} fill="none" stroke={CHART_COLORS.feed} strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="7 5" vectorEffect="non-scaling-stroke" />
 
               {hoveredIndex !== null && (
                 <line x1={chart.xAt(hoveredIndex)} x2={chart.xAt(hoveredIndex)} y1={chart.top} y2={chart.bottom} stroke="rgba(100,116,139,0.45)" strokeWidth="1.25" strokeDasharray="3 4" />
@@ -402,6 +410,7 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
                 const hitWidth = (chart.right - chart.left) / Math.max(chart.data.length, 1);
                 return (
                   <g key={`${point.label ?? point.date}-${index}`}>
+                    <circle cx={x} cy={chart.feedYAt(Number(point.totalFeed ?? 0))} r={radius} fill="#fff" stroke={CHART_COLORS.feed} strokeWidth="2" />
                     <circle cx={x} cy={chart.yAt(Number(point.cbgSold ?? 0))} r={radius} fill="#fff" stroke={CHART_COLORS.sold} strokeWidth="2" />
                     <circle cx={x} cy={chart.yAt(Number(point.cbgProduced ?? 0))} r={radius} fill="#fff" stroke={CHART_COLORS.produced} strokeWidth="2" />
                     <circle cx={x} cy={chart.yAt(Number(point.rawBiogas ?? 0))} r={radius + 0.5} fill="#fff" stroke={CHART_COLORS.raw} strokeWidth="2.25" />
@@ -427,8 +436,8 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
                 sx={{
                   position: 'absolute',
                   top: 12,
-                  left: `clamp(8px, calc(${tooltipLeft}% - 78px), calc(100% - 168px))`,
-                  width: 156,
+                  left: `clamp(8px, calc(${tooltipLeft}% - 90px), calc(100% - 192px))`,
+                  width: 180,
                   px: 1.5,
                   py: 1.15,
                   borderRadius: '12px',
@@ -441,7 +450,8 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
               >
                 <Typography sx={{ fontSize: 11, fontWeight: 600, mb: 0.75, opacity: 0.7 }}>{activePoint.label ?? activePoint.date ?? '—'}</Typography>
                 {[
-                  { label: 'Raw Biogas', value: activePoint.rawBiogas, unit: 'm³', color: CHART_COLORS.raw },
+                  { label: 'Total Feed', value: activePoint.totalFeed, unit: 'tons', color: CHART_COLORS.feed },
+                  { label: 'Total Raw Biogas', value: activePoint.rawBiogas, unit: 'm³', color: CHART_COLORS.raw },
                   { label: 'CBG Produced', value: activePoint.cbgProduced, unit: 'kg', color: CHART_COLORS.produced },
                   { label: 'CBG Sold', value: activePoint.cbgSold, unit: 'kg', color: CHART_COLORS.sold },
                 ].map((item) => (
@@ -972,7 +982,7 @@ export default function DashboardPage() {
                       value={formatNumber(Number(summary.totalFeed ?? 0))}
                       unit="tons"
                       subtitle={`Avg / day ${formatNumber(summary.avgFeed ?? 0)} tons · ${summary.totalEntries ?? 0} days`}
-                      color="#3B82F6"
+                      color="#8B5CF6"
                       icon={<AvgIcon />}
                     />
                   </Grid>
