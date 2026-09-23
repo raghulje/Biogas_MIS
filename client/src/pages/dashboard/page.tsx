@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Box,
   Card,
@@ -9,7 +9,6 @@ import {
   Grid,
   Chip,
   CircularProgress,
-  useTheme,
   useMediaQuery,
   Dialog,
   DialogTitle,
@@ -27,10 +26,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  keyframes,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
-  ExpandMore as ExpandMoreIcon,
   FilterList as FilterIcon,
   LocalFireDepartment as BiogasIcon,
   LocalGasStation as GasIcon,
@@ -40,6 +39,7 @@ import {
   Storefront as StoreIcon,
   Bolt as BoltIcon,
   HealthAndSafety as SafetyIcon,
+  ShowChart as TrendIcon,
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -48,6 +48,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { misService } from '../../services/misService';
 import MESSAGES from '../../utils/messages';
 import { getCalendarWeek, getWeeksInYear, formatWeekRangeLabel } from '../../utils/calendarUtils';
+import { buildPeriodSeries, type FilterPeriod, type TrendPoint } from './periodSeries';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -57,11 +58,415 @@ const MONTHS = [
 const currentDate = new Date();
 const currentYear = currentDate.getFullYear(); // Year options run from current year down to minYear (updates automatically each year)
 const minYear = 2020;
+const SHOW_DAILY_AVERAGES = false;
+
+const CHART_COLORS = {
+  raw: '#2879B6',
+  produced: '#10B981',
+  sold: '#F97316',
+};
+
+const chartFadeIn = keyframes`
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const DashboardMetricCard = memo(function DashboardMetricCard({
+  title,
+  value,
+  unit,
+  subtitle,
+  color,
+  icon,
+  onClick,
+}: {
+  title: string;
+  value: string;
+  unit?: string;
+  subtitle?: string;
+  color: string;
+  icon: ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <Box
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      } : undefined}
+      sx={{
+        height: '100%',
+        minHeight: 142,
+        p: { xs: 2, md: 2.25 },
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: '16px',
+        border: `1px solid ${color}26`,
+        background: `
+          radial-gradient(circle at 100% 0%, ${color}1F 0%, transparent 42%),
+          linear-gradient(145deg, #FFFFFF 0%, ${color}09 100%)
+        `,
+        boxShadow: '0 7px 20px rgba(30, 75, 110, 0.07)',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 22,
+          width: 58,
+          height: 3,
+          background: `linear-gradient(90deg, ${color}, ${color}66)`,
+          borderRadius: '0 0 5px 5px',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          width: 88,
+          height: 88,
+          right: -36,
+          bottom: -44,
+          borderRadius: '50%',
+          border: `16px solid ${color}0D`,
+          pointerEvents: 'none',
+        },
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: `0 14px 30px ${color}20`,
+          borderColor: `${color}4A`,
+        },
+        '&:focus-visible': {
+          outline: `3px solid ${color}40`,
+          outlineOffset: 2,
+        },
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Box sx={{ width: 6, height: 6, flexShrink: 0, borderRadius: '50%', bgcolor: color, boxShadow: `0 0 0 3px ${color}14` }} />
+            <Typography
+              sx={{
+                color: '#687582',
+                fontSize: 11.5,
+                fontWeight: 700,
+                letterSpacing: '0.035em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {title}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 0.65, mt: 1.15 }}>
+            <Typography sx={{ color: '#24313C', fontSize: { xs: '1.55rem', md: '1.72rem' }, lineHeight: 1, fontWeight: 800, letterSpacing: '-0.035em' }}>
+              {value}
+            </Typography>
+            {unit && (
+              <Typography component="span" sx={{ color, fontSize: 12, fontWeight: 700 }}>
+                {unit}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            width: 42,
+            height: 42,
+            flexShrink: 0,
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: '13px',
+            color: '#fff',
+            background: `linear-gradient(145deg, ${color}, ${color}CC)`,
+            boxShadow: `0 7px 16px ${color}32`,
+            '& .MuiSvgIcon-root': { fontSize: 21 },
+          }}
+        >
+          {icon}
+        </Box>
+      </Box>
+      {subtitle && (
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', mt: 1.5, px: 1, py: 0.45, borderRadius: '7px', bgcolor: `${color}0E`, border: `1px solid ${color}16` }}>
+          <Typography sx={{ color: '#6D7883', fontSize: 11.5, fontWeight: 600 }}>
+            {subtitle}
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+});
+
+function monotoneCubicPath(xs: number[], ys: number[], closeY?: number): string {
+  const count = xs.length;
+  if (!count) return '';
+  if (count === 1) {
+    return closeY === undefined
+      ? `M ${xs[0]} ${ys[0]}`
+      : `M ${xs[0]} ${closeY} L ${xs[0]} ${ys[0]} L ${xs[0]} ${closeY} Z`;
+  }
+
+  const dx: number[] = [];
+  const slopes: number[] = [];
+  for (let index = 0; index < count - 1; index += 1) {
+    dx[index] = xs[index + 1] - xs[index] || 1e-6;
+    slopes[index] = (ys[index + 1] - ys[index]) / dx[index];
+  }
+
+  const tangents = new Array<number>(count);
+  tangents[0] = slopes[0];
+  tangents[count - 1] = slopes[count - 2];
+  for (let index = 1; index < count - 1; index += 1) {
+    tangents[index] = slopes[index - 1] * slopes[index] <= 0
+      ? 0
+      : (slopes[index - 1] + slopes[index]) / 2;
+  }
+
+  for (let index = 0; index < count - 1; index += 1) {
+    if (Math.abs(slopes[index]) < 1e-12) {
+      tangents[index] = 0;
+      tangents[index + 1] = 0;
+      continue;
+    }
+    const left = tangents[index] / slopes[index];
+    const right = tangents[index + 1] / slopes[index];
+    const magnitude = left * left + right * right;
+    if (magnitude > 9) {
+      const scale = 3 / Math.sqrt(magnitude);
+      tangents[index] = scale * left * slopes[index];
+      tangents[index + 1] = scale * right * slopes[index];
+    }
+  }
+
+  let path = `M ${xs[0]} ${ys[0]}`;
+  for (let index = 0; index < count - 1; index += 1) {
+    const width = dx[index];
+    path += ` C ${xs[index] + width / 3} ${ys[index] + (tangents[index] * width) / 3}, ${xs[index + 1] - width / 3} ${ys[index + 1] - (tangents[index + 1] * width) / 3}, ${xs[index + 1]} ${ys[index + 1]}`;
+  }
+  if (closeY !== undefined) path += ` L ${xs[count - 1]} ${closeY} L ${xs[0]} ${closeY} Z`;
+  return path;
+}
+
+const ProductionTrendChart = memo(function ProductionTrendChart({
+  trends,
+  filterType,
+  year,
+}: {
+  trends: TrendPoint[];
+  filterType: FilterPeriod;
+  year: number;
+}) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const periodSeries = useMemo(
+    () => buildPeriodSeries(trends, filterType, { year }),
+    [trends, filterType, year],
+  );
+
+  const chart = useMemo(() => {
+    const data = periodSeries.points.length
+      ? periodSeries.points
+      : [{ label: '—', rawBiogas: 0, cbgProduced: 0, cbgSold: 0 }];
+    const raw = data.map((point) => Number(point.rawBiogas ?? 0) || 0);
+    const produced = data.map((point) => Number(point.cbgProduced ?? 0) || 0);
+    const sold = data.map((point) => Number(point.cbgSold ?? 0) || 0);
+    const width = 960;
+    const height = 220;
+    const left = 48;
+    const right = width - 34;
+    const top = 28;
+    const bottom = height - 40;
+    const maximum = Math.max(...raw, ...produced, ...sold, 1);
+    const xAt = (index: number) => left + (index / Math.max(data.length - 1, 1)) * (right - left);
+    const yAt = (value: number) => bottom - (value / maximum) * (bottom - top);
+    const xValues = data.map((_, index) => xAt(index));
+
+    return {
+      data, width, height, left, right, top, bottom, maximum, xAt, yAt,
+      rawPath: monotoneCubicPath(xValues, raw.map(yAt)),
+      producedPath: monotoneCubicPath(xValues, produced.map(yAt)),
+      soldPath: monotoneCubicPath(xValues, sold.map(yAt)),
+      rawArea: monotoneCubicPath(xValues, raw.map(yAt), bottom),
+    };
+  }, [periodSeries.points]);
+
+  const activePoint = hoveredIndex === null ? null : chart.data[hoveredIndex];
+  const tooltipLeft = hoveredIndex === null ? 0 : (chart.xAt(hoveredIndex) / chart.width) * 100;
+  const formatAxis = (value: number) => value >= 1000
+    ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`
+    : String(Math.round(value));
+  const granularity = `${periodSeries.granularity[0].toUpperCase()}${periodSeries.granularity.slice(1)}ly`;
+  const legend = [
+    { label: 'Raw Biogas', color: CHART_COLORS.raw },
+    { label: 'CBG Produced', color: CHART_COLORS.produced },
+    { label: 'CBG Sold', color: CHART_COLORS.sold },
+  ];
+
+  return (
+    <Card
+      sx={{
+        mb: 1.5,
+        border: '1px solid rgba(40, 121, 182, 0.16)',
+        borderRadius: '16px',
+        boxShadow: '0 10px 32px rgba(30, 75, 110, 0.08)',
+        overflow: 'hidden',
+        background: 'radial-gradient(ellipse 85% 70% at 8% 0%, rgba(40,121,182,0.12) 0%, transparent 55%), radial-gradient(ellipse 55% 65% at 100% 100%, rgba(16,185,129,0.08) 0%, transparent 58%), #fff',
+        transition: 'box-shadow 220ms ease, transform 220ms ease',
+        '&:hover': {
+          boxShadow: '0 16px 42px rgba(30, 75, 110, 0.12)',
+          transform: 'translateY(-1px)',
+        },
+      }}
+    >
+      <CardContent sx={{ p: { xs: 1.5, md: 2.25 }, '&:last-child': { pb: { xs: 1.5, md: 2.25 } } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, mb: 1.5, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Box sx={{ width: 34, height: 34, display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'rgba(40,121,182,0.1)', color: CHART_COLORS.raw }}>
+              <TrendIcon sx={{ fontSize: 19 }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#25313C', lineHeight: 1.2 }}>
+                Production Trend
+              </Typography>
+              <Typography sx={{ fontSize: 11.5, color: '#7A8793', mt: 0.2 }}>
+                Production and dispatch performance
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1.75, alignItems: 'center', flexWrap: 'wrap' }}>
+            {legend.map((item) => (
+              <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.55 }}>
+                <Box sx={{ width: 9, height: 3, borderRadius: 2, bgcolor: item.color }} />
+                <Typography sx={{ fontSize: 11.5, fontWeight: 500, color: '#58595B' }}>{item.label}</Typography>
+              </Box>
+            ))}
+            <Chip label={`${granularity} · ${chart.data.length} pts`} size="small" variant="outlined" />
+          </Box>
+        </Box>
+
+        {periodSeries.empty ? (
+          <Box sx={{ height: 240, display: 'grid', placeItems: 'center', borderRadius: '12px', border: '1px dashed rgba(40,121,182,0.3)', bgcolor: 'rgba(40,121,182,0.03)' }}>
+            <Box sx={{ textAlign: 'center', px: 2 }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#333842' }}>No trend data for this period</Typography>
+              <Typography sx={{ mt: 0.5, fontSize: 12.5, color: '#666' }}>Try another filter range or create MIS entries.</Typography>
+            </Box>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              position: 'relative',
+              width: '100%',
+              overflowX: { xs: 'auto', md: 'visible' },
+              overflowY: 'hidden',
+              animation: `${chartFadeIn} 520ms ease-out`,
+              '&::-webkit-scrollbar': { height: 5 },
+              '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(40,121,182,0.22)', borderRadius: 4 },
+            }}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            <Box sx={{ minWidth: { xs: 680, md: 0 }, width: '100%', aspectRatio: `${chart.width} / ${chart.height}` }}>
+            <svg viewBox={`0 0 ${chart.width} ${chart.height}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Production trend chart">
+              <defs>
+                <linearGradient id="production-trend-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_COLORS.raw} stopOpacity="0.14" />
+                  <stop offset="100%" stopColor={CHART_COLORS.raw} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                const tick = chart.maximum * ratio;
+                const y = chart.yAt(tick);
+                return (
+                  <g key={ratio}>
+                    <line x1={chart.left} x2={chart.right} y1={y} y2={y} stroke="rgba(148,163,184,0.28)" strokeWidth="1" strokeDasharray="4 5" />
+                    <text x={chart.left - 10} y={y + 4} fontSize="11" fontFamily="Inter, system-ui, sans-serif" fontWeight="500" textAnchor="end" fill="#777">{formatAxis(tick)}</text>
+                  </g>
+                );
+              })}
+
+              <path d={chart.rawArea} fill="url(#production-trend-fill)" />
+              <path d={chart.soldPath} fill="none" stroke={CHART_COLORS.sold} strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+              <path d={chart.producedPath} fill="none" stroke={CHART_COLORS.produced} strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+              <path d={chart.rawPath} fill="none" stroke={CHART_COLORS.raw} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+
+              {hoveredIndex !== null && (
+                <line x1={chart.xAt(hoveredIndex)} x2={chart.xAt(hoveredIndex)} y1={chart.top} y2={chart.bottom} stroke="rgba(100,116,139,0.45)" strokeWidth="1.25" strokeDasharray="3 4" />
+              )}
+
+              {chart.data.map((point, index) => {
+                const x = chart.xAt(index);
+                const radius = hoveredIndex === index ? 5.5 : 4;
+                const hitWidth = (chart.right - chart.left) / Math.max(chart.data.length, 1);
+                return (
+                  <g key={`${point.label ?? point.date}-${index}`}>
+                    <circle cx={x} cy={chart.yAt(Number(point.cbgSold ?? 0))} r={radius} fill="#fff" stroke={CHART_COLORS.sold} strokeWidth="2" />
+                    <circle cx={x} cy={chart.yAt(Number(point.cbgProduced ?? 0))} r={radius} fill="#fff" stroke={CHART_COLORS.produced} strokeWidth="2" />
+                    <circle cx={x} cy={chart.yAt(Number(point.rawBiogas ?? 0))} r={radius + 0.5} fill="#fff" stroke={CHART_COLORS.raw} strokeWidth="2.25" />
+                    <rect x={x - hitWidth / 2} y={chart.top} width={hitWidth} height={chart.bottom - chart.top} fill="transparent" onMouseEnter={() => setHoveredIndex(index)} style={{ cursor: 'crosshair' }} />
+                  </g>
+                );
+              })}
+
+              {chart.data.map((point, index) => {
+                const step = Math.max(1, Math.floor((chart.data.length - 1) / 6));
+                if (index % step !== 0 && index !== chart.data.length - 1) return null;
+                return (
+                  <text key={`label-${index}`} x={chart.xAt(index)} y={chart.height - 12} fontSize="11" fontFamily="Inter, system-ui, sans-serif" fontWeight="500" textAnchor="middle" fill="#777">
+                    {point.label ?? ''}
+                  </text>
+                );
+              })}
+            </svg>
+            </Box>
+
+            {activePoint && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 12,
+                  left: `clamp(8px, calc(${tooltipLeft}% - 78px), calc(100% - 168px))`,
+                  width: 156,
+                  px: 1.5,
+                  py: 1.15,
+                  borderRadius: '12px',
+                  bgcolor: 'rgba(15, 23, 42, 0.92)',
+                  color: '#fff',
+                  pointerEvents: 'none',
+                  zIndex: 3,
+                  boxShadow: '0 12px 32px rgba(15,23,42,0.22)',
+                }}
+              >
+                <Typography sx={{ fontSize: 11, fontWeight: 600, mb: 0.75, opacity: 0.7 }}>{activePoint.label ?? activePoint.date ?? '—'}</Typography>
+                {[
+                  { label: 'Raw Biogas', value: activePoint.rawBiogas, unit: 'm³', color: CHART_COLORS.raw },
+                  { label: 'CBG Produced', value: activePoint.cbgProduced, unit: 'kg', color: CHART_COLORS.produced },
+                  { label: 'CBG Sold', value: activePoint.cbgSold, unit: 'kg', color: CHART_COLORS.sold },
+                ].map((item) => (
+                  <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, py: 0.3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.65 }}>
+                      <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: item.color }} />
+                      <Typography sx={{ fontSize: 11, opacity: 0.85 }}>{item.label}</Typography>
+                    </Box>
+                    <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
+                      {(Number(item.value ?? 0) || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })} {item.unit}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
 
 export default function DashboardPage() {
-  const theme = useTheme();
   const isPhone = useMediaQuery('(max-width:768px)');
-  const [filterType, setFilterType] = useState('month');
+  const [filterType, setFilterType] = useState<FilterPeriod>('month');
   // Format numbers: max 2 decimal places (avoid float noise), trim trailing zeros
   const formatNumber = (val: any) => {
     if (val === null || val === undefined) return '0';
@@ -157,7 +562,7 @@ export default function DashboardPage() {
     }
   };
 
-  const filterButtons = [
+  const filterButtons: Array<{ value: FilterPeriod; label: string }> = [
     { value: 'day', label: 'Daily' },
     { value: 'week', label: 'Weekly' },
     { value: 'month', label: 'Monthly' },
@@ -189,6 +594,7 @@ export default function DashboardPage() {
   }
 
   const { summary } = dashboardData;
+  const trends: TrendPoint[] = Array.isArray(dashboardData.trends) ? dashboardData.trends : [];
 
   const periodLabel = filterType === 'week'
     ? `Week ${selectedWeek}, ${selectedYear}`
@@ -200,27 +606,74 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <Box>
+      <Box
+        sx={{
+          maxWidth: 1540,
+          mx: 'auto',
+          p: { xs: 0.25, sm: 0.75 },
+          borderRadius: '24px',
+          background: 'radial-gradient(circle at 0% 0%, rgba(40,121,182,0.05), transparent 28%), radial-gradient(circle at 100% 12%, rgba(125,194,68,0.05), transparent 24%)',
+        }}
+      >
         <Box
-          sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}
+          sx={{
+            mb: 2.5,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
           className="aos-fade-down"
         >
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
-            Dashboard
-          </Typography>
-          {/* Export Report Hidden */}
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#25313C', letterSpacing: '-0.03em' }}>
+              Operations Dashboard
+            </Typography>
+            <Typography sx={{ mt: 0.45, color: '#6B7785', fontSize: { xs: 13, sm: 14 } }}>
+              Plant performance overview · {periodLabel}
+            </Typography>
+          </Box>
+          <Chip
+            label="Live data"
+            size="small"
+            icon={<Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#2EA44F', ml: 1 }} />}
+            sx={{
+              height: 32,
+              px: 0.5,
+              fontWeight: 700,
+              color: '#16783A',
+              bgcolor: 'rgba(46,164,79,0.09)',
+              border: '1px solid rgba(46,164,79,0.2)',
+              '& .MuiChip-icon': { ml: 0.75 },
+            }}
+          />
         </Box>
 
         <Card
-          className="glass-card aos-fade-up aos-delay-100 hover-lift"
-          sx={{ mb: 3 }}
+          className="aos-fade-up aos-delay-100"
+          sx={{
+            mb: 2.5,
+            borderRadius: '16px',
+            border: '1px solid rgba(40,121,182,0.14)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(246,251,255,0.96))',
+            boxShadow: '0 8px 28px rgba(30,75,110,0.07)',
+            overflow: 'visible',
+          }}
         >
-          <CardContent>
+          <CardContent sx={{ p: { xs: 2, md: 2.5 }, '&:last-child': { pb: { xs: 2, md: 2.5 } } }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <FilterIcon sx={{ color: '#2879b6' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
-                Filter Records
-              </Typography>
+              <Box sx={{ width: 34, height: 34, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(40,121,182,0.1)' }}>
+                <FilterIcon sx={{ color: '#2879b6', fontSize: 19 }} />
+              </Box>
+              <Box>
+                <Typography sx={{ fontWeight: 700, color: '#25313C', lineHeight: 1.2 }}>
+                  Reporting Period
+                </Typography>
+                <Typography sx={{ fontSize: 11.5, color: '#7A8793', mt: 0.2 }}>
+                  Choose a period to update all metrics
+                </Typography>
+              </Box>
             </Box>
             <Box sx={{
               mb: 2,
@@ -230,7 +683,17 @@ export default function DashboardPage() {
               scrollbarWidth: 'none',
               msOverflowStyle: 'none'
             }}>
-              <ButtonGroup variant="outlined" sx={{ flexWrap: 'nowrap' }}>
+              <ButtonGroup
+                variant="outlined"
+                sx={{
+                  flexWrap: 'nowrap',
+                  p: 0.5,
+                  bgcolor: 'rgba(40,121,182,0.05)',
+                  borderRadius: '13px',
+                  gap: 0.5,
+                  '& .MuiButtonGroup-grouped:not(:last-of-type)': { borderRightColor: 'rgba(40,121,182,0.16)' },
+                }}
+              >
                 {filterButtons.map((btn) => (
                   <Button
                     key={btn.value}
@@ -244,16 +707,16 @@ export default function DashboardPage() {
                       fontSize: { xs: '0.8rem', sm: '0.875rem' },
                       px: { xs: 1, sm: 2 },
                       backgroundColor: filterType === btn.value ? '#2879b6' : 'transparent',
-                      borderColor: '#2879b6',
+                      borderColor: filterType === btn.value ? '#2879b6' : 'transparent',
                       color: filterType === btn.value ? '#ffffff' : '#2879b6',
-                      borderRadius: '12px',
+                      borderRadius: '10px !important',
                       fontWeight: 600,
+                      boxShadow: filterType === btn.value ? '0 5px 12px rgba(40,121,182,0.2)' : 'none',
                       '&:hover': {
                         backgroundColor: filterType === btn.value ? '#235EAC' : 'rgba(40, 121, 182, 0.08)',
-                        borderColor: '#2879b6',
-                        transform: 'translateY(-2px)',
+                        borderColor: filterType === btn.value ? '#2879b6' : 'transparent',
                       },
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     {btn.label}
@@ -429,21 +892,42 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card-strong aos-fade-up aos-delay-200 hover-lift">
-          <CardContent>
+        <Card
+          className="aos-fade-up aos-delay-200"
+          sx={{
+            borderRadius: '18px',
+            border: '1px solid rgba(40,121,182,0.12)',
+            boxShadow: '0 12px 38px rgba(30,75,110,0.08)',
+            background: 'rgba(255,255,255,0.92)',
+            overflow: 'hidden',
+            '& .hover-lift': {
+              boxShadow: '0 5px 16px rgba(30,75,110,0.06)',
+              borderTop: '1px solid rgba(255,255,255,0.8)',
+              '&:hover': {
+                boxShadow: '0 10px 24px rgba(30,75,110,0.11)',
+                transform: 'translateY(-2px)',
+              },
+            },
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1.5, md: 2.25 }, '&:last-child': { pb: { xs: 1.5, md: 2.25 } } }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
-                MIS Summary - {periodLabel}
-              </Typography>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#25313C', letterSpacing: '-0.01em' }}>
+                  MIS Summary
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: '#7A8793', mt: 0.25 }}>{periodLabel}</Typography>
+              </Box>
               <Chip
                 label="Aggregate"
                 size="small"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
                   background: 'linear-gradient(135deg, #7dc244 0%, #139B49 100%)',
                   color: '#ffffff',
-                  borderRadius: '8px',
+                  borderRadius: '9px',
                   px: 1,
+                  boxShadow: '0 5px 12px rgba(19,155,73,0.18)',
                 }}
               />
             </Box>
@@ -455,7 +939,7 @@ export default function DashboardPage() {
                 mb: 1.5,
                 boxShadow: 'none',
                 border: '1px solid rgba(40, 121, 182, 0.2)',
-                borderRadius: '12px !important',
+                borderRadius: '16px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 backgroundColor: '#fff',
@@ -468,135 +952,70 @@ export default function DashboardPage() {
               <Box
                 className="gradient-header"
                 sx={{
-                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  background: 'linear-gradient(120deg, #236FA8 0%, #1D9AD4 72%, #40B6DF 100%)',
                   color: '#ffffff',
-                  borderRadius: '12px 12px 0 0',
-                  minHeight: '56px',
+                  borderRadius: '16px 16px 0 0',
+                  minHeight: '48px',
                   display: 'flex',
                   alignItems: 'center',
-                  px: 2,
+                  px: 2.25,
+                  boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.16)',
                 }}
               >
-                <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Overall Production Summary</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.01em' }}>Overall Production Summary</Typography>
               </Box>
-              <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+              <Box sx={{ p: { xs: 1.5, md: 2.25 }, backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={3}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.08) 0%, rgba(40, 121, 182, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #2879b6',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            Total Feed
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber(Number(summary.totalFeed ?? 0))} tons
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
-                            Avg per day: {formatNumber(summary.avgFeed ?? 0)} tons ({summary.totalEntries ?? 0} days)
-                          </Typography>
-                        </Box>
-                        <AvgIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    <DashboardMetricCard
+                      title="Total Feed"
+                      value={formatNumber(Number(summary.totalFeed ?? 0))}
+                      unit="tons"
+                      subtitle={`Avg / day ${formatNumber(summary.avgFeed ?? 0)} tons · ${summary.totalEntries ?? 0} days`}
+                      color="#3B82F6"
+                      icon={<AvgIcon />}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={3}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.08) 0%, rgba(40, 121, 182, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #2879b6',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            Total Raw Biogas
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber(summary.totalRawBiogas ?? 0)} m³
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
-                            Avg per day: {formatNumber(summary.avgRawBiogas ?? 0)} m³ ({summary.totalEntries ?? 0} days)
-                          </Typography>
-                        </Box>
-                        <BiogasIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    <DashboardMetricCard
+                      title="Total Raw Biogas"
+                      value={formatNumber(summary.totalRawBiogas ?? 0)}
+                      unit="m³"
+                      subtitle={`Avg / day ${formatNumber(summary.avgRawBiogas ?? 0)} m³ · ${summary.totalEntries ?? 0} days`}
+                      color="#2879B6"
+                      icon={<BiogasIcon />}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={3}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(125, 194, 68, 0.08) 0%, rgba(125, 194, 68, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #7dc244',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            CBG Produced
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {formatNumber(summary.totalCBGProduced ?? 0)} kg
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
-                            Avg per day: {formatNumber(summary.avgCBGProduced ?? 0)} kg ({summary.totalEntries ?? 0} days)
-                          </Typography>
-                        </Box>
-                        <GasIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    <DashboardMetricCard
+                      title="CBG Produced"
+                      value={formatNumber(summary.totalCBGProduced ?? 0)}
+                      unit="kg"
+                      subtitle={`Avg / day ${formatNumber(summary.avgCBGProduced ?? 0)} kg · ${summary.totalEntries ?? 0} days`}
+                      color="#62A93B"
+                      icon={<GasIcon />}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={3}>
-                    <Box
-                      className="hover-lift"
+                    <DashboardMetricCard
+                      title="CBG Sold"
+                      value={formatNumber(summary.totalCBGSold ?? 0)}
+                      unit="kg"
+                      subtitle={`Avg / day ${formatNumber(summary.avgCBGSold ?? 0)} kg · ${summary.totalEntries ?? 0} days`}
+                      color="#EE6A31"
+                      icon={<SellIcon />}
                       onClick={handleCBGSoldClick}
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(238, 106, 49, 0.08) 0%, rgba(238, 106, 49, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #ee6a31',
-                        transition: 'all 0.3s ease',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          backgroundColor: 'rgba(238, 106, 49, 0.12)'
-                        }
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            CBG Sold
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {formatNumber(summary.totalCBGSold ?? 0)} kg
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
-                            Avg per day: {formatNumber(summary.avgCBGSold ?? 0)} kg ({summary.totalEntries ?? 0} days)
-                          </Typography>
-                        </Box>
-                        <SellIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    />
                   </Grid>
                 </Grid>
               </Box>
             </Box>
+
+            <ProductionTrendChart
+              trends={trends}
+              filterType={filterType}
+              year={selectedYear}
+            />
 
             {/* Fertilizer & Plant Availability */}
             <Box
@@ -605,7 +1024,7 @@ export default function DashboardPage() {
                 mb: 1.5,
                 boxShadow: 'none',
                 border: '1px solid rgba(125, 194, 68, 0.36)',
-                borderRadius: '12px !important',
+                borderRadius: '16px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 backgroundColor: '#fff',
@@ -617,18 +1036,19 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  background: 'linear-gradient(120deg, #236FA8 0%, #1D9AD4 72%, #40B6DF 100%)',
                   color: '#ffffff',
-                  borderRadius: '12px 12px 0 0',
-                  minHeight: '56px',
+                  borderRadius: '16px 16px 0 0',
+                  minHeight: '48px',
                   display: 'flex',
                   alignItems: 'center',
-                  px: 2,
+                  px: 2.25,
+                  boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.16)',
                 }}
               >
-                <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Fertilizer & Plant Availability</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.01em' }}>Fertilizer & Plant Availability</Typography>
               </Box>
-              <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+              <Box sx={{ p: { xs: 1.5, md: 2.25 }, backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>
                 <Grid container spacing={2}>
                   {/* Avg Availability - commented out for now
                   <Grid item xs={12} sm={4}>
@@ -644,72 +1064,38 @@ export default function DashboardPage() {
                   </Grid>
                   */}
                   <Grid item xs={12} sm={6}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.08) 0%, rgba(40, 121, 182, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #2879b6',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            FOM Produced
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber(summary.totalFOMProduced ?? 0)} kg
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
-                            Avg per day: {formatNumber(summary.avgFOMProduced ?? 0)} kg
-                          </Typography>
-                        </Box>
-                        <FomIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    <DashboardMetricCard
+                      title="FOM Produced"
+                      value={formatNumber(summary.totalFOMProduced ?? 0)}
+                      unit="kg"
+                      subtitle={`Avg / day ${formatNumber(summary.avgFOMProduced ?? 0)} kg`}
+                      color="#2879B6"
+                      icon={<FomIcon />}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(238, 106, 49, 0.08) 0%, rgba(238, 106, 49, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #ee6a31',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            FOM Sold
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#ee6a31', mt: 0.5 }}>
-                            {formatNumber(summary.totalFOMSold ?? 0)} kg
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#666', display: 'block', mt: 0.5 }}>
-                            Avg per day: {formatNumber(summary.avgFOMSold ?? 0)} kg
-                          </Typography>
-                        </Box>
-                        <StoreIcon sx={{ fontSize: 32, color: '#ee6a31', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    <DashboardMetricCard
+                      title="FOM Sold"
+                      value={formatNumber(summary.totalFOMSold ?? 0)}
+                      unit="kg"
+                      subtitle={`Avg / day ${formatNumber(summary.avgFOMSold ?? 0)} kg`}
+                      color="#EE6A31"
+                      icon={<StoreIcon />}
+                    />
                   </Grid>
                 </Grid>
               </Box>
             </Box>
 
             {/* Input/Output per day & Sold per day & Petrol/Diesel — hidden for now */}
-            {false && (
+            {SHOW_DAILY_AVERAGES && (
             <Box
               className="aos-fade-right aos-delay-450"
               sx={{
                 mb: 1.5,
                 boxShadow: 'none',
                 border: '1px solid rgba(125, 194, 68, 0.36)',
-                borderRadius: '12px !important',
+                borderRadius: '16px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 backgroundColor: '#fff',
@@ -807,7 +1193,7 @@ export default function DashboardPage() {
               sx={{
                 boxShadow: 'none',
                 border: '1px solid rgba(238, 106, 49, 0.2)',
-                borderRadius: '12px !important',
+                borderRadius: '16px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 backgroundColor: '#fff',
@@ -819,66 +1205,38 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  background: 'linear-gradient(120deg, #236FA8 0%, #1D9AD4 72%, #40B6DF 100%)',
                   color: '#ffffff',
-                  borderRadius: '12px 12px 0 0',
-                  minHeight: '56px',
+                  borderRadius: '16px 16px 0 0',
+                  minHeight: '48px',
                   display: 'flex',
                   alignItems: 'center',
-                  px: 2,
+                  px: 2.25,
+                  boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.16)',
                 }}
               >
-                <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Utilities & HSE Summary</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.01em' }}>Utilities & HSE Summary</Typography>
               </Box>
-              <Box sx={{ p: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+              <Box sx={{ p: { xs: 1.5, md: 2.25 }, backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.08) 0%, rgba(40, 121, 182, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #2879b6',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            Electricity Consumption
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#2879b6', mt: 0.5 }}>
-                            {formatNumber(summary.totalElectricityConsumption ?? 0)} kWh
-                          </Typography>
-                        </Box>
-                        <BoltIcon sx={{ fontSize: 32, color: '#2879b6', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    <DashboardMetricCard
+                      title="Electricity Consumption"
+                      value={formatNumber(summary.totalElectricityConsumption ?? 0)}
+                      unit="kWh"
+                      subtitle="Total usage for selected period"
+                      color="#2879B6"
+                      icon={<BoltIcon />}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Box
-                      className="hover-lift"
-                      sx={{
-                        p: 2.5,
-                        background: 'linear-gradient(135deg, rgba(125, 194, 68, 0.08) 0%, rgba(125, 194, 68, 0.03) 100%)',
-                        borderRadius: '12px',
-                        borderLeft: '4px solid #7dc244',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#58595B', fontWeight: 500 }}>
-                            HSE Incidents
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 700, color: '#7dc244', mt: 0.5 }}>
-                            {formatNumber(summary.totalHSEIncidents ?? 0)}
-                          </Typography>
-                        </Box>
-                        <SafetyIcon sx={{ fontSize: 32, color: '#7dc244', opacity: 0.7 }} />
-                      </Box>
-                    </Box>
+                    <DashboardMetricCard
+                      title="HSE Incidents"
+                      value={formatNumber(summary.totalHSEIncidents ?? 0)}
+                      subtitle={Number(summary.totalHSEIncidents ?? 0) === 0 ? 'All systems safe' : 'Review incident records'}
+                      color={Number(summary.totalHSEIncidents ?? 0) === 0 ? '#62A93B' : '#EE6A31'}
+                      icon={<SafetyIcon />}
+                    />
                   </Grid>
                 </Grid>
               </Box>
