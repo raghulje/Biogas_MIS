@@ -48,6 +48,7 @@ import {
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
 import { adminService } from '../../services/adminService';
+import SamlSettingsPanel from './SamlSettingsPanel';
 import MESSAGES from '../../utils/messages';
 
 interface TabPanelProps {
@@ -2021,6 +2022,7 @@ export default function AdminPage() {
               <Tab label="MIS Entry Email" />
               <Tab label="Final MIS Report Email" />
               <Tab label="Email delivery logs" />
+              <Tab label="SAML Configuration" />
             </Tabs>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: isPhone ? 'column' : 'row', alignItems: isPhone ? 'stretch' : 'center', gap: 2, p: 2 }}>
@@ -3377,6 +3379,11 @@ export default function AdminPage() {
           <TabPanel value={tabValue} index={6}>
             <CardContent sx={{ p: 3 }}>
               <EmailDeliveryLogsPanel />
+            </CardContent>
+          </TabPanel>
+          <TabPanel value={tabValue} index={7}>
+            <CardContent sx={{ p: 3 }}>
+              <SamlSettingsPanel />
             </CardContent>
           </TabPanel>
         </Card>

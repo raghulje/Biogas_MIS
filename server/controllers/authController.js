@@ -24,6 +24,8 @@ const emailService = require('../services/emailService');
 // Prefer explicit FRONTEND_URL, then CLIENT_ORIGIN (legacy), else localhost for dev
 const FRONTEND_URL = process.env.FRONTEND_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3015';
 
+exports.generateTokens = generateTokens;
+
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body || {};

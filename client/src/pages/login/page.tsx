@@ -34,6 +34,8 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState('');
+  const [ssoHref, setSsoHref] = useState('');
+  const [ssoLabel, setSsoLabel] = useState('Continue with RefexOne');
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -43,6 +45,18 @@ export default function LoginPage() {
     }
 
     window.scrollTo(0, 0);
+    const apiBase = import.meta.env.DEV
+      ? '/api'
+      : (import.meta.env.VITE_API_URL || `${window.location.origin}/api`);
+    fetch(`${apiBase}/auth/saml/status`)
+      .then((response) => response.json())
+      .then((status: { enabled?: boolean; idp_configured?: boolean; label?: string; login_path?: string }) => {
+        if (!status.enabled || !status.idp_configured) return;
+        const path = status.login_path || '/api/auth/saml/login';
+        setSsoHref(`${path}?returnTo=${encodeURIComponent('/dashboard')}`);
+        if (status.label) setSsoLabel(status.label);
+      })
+      .catch(() => undefined);
   }, [isAuthenticated, navigate]);
 
   if (!authLoading && isAuthenticated) {
@@ -268,6 +282,14 @@ export default function LoginPage() {
                 </>
               )}
             </button>
+            {ssoHref ? (
+              <a
+                href={ssoHref}
+                className="w-full mt-3 border border-[#2879b6] text-[#2879b6] py-3.5 rounded-lg font-semibold hover:bg-[#2879b6] hover:text-white transition-all duration-200 flex items-center justify-center text-sm"
+              >
+                {ssoLabel}
+              </a>
+            ) : null}
           </form>
 
           {/* Footer */}

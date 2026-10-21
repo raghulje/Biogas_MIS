@@ -57,7 +57,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const dummyUser = user || { name: 'Demo User', role: 'Admin' };
   const { loginAt } = useAuth();
   const theme = useTheme();
@@ -106,8 +106,7 @@ export const Layout = ({ children }: LayoutProps) => {
   };
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    navigate('/logout');
   };
 
   // Only users with role name 'Admin' should see admin menus.

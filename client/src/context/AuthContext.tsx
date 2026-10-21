@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useCallback, useContext, useState, ReactNode, useEffect } from 'react';
 import { authService } from '../services/authService';
 
 interface User {
@@ -15,7 +15,8 @@ interface AuthContextType {
   token: string | null;
   loginAt?: string | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  establishSession: (accessToken: string) => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
   hasPermission: (resource: string, action: string) => boolean;
@@ -77,7 +78,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoginAt(at);
   };
 
-  const logout = async () => {
+  const establishSession = useCallback((accessToken: string) => {
+    localStorage.setItem('token', accessToken);
+    const at = new Date().toISOString();
+    localStorage.setItem('loginAt', at);
+    setLoginAt(at);
+    setToken(accessToken);
+  }, []);
+
+  const logout = useCallback(async () => {
     try {
       await authService.logout();
     } catch (e) {
@@ -87,7 +96,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('loginAt');
     setToken(null);
     setUser(null);
-  };
+    setLoginAt(null);
+  }, []);
 
   // Auto-logout after session duration (default: 1 hour)
   useEffect(() => {
@@ -128,6 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         token,
         loginAt,
         login,
+        establishSession,
         logout,
         isAuthenticated: !!token,
         loading,

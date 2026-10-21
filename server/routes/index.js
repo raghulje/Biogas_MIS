@@ -19,6 +19,7 @@ router.get('/health', (req, res) => {
     });
 });
 
+router.use('/auth/saml', require('./samlRoutes'));
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
 router.use('/customers', require('./customerRoutes'));

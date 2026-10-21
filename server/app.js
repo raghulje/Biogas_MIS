@@ -49,7 +49,7 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(morgan('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
 
 // Routes
 // Health check (useful for load balancers / reverse proxies)

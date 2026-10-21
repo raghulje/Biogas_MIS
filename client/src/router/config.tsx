@@ -5,6 +5,8 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
 
 const LoginPage = lazy(() => import('../pages/login/page'));
+const SsoCallbackPage = lazy(() => import('../pages/login/SsoCallback'));
+const LogoutPage = lazy(() => import('../pages/logout/page'));
 const ResetPasswordPage = lazy(() => import('../pages/reset-password/page'));
 const DashboardPage = lazy(() => import('../pages/dashboard/page'));
 const MISEntryPage = lazy(() => import('../pages/mis-entry/page'));
@@ -27,6 +29,22 @@ const routes: RouteObject[] = [
   {
     path: '/',
     element: <Navigate to="/dashboard" replace />,
+  },
+  {
+    path: '/login/sso/callback',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <SsoCallbackPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/logout',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <LogoutPage />
+      </Suspense>
+    ),
   },
   {
     path: '/login',
