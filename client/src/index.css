@@ -283,4 +283,81 @@ body {
     max-height: calc(100% - 32px) !important;
     border-radius: 20px !important;
   }
+
+  .page-actions {
+    width: 100%;
+  }
+
+  .page-actions .MuiButton-root,
+  .page-actions > label,
+  .page-actions > label .MuiButton-root {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .gradient-bg,
+  main {
+    max-width: 100%;
+  }
+
+  .glass-card,
+  .glass-card-strong,
+  .hover-lift {
+    max-width: 100%;
+  }
+
+  .MuiTableContainer-root {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .MuiTypography-h4 {
+    font-size: 1.45rem !important;
+    line-height: 1.25 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .notistack-SnackbarContainer {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .MuiTypography-h4 {
+    font-size: 1.28rem !important;
+  }
+
+  .MuiTypography-h5,
+  .MuiTypography-h6 {
+    overflow-wrap: anywhere;
+  }
+
+  .MuiCardContent-root {
+    padding: 16px;
+  }
+
+  .MuiCardContent-root:last-child {
+    padding-bottom: 16px;
+  }
+
+  .MuiDialogActions-root {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .MuiTabs-root {
+    max-width: 100%;
+  }
+}
+
+@media (hover: none) {
+  .glass-card:hover,
+  .glass-card-strong:hover,
+  .hover-lift:hover {
+    transform: none;
+  }
 }

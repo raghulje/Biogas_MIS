@@ -165,6 +165,8 @@ export default function LoginPage() {
             </div>
             <Dialog
               open={forgotOpen}
+              fullWidth
+              maxWidth="xs"
               onClose={() => { if (!forgotLoading) setForgotOpen(false); }}
               PaperProps={{
                 sx: {
@@ -172,7 +174,9 @@ export default function LoginPage() {
                   backdropFilter: 'blur(6px)',
                   borderRadius: 3,
                   p: 2,
-                  minWidth: 360
+                  width: { xs: '100%', sm: 420 },
+                  minWidth: 0,
+                  maxWidth: '100%',
                 }
               }}
             >

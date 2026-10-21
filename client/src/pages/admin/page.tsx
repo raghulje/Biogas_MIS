@@ -441,7 +441,7 @@ function FinalMISReportEmailPanel({
   }, []);
   useEffect(() => { loadConfig(); }, [loadConfig]);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const addEmail = () => {
     const trimmed = newEmail.trim().toLowerCase();
@@ -681,7 +681,7 @@ function FinalMISReportEmailPanel({
 
 function EmailDeliveryLogsPanel() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isCompact = useMediaQuery(theme.breakpoints.down('lg'));
   const [rows, setRows] = useState<
     {
       id: number;
@@ -737,7 +737,7 @@ function EmailDeliveryLogsPanel() {
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Each row is one SMTP attempt logged by the server (sent or failed). Final MIS scheduled sends include the report date range in the subject when available. If you see failures, open SMTP Configuration and check the server console.
       </Typography>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: isCompact ? 'column' : 'row', flexWrap: 'wrap', gap: 2, alignItems: isCompact ? 'stretch' : 'center', mb: 2 }}>
         <TextField
           select
           size="small"
@@ -747,7 +747,8 @@ function EmailDeliveryLogsPanel() {
             setEntityFilter(e.target.value);
             setPage(0);
           }}
-          sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+          fullWidth={isCompact}
+          sx={{ minWidth: isCompact ? 0 : 220, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
         >
           <MenuItem value="">All</MenuItem>
           <MenuItem value="FinalMISReportConfig">Final MIS report</MenuItem>
@@ -760,12 +761,53 @@ function EmailDeliveryLogsPanel() {
           onClick={() => load()}
           disabled={loading}
           sx={{ textTransform: 'none', borderRadius: '12px' }}
+          fullWidth={isCompact}
         >
           Refresh
         </Button>
       </Box>
+      {isCompact ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          {rows.length === 0 && !loading && (
+            <Typography variant="body2" color="text.secondary">No log rows yet, or nothing matches this filter.</Typography>
+          )}
+          {rows.map((r) => (
+            <Card key={r.id} variant="outlined" sx={{ borderRadius: '14px' }}>
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{r.sent_at ? new Date(r.sent_at).toLocaleString() : '—'}</Typography>
+                  <Chip
+                    size="small"
+                    label={r.status === 'sent' ? 'Sent' : 'Failed'}
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: r.status === 'sent' ? 'rgba(19, 155, 73, 0.12)' : 'rgba(238, 106, 49, 0.12)',
+                      color: r.status === 'sent' ? '#139B49' : '#ee6a31',
+                    }}
+                  />
+                </Box>
+                <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{r.recipient || '—'}</Typography>
+                <Typography variant="body2" sx={{ color: '#58595B', wordBreak: 'break-word', mt: 0.5 }}>{r.subject || '—'}</Typography>
+                <Typography variant="caption" sx={{ display: 'block', mt: 0.75 }}>{formatSource(r.entity_type)}</Typography>
+                {r.error_message ? (
+                  <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5, wordBreak: 'break-word' }}>{r.error_message}</Typography>
+                ) : null}
+              </CardContent>
+            </Card>
+          ))}
+          <TablePagination
+            component="div"
+            count={total}
+            page={page}
+            onPageChange={(_, p) => setPage(p)}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[rowsPerPage]}
+            labelDisplayedRows={({ from, to, count }) => `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`}
+          />
+        </Box>
+      ) : (
       <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxWidth: '100%' }}>
-        <Table size="small" sx={{ minWidth: isMobile ? 600 : undefined }}>
+        <Table size="small">
           <TableHead>
             <TableRow sx={{ backgroundColor: 'rgba(40, 121, 182, 0.06)' }}>
               <TableCell sx={{ fontWeight: 600 }}>Time (server)</TableCell>
@@ -822,6 +864,7 @@ function EmailDeliveryLogsPanel() {
           labelDisplayedRows={({ from, to, count }) => `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`}
         />
       </TableContainer>
+      )}
     </Box>
   );
 }
@@ -1003,9 +1046,9 @@ const Transition = React.forwardRef(function Transition(
 
 export default function AdminPage() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  // Explicit mobile breakpoint required by project (<=768px)
-  const isPhone = useMediaQuery('(max-width:768px)');
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  // Phone and tablet share the stacked admin layout. Desktop tables start at lg.
+  const isPhone = isMobile;
   const [tabValue, setTabValue] = useState(0);
   const [openUserDialog, setOpenUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -2077,7 +2120,7 @@ export default function AdminPage() {
                 </Button>
               </Box>
 
-              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', md: 'block' } }}>
+              <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', lg: 'block' } }}>
                 <Table>
                   <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                     <TableRow>
@@ -2128,7 +2171,7 @@ export default function AdminPage() {
                 </Table>
               </TableContainer>
               {/* Mobile Card List View for Users */}
-              <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2, mt: 2 }}>
+              <Box sx={{ display: { xs: 'flex', lg: 'none' }, flexDirection: 'column', gap: 2, mt: 2 }}>
                 {users.map(user => (
                   <Card key={user.id} variant="outlined" sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                     <CardContent sx={{ p: 2 }}>
@@ -2180,11 +2223,11 @@ export default function AdminPage() {
 
           <TabPanel value={tabValue} index={1}>
             <CardContent sx={{ p: isPhone ? 2 : 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: isPhone ? 'stretch' : 'center', flexDirection: isPhone ? 'column' : 'row', gap: isPhone ? 1.5 : 0, mb: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                   User Activity Logs
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexDirection: isPhone ? 'column' : 'row' }}>
                   <Button
                     variant="outlined"
                     startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
@@ -2201,6 +2244,7 @@ export default function AdminPage() {
                         backgroundColor: 'rgba(40, 121, 182, 0.05)',
                       },
                     }}
+                    fullWidth={isPhone}
                   >
                     Refresh
                   </Button>
@@ -2215,6 +2259,7 @@ export default function AdminPage() {
                       color: '#fff',
                       whiteSpace: 'nowrap',
                     }}
+                    fullWidth={isPhone}
                   >
                     Export Logs
                   </Button>
@@ -2658,7 +2703,7 @@ export default function AdminPage() {
           <TabPanel value={tabValue} index={2}>
             <CardContent sx={{ p: isPhone ? 2 : 3 }}>
               <ErrorBoundary>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: isPhone ? 'stretch' : 'center', flexDirection: isPhone ? 'column' : 'row', gap: isPhone ? 1.5 : 0, mb: 3 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
                     Email Templates
                   </Typography>
@@ -2673,6 +2718,7 @@ export default function AdminPage() {
                       color: '#fff',
                       whiteSpace: 'nowrap',
                     }}
+                    fullWidth={isPhone}
                   >
                     Create Template
                   </Button>
@@ -2695,7 +2741,7 @@ export default function AdminPage() {
                 )}
 
                 {/* Mobile SMTP card (phone only) */}
-                <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 2 }}>
+                <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 2 }}>
                   <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                     <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
                       SMTP Settings
@@ -2722,7 +2768,7 @@ export default function AdminPage() {
                   </Card>
                 </Box>
 
-                <Grid container spacing={3} sx={{ display: { xs: 'none', md: 'flex' } }}>
+                <Grid container spacing={3} sx={{ display: { xs: 'none', lg: 'flex' } }}>
                   {emailTemplates.map((template, index) => (
                     <Grid item xs={12} md={6} key={template.id}>
                       <Card
@@ -2836,7 +2882,7 @@ export default function AdminPage() {
                   ))}
                 </Grid>
                 {/* Mobile list for email templates */}
-                <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 2 }}>
+                <Box sx={{ display: { xs: 'block', lg: 'none' }, mt: 2 }}>
                   {emailTemplates.map((template) => (
                     <Card key={`tmpl-mobile-${template.id}`} variant="outlined" sx={{ mb: 2, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                       <CardContent sx={{ p: 2 }}>
@@ -3485,7 +3531,7 @@ export default function AdminPage() {
               Assign access per page for this user. These permissions apply only to this user and are the primary way to manage access.
             </Typography>
 
-            <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', md: 'block' } }}>
+            <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', lg: 'block' } }}>
               <Table size="small">
                 <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                   <TableRow>
@@ -3562,7 +3608,7 @@ export default function AdminPage() {
             </TableContainer>
 
             {/* Mobile Stacked List for Permissions */}
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: { xs: 'flex', lg: 'none' }, flexDirection: 'column', gap: 2 }}>
               {userPermissions.map((perm, index) => (
                 <Card key={perm.page} variant="outlined" sx={{ borderRadius: '12px', p: 2 }}>
                   <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>

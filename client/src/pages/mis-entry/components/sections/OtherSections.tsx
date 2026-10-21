@@ -40,7 +40,7 @@ export default function OtherSections({ isReadOnly }: Props) {
         <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Fertilizer</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="FOM Produced" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.fomProduced')} disabled={isReadOnly} /></Grid>
             <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Inventory" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('fertilizer.inventory')} disabled={isReadOnly} /></Grid>
@@ -60,7 +60,7 @@ export default function OtherSections({ isReadOnly }: Props) {
         <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Utilities and Power</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Electricity Consumption (KWH)" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('utilities.electricityConsumption')} disabled={isReadOnly} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Specific Power Consumption" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('utilities.specificPowerConsumption')} disabled={isReadOnly} /></Grid>
@@ -73,7 +73,7 @@ export default function OtherSections({ isReadOnly }: Props) {
         <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Manpower</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Refex SREL" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('manpower.refexSrelStaff')} disabled={isReadOnly} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Third Party" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('manpower.thirdPartyStaff')} disabled={isReadOnly} /></Grid>
@@ -86,7 +86,7 @@ export default function OtherSections({ isReadOnly }: Props) {
         <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Plant Availability</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Working Hours" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('plantAvailability.workingHours')} disabled={isReadOnly} /></Grid>
             <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Scheduled Downtime" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('plantAvailability.scheduledDowntime')} disabled={isReadOnly} /></Grid>
@@ -101,15 +101,15 @@ export default function OtherSections({ isReadOnly }: Props) {
         <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Health, Safety & Environment (HSE)</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Safety LTI" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.safetyLti')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Near Misses" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.nearMisses')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="First Aid" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.firstAid')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Reportable Incidents" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.reportableIncidents')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="MTI" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.mti')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Other Incidents" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.otherIncidents')} disabled={isReadOnly} /></Grid>
-            <Grid item xs={6} sm={4} md={3}><TextField fullWidth label="Fatalities" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.fatalities')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Safety LTI" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.safetyLti')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Near Misses" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.nearMisses')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="First Aid" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.firstAid')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Reportable Incidents" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.reportableIncidents')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="MTI" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.mti')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Other Incidents" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.otherIncidents')} disabled={isReadOnly} /></Grid>
+            <Grid item xs={12} sm={6} md={3}><TextField fullWidth label="Fatalities" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('hse.fatalities')} disabled={isReadOnly} /></Grid>
           </Grid>
         </Box>
       </Box>
@@ -119,7 +119,7 @@ export default function OtherSections({ isReadOnly }: Props) {
         <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Remarks</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <TextField
             fullWidth
             label="Breakdown Reason / Other Remarks"

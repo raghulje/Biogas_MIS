@@ -14,10 +14,14 @@ import {
   Chip,
   TextField,
   Grid,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { Layout } from '../../components/Layout';
 
 export default function AuditLogsPage() {
+  const theme = useTheme();
+  const isCompact = useMediaQuery(theme.breakpoints.down('lg'));
   const mockLogs = [
     {
       id: 1,
@@ -90,6 +94,33 @@ export default function AuditLogsPage() {
           </CardContent>
         </Card>
 
+        {isCompact ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {mockLogs.map((log) => (
+              <Card key={log.id} sx={{ borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'flex-start' }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 700 }}>{log.action}</Typography>
+                      <Typography variant="body2" color="text.secondary">{log.user}</Typography>
+                    </Box>
+                    <Chip
+                      label={log.status}
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                        backgroundColor: log.status === 'Success' ? '#7dc244' : '#ee6a31',
+                        color: '#ffffff',
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="body2" sx={{ mt: 1 }}>{log.details}</Typography>
+                  <Typography variant="caption" color="text.secondary">{log.timestamp}</Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        ) : (
         <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <CardContent>
             <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #e0e0e0' }}>
@@ -128,6 +159,7 @@ export default function AuditLogsPage() {
             </TableContainer>
           </CardContent>
         </Card>
+        )}
       </Box>
     </Layout>
   );

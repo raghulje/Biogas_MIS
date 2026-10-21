@@ -282,7 +282,7 @@ export default function MISFormView({
             gap: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flexWrap: 'wrap' }}>
             <IconButton
               onClick={onBackToList}
               sx={{
@@ -293,7 +293,7 @@ export default function MISFormView({
             >
               <ArrowBackIcon sx={{ color: '#2879b6' }} />
             </IconButton>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6', fontSize: { xs: '1.25rem', sm: '1.75rem' }, lineHeight: 1.25 }}>
               {viewMode === 'create'
                 ? 'Create New MIS Entry'
                 : viewMode === 'edit'

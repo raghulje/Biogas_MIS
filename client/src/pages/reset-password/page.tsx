@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 480, mx: 'auto', mt: 6, p: 3 }}>
+    <Box sx={{ maxWidth: 480, width: '100%', mx: 'auto', mt: { xs: 3, sm: 6 }, p: { xs: 2, sm: 3 } }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
         Reset password
       </Typography>
@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
         <input type="hidden" value={token} onChange={(e) => setToken(e.target.value)} aria-hidden="true" />
         <TextField fullWidth label="New password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} sx={{ mb: 2 }} />
         <TextField fullWidth label="Confirm password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} sx={{ mb: 2 }} />
-        <Button type="submit" variant="contained" disabled={loading}>
+        <Button type="submit" variant="contained" disabled={loading} fullWidth sx={{ minHeight: 44 }}>
           Reset password
         </Button>
       </form>

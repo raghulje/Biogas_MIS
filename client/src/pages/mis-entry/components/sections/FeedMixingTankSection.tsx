@@ -64,7 +64,7 @@ export default function FeedMixingTankSection({ isReadOnly }: Props) {
         <Typography sx={{ fontWeight: 600, color: '#333' }}>Feed Mixing Tank</Typography>
       </Box>
 
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>
         {/* Pressmud Feed (moved to first row) */}
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#555' }}>
           Pressmud Feed

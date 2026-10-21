@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   Button,
-  ButtonGroup,
   Select,
   MenuItem,
   FormControl,
@@ -142,7 +141,7 @@ function formatMaybeFixed(value: number | null | undefined, digits: number): str
 
 const FinalMISPage = () => {
   const theme = useTheme();
-  const isPhone = useMediaQuery('(max-width:768px)');
+  const isPhone = useMediaQuery(theme.breakpoints.down('lg'));
   const [filterType, setFilterType] = useState<FilterType>('single');
   const [singleDate, setSingleDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(() => {
@@ -1234,7 +1233,7 @@ const FinalMISPage = () => {
             background:
               'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
             borderRadius: '16px',
-            p: 3,
+            p: { xs: 2, sm: 3 },
             mb: 3,
             boxShadow: '0 4px 20px rgba(40, 121, 182, 0.2)',
             opacity: isAnimated ? 1 : 0,
@@ -1787,7 +1786,7 @@ const FinalMISPage = () => {
           </Box>
 
           <Box sx={{ mb: 2 }}>
-            <ButtonGroup variant="outlined" sx={{ flexWrap: 'wrap', gap: 0 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {filterButtons.map((btn) => (
                 <Button
                   key={btn.value}
@@ -1795,7 +1794,8 @@ const FinalMISPage = () => {
                   variant={filterType === btn.value ? 'contained' : 'outlined'}
                   sx={{
                     textTransform: 'none',
-                    minWidth: { xs: '72px', sm: '90px' },
+                    flex: { xs: '1 1 calc(33% - 8px)', sm: '0 0 auto' },
+                    minWidth: { xs: 0, sm: 90 },
                     backgroundColor: filterType === btn.value ? '#2879b6' : 'transparent',
                     borderColor: '#2879b6',
                     color: filterType === btn.value ? '#fff' : '#2879b6',
@@ -1806,10 +1806,10 @@ const FinalMISPage = () => {
                   {btn.label}
                 </Button>
               ))}
-            </ButtonGroup>
+            </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-end' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: { xs: 'stretch', sm: 'flex-end' }, flexDirection: { xs: 'column', sm: 'row' }, '& .MuiFormControl-root': { width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 0, sm: 160 } } }}>
             {filterType === 'single' && (
               <TextField
                 type="date"
@@ -1925,7 +1925,7 @@ const FinalMISPage = () => {
               </>
             )}
 
-            <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', ml: { xs: 0, sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
               <Chip label="Today" size="small" onClick={() => { setFilterType('single'); setSingleDate(new Date().toISOString().split('T')[0]); }} sx={{ cursor: 'pointer' }} />
               <Chip label="This Week" size="small" onClick={() => { setFilterType('week'); setSingleDate(new Date().toISOString().split('T')[0]); }} sx={{ cursor: 'pointer' }} />
               <Chip label="This Month" size="small" onClick={() => { setFilterType('month'); setSelectedMonth(new Date().toISOString().slice(0, 7)); }} sx={{ cursor: 'pointer' }} />

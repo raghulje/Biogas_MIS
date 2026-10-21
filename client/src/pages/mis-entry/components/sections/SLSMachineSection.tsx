@@ -39,7 +39,7 @@ export default function SLSMachineSection({ isReadOnly }: Props) {
         <Typography sx={{ fontWeight: 600, color: '#333' }}>SLS Machine</Typography>
       </Box>
 
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
             <TextField fullWidth label="Water Consumption" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('slsMachine.waterConsumption')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />

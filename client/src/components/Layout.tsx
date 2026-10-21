@@ -303,12 +303,13 @@ export const Layout = ({ children }: LayoutProps) => {
           paddingTop: 'env(safe-area-inset-top, 0px)',
         }}
       >
-        <Toolbar sx={{ py: 1, minHeight: { xs: 56, sm: 64 } }}>
+        <Toolbar sx={{ py: 0.5, px: { xs: 1, sm: 2 }, gap: 0.5, minHeight: { xs: 56, sm: 64 } }}>
           <IconButton
             color="inherit"
+            aria-label="Open menu"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ display: { md: 'none' }, width: 44, height: 44 }}
           >
             <MenuIcon />
           </IconButton>
@@ -316,9 +317,10 @@ export const Layout = ({ children }: LayoutProps) => {
             variant="h6"
             noWrap
             component="div"
-            sx={{ flexGrow: 1, fontWeight: 700, color: '#2879b6' }}
+            sx={{ flexGrow: 1, minWidth: 0, fontWeight: 700, color: '#2879b6', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}
           >
-            Industrial Biogas Plant MIS
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Industrial Biogas Plant MIS</Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Biogas MIS</Box>
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
@@ -377,6 +379,16 @@ export const Layout = ({ children }: LayoutProps) => {
                 },
               }}
             >
+              <MenuItem disabled sx={{ opacity: '1 !important', display: { sm: 'none' }, flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'normal' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#333842' }}>{dummyUser.name}</Typography>
+                <Typography variant="caption" sx={{ color: '#58595B' }}>
+                  {typeof dummyUser.role === 'string' ? dummyUser.role : (dummyUser.role?.name || 'User')}
+                </Typography>
+                {loginAt && (
+                  <Typography variant="caption" sx={{ color: '#64748b' }}>Session {formatElapsed(elapsed)}</Typography>
+                )}
+              </MenuItem>
+              <Divider sx={{ display: { sm: 'none' }, my: 0.5 }} />
               <MenuItem onClick={handleLogout} sx={{ borderRadius: '8px', mx: 1 }}>
                 <LogoutIcon sx={{ mr: 1.5, fontSize: 20, color: '#ee6a31' }} />
                 Logout
@@ -398,7 +410,7 @@ export const Layout = ({ children }: LayoutProps) => {
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: drawerWidth,
+              width: 'min(280px, 88vw)',
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
@@ -433,8 +445,11 @@ export const Layout = ({ children }: LayoutProps) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 1.5, sm: 3 },
-          width: { md: `calc(100% - ${currentDrawerWidth}px)` },
+          minWidth: 0,
+          maxWidth: '100%',
+          overflowX: 'clip',
+          p: { xs: 1.5, sm: 2, md: 3 },
+          width: { xs: '100%', md: `calc(100% - ${currentDrawerWidth}px)` },
             mt: { xs: 'calc(56px + env(safe-area-inset-top, 0px))', sm: 'calc(64px + env(safe-area-inset-top, 0px))' },
             minHeight: 'calc(100vh - 64px)',
             paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',

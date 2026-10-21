@@ -90,7 +90,7 @@ export default function ConsolidatedMISV2Page() {
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#333842' }}>
             Consolidated MIS v2
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: { xs: 'stretch', md: 'center' }, flexWrap: 'wrap', flexDirection: { xs: 'column', md: 'row' }, width: { xs: '100%', md: 'auto' }, '& .MuiFormControl-root, & .MuiTextField-root, & .MuiButton-root': { width: { xs: '100%', md: 'auto' } } }}>
             <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel>Filter by</InputLabel>
               <Select
@@ -146,6 +146,9 @@ export default function ConsolidatedMISV2Page() {
 
         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
+        <Typography sx={{ display: { lg: 'none' }, mb: 1, fontSize: 13, color: '#64748b' }}>
+          Swipe sideways to see the full report.
+        </Typography>
         <Paper
           elevation={0}
           sx={{

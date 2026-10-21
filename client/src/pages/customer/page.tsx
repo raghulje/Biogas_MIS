@@ -62,7 +62,7 @@ const CUSTOMER_TYPES = [
 
 export default function CustomerPage() {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
     const { user, hasPermission } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
     const canCreate = hasPermission('customer', 'create');
@@ -210,6 +210,7 @@ export default function CustomerPage() {
                             variant="contained"
                             startIcon={<AddIcon />}
                             onClick={() => handleOpen()}
+                            fullWidth={isMobile}
                             sx={{
                                 borderRadius: '12px',
                                 background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
@@ -262,7 +263,47 @@ export default function CustomerPage() {
                     </Box>
                 </Card>
 
-                {/* Data Table */}
+                {isMobile ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        {loading ? (
+                            <Typography align="center" sx={{ py: 3 }}>Loading...</Typography>
+                        ) : customers.length === 0 ? (
+                            <Typography align="center" sx={{ py: 3 }}>No customers found.</Typography>
+                        ) : customers.map((customer) => (
+                            <Card key={customer.id} sx={{ borderRadius: '14px', border: '1px solid rgba(0,0,0,0.08)' }}>
+                                <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'flex-start' }}>
+                                        <Box sx={{ minWidth: 0 }}>
+                                            <Typography sx={{ fontWeight: 700, color: '#334155' }}>{customer.name}</Typography>
+                                            <Typography variant="caption" sx={{ color: '#64748b' }}>{customer.address || 'No address'}</Typography>
+                                        </Box>
+                                        <Chip
+                                            label={customer.status === 'active' ? 'Active' : 'Inactive'}
+                                            size="small"
+                                            color={customer.status === 'active' ? 'success' : 'default'}
+                                        />
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: '#2879b6', fontWeight: 600 }}>{customer.type || 'N/A'}</Typography>
+                                    <Typography variant="body2">{customer.email || 'No email'}</Typography>
+                                    <Typography variant="body2" color="text.secondary">{customer.phone || 'No phone'}</Typography>
+                                    <Typography variant="caption" color="text.secondary">GST {customer.gst_number || '-'} · PAN {customer.pan_number || '-'}</Typography>
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                        {canUpdate && (
+                                            <IconButton onClick={() => handleOpen(customer)} sx={{ color: '#2879b6', border: '1px solid rgba(40,121,182,0.3)', borderRadius: '10px' }} aria-label="Edit customer">
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                        )}
+                                        {canDelete && (
+                                            <IconButton onClick={() => handleDelete(customer.id)} sx={{ color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px' }} aria-label="Delete customer">
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                </Box>
+                            </Card>
+                        ))}
+                    </Box>
+                ) : (
                 <TableContainer
                     component={Paper}
                     elevation={0}
@@ -365,6 +406,7 @@ export default function CustomerPage() {
                         </TableBody>
                     </Table>
                 </TableContainer>
+                )}
 
                 {/* Add/Edit Dialog */}
                 <Dialog
@@ -372,7 +414,8 @@ export default function CustomerPage() {
                     onClose={handleClose}
                     maxWidth="sm"
                     fullWidth
-                    PaperProps={{ sx: { borderRadius: '16px' } }}
+                    fullScreen={isMobile}
+                    PaperProps={{ sx: { borderRadius: isMobile ? 0 : '16px' } }}
                     TransitionComponent={Zoom}
                     TransitionProps={{ timeout: 400 }}
                 >
@@ -410,7 +453,7 @@ export default function CustomerPage() {
                                 ))}
                             </TextField>
 
-                            <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                                 <TextField
                                     name="email"
                                     label="Email"
@@ -438,7 +481,7 @@ export default function CustomerPage() {
                                 fullWidth
                             />
 
-                            <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                                 <TextField
                                     name="gst_number"
                                     label="GST Number"
@@ -468,14 +511,15 @@ export default function CustomerPage() {
                             </TextField>
                         </Box>
                     </DialogContent>
-                    <DialogActions sx={{ p: 3, pt: 1, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                        <Button onClick={handleClose} color="inherit" sx={{ borderRadius: '8px' }}>
+                    <DialogActions sx={{ p: 3, pt: 1, borderTop: '1px solid rgba(0,0,0,0.08)', flexDirection: { xs: 'column', sm: 'row' } }}>
+                        <Button onClick={handleClose} color="inherit" fullWidth={isMobile} sx={{ borderRadius: '8px' }}>
                             Cancel
                         </Button>
                         <Button
                             onClick={handleSubmit}
                             variant="contained"
                             disabled={!formData.name}
+                            fullWidth={isMobile}
                             sx={{
                                 borderRadius: '8px',
                                 background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',

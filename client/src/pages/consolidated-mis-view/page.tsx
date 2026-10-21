@@ -143,7 +143,7 @@ const ConsolidatedMISView = () => {
           sx={{
             background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
             borderRadius: '20px',
-            p: 3,
+            p: { xs: 2, sm: 3 },
             mb: 4,
             position: 'relative',
             overflow: 'hidden',
@@ -170,7 +170,7 @@ const ConsolidatedMISView = () => {
                   {mockMISData.plantName}
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
+              <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1.5, flexWrap: 'wrap', flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' }, '& .MuiTextField-root, & .MuiButton-root': { width: { xs: '100%', sm: 'auto' } } }}>
                 <TextField
                   type="date"
                   value={selectedDate}
@@ -214,6 +214,9 @@ const ConsolidatedMISView = () => {
           data-index="0"
           sx={{ mb: 4, ...getAnimationStyle(0) }}
         >
+          <Typography sx={{ display: { lg: 'none' }, mb: 1.5, fontSize: 13, color: '#64748b' }}>
+            Swipe each table sideways to see every column.
+          </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             {/* Feeding Data */}
             <GlassCard title="Feeding Data" color="#7dc244" icon="ri-plant-line">

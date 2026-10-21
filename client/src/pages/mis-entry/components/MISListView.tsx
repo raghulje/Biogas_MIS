@@ -311,7 +311,7 @@ export default function MISListView({
         <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
           MIS Entry Records
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box className="page-actions" sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' }, flexDirection: { xs: 'column', md: 'row' }, '& .MuiButton-root, & > label': { width: { xs: '100%', md: 'auto' } } }}>
           {canExport && (
             <Button
               variant="outlined"
@@ -584,7 +584,7 @@ export default function MISListView({
         sx={{
           borderRadius: '20px',
           overflow: 'hidden',
-          display: { xs: 'none', md: 'block' } // Hide on mobile
+          display: { xs: 'none', lg: 'block' }
         }}
       >
         <TableContainer sx={{ maxHeight: '60vh' }}>
@@ -797,7 +797,7 @@ export default function MISListView({
       </Card>
 
       {/* Mobile Card List View */}
-      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: { xs: 'flex', lg: 'none' }, flexDirection: 'column', gap: 2 }}>
         {paginatedEntries.map((entry) => {
           const statusColors = getStatusColor(entry.status);
           return (

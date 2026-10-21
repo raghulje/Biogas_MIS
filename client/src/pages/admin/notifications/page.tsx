@@ -50,8 +50,8 @@ function TabPanel(props: { children?: React.ReactNode; index: number; value: num
 export default function NotificationConfigPage() {
     const theme = useTheme();
     const { enqueueSnackbar } = useSnackbar();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const isPhone = useMediaQuery('(max-width:768px)');
+    const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+    const isPhone = isMobile;
     const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -299,7 +299,7 @@ export default function NotificationConfigPage() {
                     <TabPanel value={tabValue} index={0}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <Grid container spacing={4}>
-                                <Grid item xs={12} md={6}>
+                                <Grid item xs={12} lg={6}>
                                     <Card
                                         variant="outlined"
                                         sx={{
@@ -355,7 +355,7 @@ export default function NotificationConfigPage() {
                                         </CardContent>
                                     </Card>
                                 </Grid>
-                                <Grid item xs={12} md={6}>
+                                <Grid item xs={12} lg={6}>
                                     <Card
                                         variant="outlined"
                                         sx={{
@@ -463,7 +463,7 @@ export default function NotificationConfigPage() {
 
                     <TabPanel value={tabValue} index={1}>
                         <Grid container spacing={4}>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} lg={6}>
                                 <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
                                     Site Users (Daily Alerts)
                                 </Typography>
@@ -531,7 +531,7 @@ export default function NotificationConfigPage() {
                                     </List>
                                 </Paper>
                             </Grid>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} lg={6}>
                                 <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
                                     Managers (Escalation Alerts)
                                 </Typography>
@@ -579,7 +579,7 @@ export default function NotificationConfigPage() {
                                     </List>
                                 </Paper>
                             </Grid>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} lg={6}>
                                 <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
                                     Approved Editors (Can edit approved entries)
                                 </Typography>
@@ -599,7 +599,7 @@ export default function NotificationConfigPage() {
                                     </List>
                                 </Paper>
                             </Grid>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} lg={6}>
                                 <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
                                     Approvers (Submission Review)
                                 </Typography>

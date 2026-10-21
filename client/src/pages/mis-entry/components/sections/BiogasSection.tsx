@@ -138,7 +138,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
         <Box sx={headerStyle}>
           <Typography sx={{ fontWeight: 600, color: '#333' }}>Raw Biogas</Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField fullWidth label="Digester 01 Gas" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogas.digester01Gas')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -169,7 +169,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
             Raw Biogas Quality
           </Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField fullWidth label="CH4 %" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('rawBiogasQuality.ch4')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -197,7 +197,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
             Compressed Biogas
           </Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField fullWidth label="Produced (kg)" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressedBiogas.produced')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />
@@ -776,7 +776,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
             Compressors
           </Typography>
         </Box>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
               <TextField fullWidth label="Compressor 1 Hours" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} {...register('compressors.compressor1Hours')} disabled={isReadOnly} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} />

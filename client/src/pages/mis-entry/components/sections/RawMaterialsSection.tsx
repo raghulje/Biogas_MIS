@@ -38,7 +38,7 @@ export default function RawMaterialsSection({ isReadOnly }: Props) {
       <Box sx={headerStyle}>
         <Typography sx={{ fontWeight: 600, color: '#333' }}>Summary of Raw Materials</Typography>
       </Box>
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>
         <Grid container spacing={2.5}>
           <Grid item xs={12} sm={6} md={4}>
             <TextField

@@ -76,7 +76,7 @@ export default function DigestersSection({ isReadOnly }: Props) {
         <Typography sx={{ fontWeight: 600, color: '#333' }}>Digesters</Typography>
       </Box>
 
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>
         {!isReadOnly && (
           <Box sx={{ mb: 2 }}>
             <Button
@@ -120,7 +120,7 @@ export default function DigestersSection({ isReadOnly }: Props) {
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
               }}
             >
-              <CardContent sx={{ p: 3 }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
 
@@ -186,7 +186,7 @@ export default function DigestersSection({ isReadOnly }: Props) {
                     { label: 'Pressure', key: 'pressure' },
                     { label: 'Slurry Level', key: 'slurryLevel' },
                   ].map(({ label, key }) => (
-                    <Grid item xs={6} sm={4} md={3} key={key}>
+                    <Grid item xs={12} sm={6} md={3} key={key}>
                       <TextField fullWidth label={label} type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} size="small" {...register(`digesters.${index}.characteristics.${key}`)} disabled={isReadOnly} />
                     </Grid>
                   ))}
@@ -195,25 +195,25 @@ export default function DigestersSection({ isReadOnly }: Props) {
                 {/* Health Monitoring */}
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#555' }}>Health Monitoring</Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={6} sm={4} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField fullWidth label="HRT" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} size="small" {...register(`digesters.${index}.health.hrt`)} disabled={isReadOnly} />
                   </Grid>
-                  <Grid item xs={6} sm={4} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField fullWidth label="VS Destruction" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} size="small" {...register(`digesters.${index}.health.vsDestruction`)} disabled={isReadOnly} />
                   </Grid>
-                  <Grid item xs={6} sm={4} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField fullWidth label="OLR" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} size="small" {...register(`digesters.${index}.health.olr`)} disabled={isReadOnly} />
                   </Grid>
-                  <Grid item xs={6} sm={4} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField fullWidth label="Balloon Level" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} size="small" {...register(`digesters.${index}.health.balloonLevel`)} disabled={isReadOnly} />
                   </Grid>
-                  <Grid item xs={6} sm={4} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField fullWidth select label="Agitator Condition" defaultValue="OK" size="small" {...register(`digesters.${index}.health.agitatorCondition`)} disabled={isReadOnly}>
                       <MenuItem value="OK">OK</MenuItem>
                       <MenuItem value="Not OK">Not OK</MenuItem>
                     </TextField>
                   </Grid>
-                  <Grid item xs={6} sm={4} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField fullWidth label="Foaming Level" type="number" inputProps={{ step: 'any', inputMode: 'decimal' }} size="small" {...register(`digesters.${index}.health.foamingLevel`)} disabled={isReadOnly} />
                   </Grid>
                 </Grid>
