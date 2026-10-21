@@ -48,12 +48,16 @@ function samlSpConfig() {
     };
 }
 
+function samlLaunchUrl() {
+    return `${apiBase()}/api/auth/saml/login`;
+}
+
 function samlPortalFields() {
     const sp = samlSpConfig();
     return {
         'Entity ID / Audience': sp.entity_id,
         'ACS URL (Assertion Consumer Service)': sp.acs_url,
-        'Home URL (Post-SSO Redirect)': sp.home_url,
+        'Home URL': samlLaunchUrl(),
         'SLO URL': sp.slo_url,
         'Name ID Format': sp.name_id_format_label,
         'Sign Assertions': sp.sign_assertions ? 'Yes' : 'No',
@@ -174,6 +178,7 @@ function safeAppPath(value) {
 module.exports = {
     samlEnabled,
     samlSpConfig,
+    samlLaunchUrl,
     samlPortalFields,
     idpConfigured,
     publicBase,

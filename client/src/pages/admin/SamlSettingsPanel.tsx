@@ -31,7 +31,7 @@ export default function SamlSettingsPanel() {
   return (
     <Box>
       <Typography sx={{ color: '#5c6770', mb: 2, maxWidth: 760 }}>
-        Paste these values into the IdP SAML configuration. Name ID is the email address. Sign the assertion, and leave the response unsigned unless your IdP requires it.
+        Paste these values into RefexOne. The Home URL is what opens when someone clicks the app, and it starts sign-in directly. Name ID is the email address. Sign the assertion, and leave the response unsigned.
       </Typography>
       <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
         <Chip size="small" label={config.enabled ? 'SSO enabled' : 'SSO disabled'} color={config.enabled ? 'success' : 'default'} />

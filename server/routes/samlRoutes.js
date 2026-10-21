@@ -94,7 +94,7 @@ router.post('/acs', async (req, res) => {
         if (!samlEnabled()) return htmlError(res, 'SAML SSO is disabled.', 503);
         const body = req.body || {};
         const { profile, loggedOut } = await createSaml().validatePostResponseAsync(body);
-        if (loggedOut) return res.redirect(`${publicBase()}/login`);
+        if (loggedOut) return res.redirect(`${publicBase()}/logout`);
         if (!profile) return htmlError(res, 'Empty SAML profile from IdP.');
 
         const email = profileEmail(profile);

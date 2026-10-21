@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   Dialog,
@@ -23,6 +23,8 @@ export default function LoginPage() {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const preferLocal = searchParams.get('local') === '1';
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -36,31 +38,63 @@ export default function LoginPage() {
   const [forgotError, setForgotError] = useState('');
   const [ssoHref, setSsoHref] = useState('');
   const [ssoLabel, setSsoLabel] = useState('Continue with RefexOne');
+  const [ssoPhase, setSsoPhase] = useState<'checking' | 'redirecting' | 'form'>(preferLocal ? 'form' : 'checking');
 
   useEffect(() => {
-    // Redirect if already authenticated
     if (isAuthenticated) {
       navigate('/dashboard', { replace: true });
       return;
     }
 
     window.scrollTo(0, 0);
+    let cancelled = false;
     const apiBase = import.meta.env.DEV
       ? '/api'
       : (import.meta.env.VITE_API_URL || `${window.location.origin}/api`);
     fetch(`${apiBase}/auth/saml/status`)
       .then((response) => response.json())
       .then((status: { enabled?: boolean; idp_configured?: boolean; label?: string; login_path?: string }) => {
-        if (!status.enabled || !status.idp_configured) return;
+        if (cancelled) return;
+        if (!status.enabled || !status.idp_configured) {
+          setSsoPhase('form');
+          return;
+        }
         const path = status.login_path || '/api/auth/saml/login';
-        setSsoHref(`${path}?returnTo=${encodeURIComponent('/dashboard')}`);
+        const href = `${path}?returnTo=${encodeURIComponent('/dashboard')}`;
+        setSsoHref(href);
         if (status.label) setSsoLabel(status.label);
+        if (preferLocal) {
+          setSsoPhase('form');
+          return;
+        }
+        setSsoPhase('redirecting');
+        window.location.replace(href);
       })
-      .catch(() => undefined);
-  }, [isAuthenticated, navigate]);
+      .catch(() => {
+        if (!cancelled) setSsoPhase('form');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, navigate, preferLocal]);
 
   if (!authLoading && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (!preferLocal && ssoPhase !== 'form') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-10 text-center max-w-md w-full">
+          <img src={SREL_LOGO} alt="Refex Logo" className="h-16 w-auto object-contain mx-auto mb-6" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Signing you in</h1>
+          <p className="text-sm text-gray-600">Continuing to RefexOne…</p>
+          <a href="/login?local=1" className="inline-block mt-6 text-sm text-[#2879b6] hover:underline">
+            Sign in with email instead
+          </a>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
