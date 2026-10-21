@@ -14,6 +14,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
+  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -30,6 +32,7 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
+  Close as CloseIcon,
   FilterList as FilterIcon,
   LocalFireDepartment as BiogasIcon,
   LocalGasStation as GasIcon,
@@ -492,6 +495,14 @@ export default function DashboardPage() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedWeek, setSelectedWeek] = useState(getCalendarWeek(currentDate));
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [draftType, setDraftType] = useState<FilterPeriod>('month');
+  const [draftDate, setDraftDate] = useState<Date | null>(new Date());
+  const [draftStart, setDraftStart] = useState<Date | null>(null);
+  const [draftEnd, setDraftEnd] = useState<Date | null>(null);
+  const [draftYear, setDraftYear] = useState(currentYear);
+  const [draftMonth, setDraftMonth] = useState(currentDate.getMonth() + 1);
+  const [draftWeek, setDraftWeek] = useState(getCalendarWeek(currentDate));
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -543,11 +554,11 @@ export default function DashboardPage() {
     return params;
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (override?: { period: string; startDate?: string; endDate?: string; year?: number; week?: number; month?: number }) => {
     setLoading(true);
     setFetchError(null);
     try {
-      const data = await misService.getDashboardData(buildParams());
+      const data = await misService.getDashboardData(override || buildParams());
       setDashboardData(data);
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
@@ -569,6 +580,53 @@ export default function DashboardPage() {
       enqueueSnackbar(MESSAGES.FAILED_LOAD_BREAKDOWN, { variant: 'error' });
     } finally {
       setCBGLoading(false);
+    }
+  };
+
+  const openMobileFilters = () => {
+    setDraftType(filterType);
+    setDraftDate(selectedDate);
+    setDraftStart(startDate);
+    setDraftEnd(endDate);
+    setDraftYear(selectedYear);
+    setDraftMonth(selectedMonth);
+    setDraftWeek(selectedWeek);
+    setFiltersOpen(true);
+  };
+
+  const applyMobileFilters = (next?: {
+    filterType: FilterPeriod;
+    selectedDate: Date | null;
+    startDate: Date | null;
+    endDate: Date | null;
+    selectedYear: number;
+    selectedMonth: number;
+    selectedWeek: number;
+  }) => {
+    const chosen = next || {
+      filterType: draftType,
+      selectedDate: draftDate,
+      startDate: draftStart,
+      endDate: draftEnd,
+      selectedYear: draftYear,
+      selectedMonth: draftMonth,
+      selectedWeek: draftWeek,
+    };
+    const week = Math.min(chosen.selectedWeek, getWeeksInYear(chosen.selectedYear));
+    setFilterType(chosen.filterType);
+    setSelectedDate(chosen.selectedDate);
+    setStartDate(chosen.startDate);
+    setEndDate(chosen.endDate);
+    setSelectedYear(chosen.selectedYear);
+    setSelectedMonth(chosen.selectedMonth);
+    setSelectedWeek(week);
+    setFiltersOpen(false);
+    if (chosen.filterType === 'custom' && chosen.startDate && chosen.endDate) {
+      void fetchDashboardData({
+        period: 'custom',
+        startDate: chosen.startDate.toISOString().slice(0, 10),
+        endDate: chosen.endDate.toISOString().slice(0, 10),
+      });
     }
   };
 
@@ -672,7 +730,7 @@ export default function DashboardPage() {
           }}
         >
           <CardContent sx={{ p: { xs: 2, md: 2.5 }, '&:last-child': { pb: { xs: 2, md: 2.5 } } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Box sx={{ display: isPhone ? 'none' : 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Box sx={{ width: 34, height: 34, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(40,121,182,0.1)' }}>
                 <FilterIcon sx={{ color: '#2879b6', fontSize: 19 }} />
               </Box>
@@ -685,7 +743,35 @@ export default function DashboardPage() {
                 </Typography>
               </Box>
             </Box>
+            {isPhone ? (
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<FilterIcon />}
+                onClick={openMobileFilters}
+                sx={{
+                  minHeight: 48,
+                  borderRadius: '14px',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  justifyContent: 'center',
+                  whiteSpace: 'normal',
+                  lineHeight: 1.3,
+                  color: '#2879b6',
+                  borderColor: 'rgba(40,121,182,0.35)',
+                  backgroundColor: 'rgba(40,121,182,0.06)',
+                  '&:hover': { borderColor: '#2879b6', backgroundColor: 'rgba(40,121,182,0.1)' },
+                }}
+              >
+                All filters · {filterType === 'day' && selectedDate
+                  ? selectedDate.toLocaleDateString()
+                  : filterType === 'custom' && startDate && endDate
+                    ? `${startDate.toLocaleDateString()} – ${endDate.toLocaleDateString()}`
+                    : periodLabel}
+              </Button>
+            ) : null}
             <Box sx={{
+              display: isPhone ? 'none' : 'block',
               mb: 2,
               overflowX: 'auto',
               pb: 1,
@@ -734,6 +820,7 @@ export default function DashboardPage() {
                 ))}
               </ButtonGroup>
             </Box>
+            <Box sx={{ display: isPhone ? 'none' : 'block' }}>
             {filterType === 'day' && (
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <Box sx={{ mt: 2, maxWidth: 300 }}>
@@ -899,8 +986,173 @@ export default function DashboardPage() {
                 </Grid>
               </LocalizationProvider>
             )}
+            </Box>
           </CardContent>
         </Card>
+
+        <Drawer
+          anchor="bottom"
+          open={isPhone && filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          PaperProps={{
+            sx: {
+              borderRadius: '18px 18px 0 0',
+              maxHeight: '88vh',
+              pb: 'env(safe-area-inset-bottom, 0px)',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5, borderBottom: '1px solid #f1f5f9' }}>
+            <Box>
+              <Typography sx={{ fontWeight: 700, color: '#0f172a' }}>All filters</Typography>
+              <Typography sx={{ fontSize: 12, color: '#64748b' }}>Choose a period, then apply</Typography>
+            </Box>
+            <IconButton aria-label="Close filters" onClick={() => setFiltersOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box sx={{ px: 2, py: 2, overflow: 'auto' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+              {filterButtons.map((btn) => (
+                <Button
+                  key={btn.value}
+                  onClick={() => setDraftType(btn.value)}
+                  variant={draftType === btn.value ? 'contained' : 'outlined'}
+                  sx={{
+                    textTransform: 'none',
+                    flex: '1 1 calc(33% - 8px)',
+                    minHeight: 44,
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    backgroundColor: draftType === btn.value ? '#2879b6' : 'transparent',
+                    borderColor: '#2879b6',
+                    color: draftType === btn.value ? '#fff' : '#2879b6',
+                  }}
+                >
+                  {btn.label}
+                </Button>
+              ))}
+            </Box>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              {draftType === 'day' && (
+                <DatePicker
+                  label="Select Date"
+                  value={draftDate}
+                  onChange={(value) => setDraftDate(value)}
+                  slotProps={{ textField: { fullWidth: true, sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } } } }}
+                />
+              )}
+              {draftType === 'week' && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Year</InputLabel>
+                      <Select label="Year" value={draftYear} onChange={(e) => setDraftYear(Number(e.target.value))}>
+                        {Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i).map((y) => (
+                          <MenuItem key={y} value={y}>{y}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Week</InputLabel>
+                      <Select label="Week" value={draftWeek} onChange={(e) => setDraftWeek(Number(e.target.value))}>
+                        {Array.from({ length: getWeeksInYear(draftYear) }, (_, i) => i + 1).map((w) => (
+                          <MenuItem key={w} value={w}>Week {w}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography sx={{ color: 'text.secondary', fontWeight: 600 }}>{formatWeekRangeLabel(draftYear, draftWeek)}</Typography>
+                  </Grid>
+                </Grid>
+              )}
+              {draftType === 'month' && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Year</InputLabel>
+                      <Select label="Year" value={draftYear} onChange={(e) => setDraftYear(Number(e.target.value))}>
+                        {Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i).map((y) => (
+                          <MenuItem key={y} value={y}>{y}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Month</InputLabel>
+                      <Select label="Month" value={draftMonth} onChange={(e) => setDraftMonth(Number(e.target.value))}>
+                        {MONTHS.map((name, i) => (
+                          <MenuItem key={name} value={i + 1}>{name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              )}
+              {draftType === 'year' && (
+                <FormControl fullWidth>
+                  <InputLabel>Year</InputLabel>
+                  <Select label="Year" value={draftYear} onChange={(e) => setDraftYear(Number(e.target.value))}>
+                    {Array.from({ length: currentYear - minYear + 1 }, (_, i) => currentYear - i).map((y) => (
+                      <MenuItem key={y} value={y}>{y}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              {draftType === 'custom' && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <DatePicker
+                      label="Start Date"
+                      value={draftStart}
+                      onChange={(value) => setDraftStart(value)}
+                      slotProps={{ textField: { fullWidth: true, sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } } } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <DatePicker
+                      label="End Date"
+                      value={draftEnd}
+                      onChange={(value) => setDraftEnd(value)}
+                      slotProps={{ textField: { fullWidth: true, sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } } } }}
+                    />
+                  </Grid>
+                </Grid>
+              )}
+            </LocalizationProvider>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, p: 2, borderTop: '1px solid #f1f5f9' }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => applyMobileFilters({
+                filterType: 'month',
+                selectedDate: new Date(),
+                startDate: null,
+                endDate: null,
+                selectedYear: currentYear,
+                selectedMonth: currentDate.getMonth() + 1,
+                selectedWeek: getCalendarWeek(currentDate),
+              })}
+              sx={{ minHeight: 48, borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}
+            >
+              Clear
+            </Button>
+            <Button
+              fullWidth
+              variant="contained"
+              disabled={draftType === 'custom' && (!draftStart || !draftEnd || draftStart > draftEnd)}
+              onClick={() => applyMobileFilters()}
+              sx={{ minHeight: 48, borderRadius: '12px', textTransform: 'none', fontWeight: 700, backgroundColor: '#2879b6' }}
+            >
+              Apply
+            </Button>
+          </Box>
+        </Drawer>
 
         <Card
           className="aos-fade-up aos-delay-200"
