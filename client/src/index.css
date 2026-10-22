@@ -19,38 +19,70 @@ body {
   overflow-x: hidden;
 }
 
-/* Old staggered fades held each page invisible for up to a second.
-   Keep the class names so existing markup stays put, without the wait. */
-.aos-fade-up,
-.aos-fade-down,
-.aos-fade-left,
-.aos-fade-right,
-.aos-scale-in,
-.aos-delay-100,
-.aos-delay-200,
-.aos-delay-300,
-.aos-delay-400,
-.aos-delay-450,
-.aos-delay-500 {
-  animation: none !important;
-  opacity: 1 !important;
-  transform: none;
+/* Short jelly settle. Content stays visible; it does not sit blank on a long delay. */
+@keyframes jelly-up {
+  0% { transform: translateY(16px) scale(0.97); }
+  62% { transform: translateY(-4px) scale(1.015); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes jelly-down {
+  0% { transform: translateY(-14px) scale(0.97); }
+  62% { transform: translateY(3px) scale(1.015); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes jelly-left {
+  0% { transform: translateX(-16px) scale(0.98); }
+  62% { transform: translateX(3px) scale(1.012); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes jelly-right {
+  0% { transform: translateX(16px) scale(0.98); }
+  62% { transform: translateX(-3px) scale(1.012); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes jelly-scale {
+  0% { transform: scale(0.94); }
+  62% { transform: scale(1.03); }
+  100% { transform: scale(1); }
 }
 
 @keyframes page-enter {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(14px) scale(0.96);
   }
 
-  to {
+  58% {
     opacity: 1;
-    transform: none;
+    transform: translateY(-5px) scale(1.018);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
+.aos-fade-up { animation: jelly-up 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-down { animation: jelly-down 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-left { animation: jelly-left 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-right { animation: jelly-right 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-scale-in { animation: jelly-scale 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+
+.aos-delay-100 { animation-delay: 0.05s; }
+.aos-delay-200 { animation-delay: 0.1s; }
+.aos-delay-300 { animation-delay: 0.14s; }
+.aos-delay-400 { animation-delay: 0.18s; }
+.aos-delay-450 { animation-delay: 0.2s; }
+.aos-delay-500 { animation-delay: 0.22s; }
+
 .page-stage {
-  animation: page-enter 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: page-enter 0.5s cubic-bezier(0.22, 1.35, 0.36, 1) both;
+  transform-origin: top center;
 }
 
 .side-nav-item {
@@ -68,7 +100,7 @@ body {
   background: linear-gradient(180deg, #2879b6, #7dc244);
   transform: scaleY(0);
   transform-origin: center;
-  transition: transform 0.18s ease;
+  transition: transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1);
 }
 
 .side-nav-item.Mui-selected::before {
@@ -117,7 +149,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   border-radius: 20px;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.35s ease;
 }
 
 .glass-card-strong {
@@ -158,7 +190,7 @@ body {
 
 /* Hover Lift Effect */
 .hover-lift {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.35s ease;
 }
 
 .hover-lift:hover {
