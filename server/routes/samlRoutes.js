@@ -223,7 +223,7 @@ router.post('/acs', async (req, res) => {
         if (!user) {
             return htmlError(
                 res,
-                `No User Found for this '${email}'`,
+                `No User Found for this email '${email}'`,
                 403,
                 { title: 'No User Found' },
             );
@@ -257,7 +257,7 @@ router.post('/acs', async (req, res) => {
         const email = emailFromSamlBody(req.body);
         return htmlError(
             res,
-            email ? `No User Found for this '${email}'` : 'No User Found',
+            email ? `No User Found for this email '${email}'` : 'No User Found',
             403,
             { title: 'No User Found' },
         );
