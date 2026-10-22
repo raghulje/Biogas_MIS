@@ -28,7 +28,7 @@ function escapeHtml(value) {
 }
 
 function htmlError(res, message, status = 400, options = {}) {
-    const home = `${publicBase()}/login?local=1`;
+    const home = `${refexOneWebBase()}/launcher`;
     const title = options.title || 'Sign-in could not be completed';
     const email = options.email ? escapeHtml(options.email) : '';
     res.status(status).type('html').send(`<!doctype html>
@@ -109,7 +109,7 @@ function htmlError(res, message, status = 400, options = {}) {
     <h1>${escapeHtml(title)}</h1>
     <p>${escapeHtml(message)}</p>
     ${email ? `<div class="email">${email}</div>` : ''}
-    <a class="button" href="${escapeHtml(home)}">Back to login</a>
+    <a class="button" href="${escapeHtml(home)}">Back to RefexOne</a>
   </main>
 </body></html>`);
 }
