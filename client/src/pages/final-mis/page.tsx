@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react';
 import {
   Box,
   Typography,
@@ -1185,20 +1185,45 @@ const FinalMISPage = () => {
     XLSX.writeFile(wb, fileName);
   };
 
-  // Soft washes in the app palette: blue, sage, warm ivory, blush
   const colors = {
     headerPrimary: '#2879b6',
-    headerSecondary: '#2f86c0',
-    sectionHeader: '#f6f8fb',
-    rowHeader: '#f3f6f9',
-    accent1: '#eef5fb',
-    accent2: '#f2f7f3',
-    accent3: '#fbf6ea',
-    accent4: '#fbf3f2',
-    border: '#e6edf3',
-    text: '#3d4a5c',
+    headerSecondary: '#2879b6',
+    sectionHeader: '#f4f7fb',
+    rowHeader: '#f4f7fb',
+    accent1: '#d7ebf8',
+    accent2: '#dceede',
+    accent3: '#f4e4c4',
+    accent4: '#fde3d8',
+    skyInk: '#165a84',
+    sageInk: '#1c6b3a',
+    sandInk: '#7a4e0c',
+    blushInk: '#a3411f',
+    border: '#d5e2ec',
+    text: '#243044',
     textLight: '#64748b',
   };
+
+  const colHead = (bg: string, ink: string): CSSProperties => ({
+    background: bg,
+    color: ink,
+    padding: '10px 12px',
+    textAlign: 'center',
+    fontWeight: 700,
+    fontSize: '12px',
+    borderBottom: `1px solid ${colors.border}`,
+  });
+
+  const sectionHead = (bg: string, ink: string, align: 'center' | 'left' = 'center'): CSSProperties => ({
+    background: bg,
+    color: ink,
+    padding: '13px 16px',
+    textAlign: align,
+    fontWeight: 800,
+    fontSize: '12px',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    borderBottom: `2px solid ${ink}33`,
+  });
 
   const getFilterLabel = () => {
     switch (filterType) {
@@ -1984,10 +2009,10 @@ const FinalMISPage = () => {
           <Box
             sx={{
               background: '#fff',
-              borderRadius: '16px',
+              borderRadius: '18px',
               overflow: 'hidden',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              border: '1px solid #e6edf3',
+              boxShadow: '0 16px 40px rgba(40, 121, 182, 0.10)',
+              border: '1px solid #d5e2ec',
               opacity: isAnimated ? 1 : 0,
               transform: isAnimated ? 'translateY(0)' : 'translateY(-20px)',
               transition: 'all 0.5s ease-out 0.2s',
@@ -2000,6 +2025,8 @@ const FinalMISPage = () => {
                   borderCollapse: 'collapse',
                   fontSize: '13px',
                   minWidth: '1200px',
+                  color: '#243044',
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 <tbody>
@@ -2009,9 +2036,10 @@ const FinalMISPage = () => {
                       style={{
                         background: colors.headerPrimary,
                         color: '#fff',
-                        padding: '14px 16px',
-                        fontWeight: 600,
-                        borderBottom: `1px solid ${colors.border}`,
+                        padding: '16px 18px',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        borderBottom: 'none',
                       }}
                     >
                       Report
@@ -2021,11 +2049,12 @@ const FinalMISPage = () => {
                       style={{
                         background: colors.headerPrimary,
                         color: '#fff',
-                        padding: '14px 16px',
+                        padding: '16px 18px',
                         textAlign: 'center',
-                        fontWeight: 700,
+                        fontWeight: 800,
                         fontSize: '16px',
-                        borderBottom: `1px solid ${colors.border}`,
+                        letterSpacing: '0.06em',
+                        borderBottom: 'none',
                       }}
                     >
                       4 TPD - SREL PLANT
@@ -2033,18 +2062,19 @@ const FinalMISPage = () => {
                     <td
                       colSpan={4}
                       style={{
-                        background: colors.headerSecondary,
-                        padding: '14px 16px',
-                        borderBottom: `1px solid ${colors.border}`,
+                        background: colors.headerPrimary,
+                        padding: '16px 18px',
+                        borderBottom: 'none',
                       }}
                     ></td>
                     <td
                       style={{
                         background: colors.headerPrimary,
                         color: '#fff',
-                        padding: '14px 16px',
-                        fontWeight: 600,
-                        borderBottom: `1px solid ${colors.border}`,
+                        padding: '16px 18px',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        borderBottom: 'none',
                       }}
                     >
                       Period
@@ -2052,11 +2082,12 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.headerSecondary,
+                        background: colors.headerPrimary,
                         color: '#fff',
-                        padding: '14px 16px',
-                        fontWeight: 500,
-                        borderBottom: `1px solid ${colors.border}`,
+                        padding: '16px 18px',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        borderBottom: 'none',
                       }}
                     >
                       {getFilterLabel()}
@@ -2067,11 +2098,7 @@ const FinalMISPage = () => {
                   <tr>
                     <td
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk, 'left'),
                       }}
                     >
                       Name of the Feedstock&apos;s
@@ -2079,12 +2106,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={4}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Feeding Data
@@ -2092,7 +2114,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={1}
                       style={{
-                        background: colors.accent1,
+                        background: '#f7fafc',
                         padding: '12px 16px',
                         borderBottom: `1px solid ${colors.border}`,
                       }}
@@ -2100,12 +2122,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={6}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Raw material Quality Data
@@ -2123,55 +2140,35 @@ const FinalMISPage = () => {
                     ></td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       D-01
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       D-02
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       D-03
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       Total
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
+                        background: '#f7fafc',
                         padding: '10px 16px',
                         borderBottom: `1px solid ${colors.border}`,
                       }}
@@ -2179,12 +2176,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       TS%
@@ -2192,12 +2184,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       VS%
@@ -2205,12 +2192,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       pH
@@ -2279,7 +2261,7 @@ const FinalMISPage = () => {
                       </td>
                       <td
                         style={{
-                          background: colors.accent1,
+                          background: '#f7fafc',
                           padding: '10px 16px',
                           borderBottom: `1px solid ${colors.border}`,
                         }}
@@ -2324,8 +2306,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        padding: '8px',
-                        background: '#f8fafc',
+                        padding: '12px',
+                        background: '#eef3f8',
                       }}
                     ></td>
                   </tr>
@@ -2335,12 +2317,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Digester Performance Report
@@ -2362,72 +2339,42 @@ const FinalMISPage = () => {
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       TS%
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       VS%
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       pH
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       VFA/TIC
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Slurry Level (m)
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       HRT (days)
@@ -2435,12 +2382,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       OLR(kgVS/m3/day)
@@ -2448,12 +2390,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={3}
                       style={{
-                        background: colors.accent4,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       Slurry avg. Temp (deg C)
@@ -2725,8 +2662,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        padding: '8px',
-                        background: '#f8fafc',
+                        padding: '12px',
+                        background: '#eef3f8',
                       }}
                     ></td>
                   </tr>
@@ -2736,12 +2673,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={5}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Biogas Quality Report
@@ -2749,12 +2681,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={7}
                       style={{
-                        background: colors.accent1,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Biogas Production (Nm3)
@@ -2765,60 +2692,35 @@ const FinalMISPage = () => {
                   <tr>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       CH4%
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       CO2%
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       O2%
                     </td>
                     <td
                       style={{
-                        background: colors.accent4,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       H2S ppm
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       N2%
@@ -2826,24 +2728,14 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       RBG Produced (Nm3)
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       RBG Flared (m3)
@@ -2851,12 +2743,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Used in Kitchen (m3)
@@ -2864,12 +2751,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Sent to Purification Unit (m3)
@@ -2985,8 +2867,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        padding: '8px',
-                        background: '#f8fafc',
+                        padding: '12px',
+                        background: '#eef3f8',
                       }}
                     ></td>
                   </tr>
@@ -2996,12 +2878,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={4}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       CBG Quality Report
@@ -3010,12 +2887,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={7}
                       style={{
-                        background: colors.accent4,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       CBG (Kg)
@@ -3026,60 +2898,35 @@ const FinalMISPage = () => {
                   <tr>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       CH4%
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       CO2%
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       O2%
                     </td>
                     <td
                       style={{
-                        background: colors.accent4,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       H2S ppm
                     </td>
                     <td
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       N2%
@@ -3087,12 +2934,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent4,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       Production (Kg)
@@ -3100,12 +2942,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent4,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       Dispatch(Kg)
@@ -3113,24 +2950,14 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent4,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 6,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       Gas Yield (m3/ton PM)
                     </td>
                     <td
                       style={{
-                        background: colors.accent4,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent4, colors.blushInk),
                       }}
                     >
                       CF
@@ -3240,8 +3067,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        padding: '8px',
-                        background: '#f8fafc',
+                        padding: '12px',
+                        background: '#eef3f8',
                       }}
                     ></td>
                   </tr>
@@ -3251,12 +3078,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={5}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Solid Liquid Separator Operating Data
@@ -3264,12 +3086,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={7}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       FOM & LFOM Production
@@ -3287,60 +3104,35 @@ const FinalMISPage = () => {
                     ></td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Run. Hrs
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Slurry feed (m3/hr)
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Inlet TS%
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent1, colors.skyInk),
                       }}
                     >
                       Total Slurry feed (m3/day)
                     </td>
                     <td
                       style={{
-                        background: colors.accent3,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Wet Cake Qty (tpd)
@@ -3348,12 +3140,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent3,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Wet Cake TS%
@@ -3361,12 +3148,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       LFOM qty (m3 or tpd)
@@ -3374,12 +3156,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 16px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...colHead(colors.accent2, colors.sageInk),
                       }}
                     >
                       LFOM TS%
@@ -3597,8 +3374,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        padding: '8px',
-                        background: '#f8fafc',
+                        padding: '12px',
+                        background: '#eef3f8',
                       }}
                     ></td>
                   </tr>
@@ -3608,12 +3385,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Slurry Management Data
@@ -3624,52 +3396,32 @@ const FinalMISPage = () => {
                   <tr>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent1, colors.skyInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       Direct Purge Out to Farmers (m3)
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent1, colors.skyInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       SLS inlet (m3)
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent1, colors.skyInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       Direct Purge to Lagoon(m3)
                     </td>
                     <td
                       style={{
-                        background: colors.accent1,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent1, colors.skyInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       Total Slurry out (m3)
@@ -3677,13 +3429,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent2, colors.sageInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       Total permeate to Mixing Tank (m3)
@@ -3691,13 +3438,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent2,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent2, colors.sageInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       Total LFOM to Lagoon (m3)
@@ -3705,13 +3447,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent3,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent3, colors.sandInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       FOM Cake Dispatch (tons)
@@ -3719,13 +3456,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: colors.accent3,
-                        padding: '10px 12px',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        color: colors.text,
+                        ...colHead(colors.accent3, colors.sandInk),
                         fontSize: '11px',
-                        borderBottom: `1px solid ${colors.border}`,
                       }}
                     >
                       LFOM Dispatch (tons)
@@ -3840,8 +3572,8 @@ const FinalMISPage = () => {
                     <td
                       colSpan={12}
                       style={{
-                        padding: '8px',
-                        background: '#f8fafc',
+                        padding: '12px',
+                        background: '#eef3f8',
                       }}
                     ></td>
                   </tr>
@@ -3851,12 +3583,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={5}
                       style={{
-                        background: colors.accent3,
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead(colors.accent3, colors.sandInk),
                       }}
                     >
                       Total Power Consumptions (Kwh/day)
@@ -3864,12 +3591,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={7}
                       style={{
-                        background: '#f1f5f9',
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: colors.text,
-                        borderBottom: `1px solid ${colors.border}`,
+                        ...sectionHead('#eef3f7', '#334155'),
                       }}
                     >
                       Major Breakdown Reasons
