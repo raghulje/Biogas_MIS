@@ -218,15 +218,15 @@ export default function MISFormView({
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Submitted':
-        return { bg: 'rgba(40, 121, 182, 0.1)', color: '#2879b6' };
-      case 'Approved':
-        return { bg: 'rgba(125, 194, 68, 0.1)', color: '#7dc244' };
-      case 'Draft':
-        return { bg: 'rgba(245, 158, 33, 0.1)', color: '#F59E21' };
+    switch (String(status || '').toLowerCase()) {
+      case 'submitted':
+        return { bg: '#ffffff', color: '#1d4e89', border: 'rgba(255,255,255,0.9)' };
+      case 'approved':
+        return { bg: '#ffffff', color: '#1b7a32', border: 'rgba(255,255,255,0.9)' };
+      case 'draft':
+        return { bg: '#fff7ed', color: '#9a3412', border: '#fdba74' };
       default:
-        return { bg: 'rgba(88, 89, 91, 0.1)', color: '#58595B' };
+        return { bg: '#ffffff', color: '#334155', border: 'rgba(255,255,255,0.9)' };
     }
   };
 
@@ -310,10 +310,14 @@ export default function MISFormView({
                 label={selectedEntry.status}
                 size="small"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  textTransform: 'capitalize',
                   backgroundColor: getStatusColor(selectedEntry.status).bg,
                   color: getStatusColor(selectedEntry.status).color,
-                  borderRadius: '8px',
+                  border: `1px solid ${getStatusColor(selectedEntry.status).border}`,
+                  borderRadius: '999px',
+                  height: 26,
+                  '& .MuiChip-label': { px: 1.25 },
                 }}
               />
             )}

@@ -264,10 +264,11 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     <Box
                       key={productType}
                       sx={{
-                        mb: 3.5,
+                        mb: 2.5,
+                        mx: { xs: 0.5, sm: 1 },
                         p: 2.5,
                         borderRadius: '16px',
-                        border: `1px solid ${productAccent}33`,
+                        border: `1px solid ${productAccent}55`,
                         background: `linear-gradient(180deg, ${productAccent}12 0%, #fff 46%)`,
                         boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
                       }}
@@ -293,19 +294,21 @@ export default function BiogasSection({ isReadOnly }: Props) {
                         a) Customer Name
                       </Typography>
                       {rowIndices.map((index) => (
-                        <Grid
-                          container
-                          spacing={2.5}
+                        <Box
                           key={fields[index].id}
                           sx={{
-                            mb: 3.5,
-                            alignItems: 'center',
+                            mb: 2.5,
                             bgcolor: '#fff',
                             borderRadius: '12px',
-                            p: 2.5,
+                            p: 2,
                             border: '1px solid',
                             borderColor: 'divider',
                           }}
+                        >
+                        <Grid
+                          container
+                          spacing={2.5}
+                          sx={{ alignItems: 'center' }}
                         >
                           <Grid item xs={12} sm={5}>
                             <Controller
@@ -372,6 +375,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                             </Grid>
                           )}
                         </Grid>
+                        </Box>
                       ))}
                       {!isReadOnly && (
                         <Box
@@ -485,10 +489,11 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     <Box
                       key={fuelType}
                       sx={{
-                        mb: 3.5,
+                        mb: 2.5,
+                        mx: { xs: 0.5, sm: 1 },
                         p: 2.5,
                         borderRadius: '16px',
-                        border: `1px solid ${fuelAccent}33`,
+                        border: `1px solid ${fuelAccent}55`,
                         background: `linear-gradient(180deg, ${fuelAccent}12 0%, #fff 46%)`,
                         boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
                       }}
@@ -514,19 +519,21 @@ export default function BiogasSection({ isReadOnly }: Props) {
                         a) Customer Name
                       </Typography>
                       {rowIndices.map((index) => (
-                        <Grid
-                          container
-                          spacing={2.5}
+                        <Box
                           key={fuelFields[index].id}
                           sx={{
-                            mb: 3.5,
-                            alignItems: 'center',
+                            mb: 2.5,
                             bgcolor: '#fff',
                             borderRadius: '12px',
-                            p: 2.5,
+                            p: 2,
                             border: '1px solid',
                             borderColor: 'divider',
                           }}
+                        >
+                        <Grid
+                          container
+                          spacing={2.5}
+                          sx={{ alignItems: 'center' }}
                         >
                           <Grid item xs={12} sm={5}>
                             <Controller
@@ -593,6 +600,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                             </Grid>
                           )}
                         </Grid>
+                        </Box>
                       ))}
                       {!isReadOnly && (
                         <Box
