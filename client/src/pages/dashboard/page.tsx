@@ -370,7 +370,7 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
               width: '100%',
               overflowX: { xs: 'auto', md: 'visible' },
               overflowY: 'hidden',
-              animation: `${chartFadeIn} 520ms ease-out`,
+              animation: `${chartFadeIn} 320ms ease-out`,
               '&::-webkit-scrollbar': { height: 5 },
               '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(40,121,182,0.22)', borderRadius: 4 },
             }}

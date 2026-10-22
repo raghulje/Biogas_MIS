@@ -67,21 +67,21 @@ body {
   }
 }
 
-.aos-fade-up { animation: jelly-up 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-fade-down { animation: jelly-down 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-fade-left { animation: jelly-left 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-fade-right { animation: jelly-right 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-scale-in { animation: jelly-scale 0.52s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-up { animation: jelly-up 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-down { animation: jelly-down 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-left { animation: jelly-left 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-right { animation: jelly-right 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-scale-in { animation: jelly-scale 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
 
-.aos-delay-100 { animation-delay: 0.05s; }
-.aos-delay-200 { animation-delay: 0.1s; }
-.aos-delay-300 { animation-delay: 0.14s; }
-.aos-delay-400 { animation-delay: 0.18s; }
-.aos-delay-450 { animation-delay: 0.2s; }
-.aos-delay-500 { animation-delay: 0.22s; }
+.aos-delay-100 { animation-delay: 0.03s; }
+.aos-delay-200 { animation-delay: 0.06s; }
+.aos-delay-300 { animation-delay: 0.08s; }
+.aos-delay-400 { animation-delay: 0.1s; }
+.aos-delay-450 { animation-delay: 0.12s; }
+.aos-delay-500 { animation-delay: 0.14s; }
 
 .page-stage {
-  animation: page-enter 0.5s cubic-bezier(0.22, 1.35, 0.36, 1) both;
+  animation: page-enter 0.32s cubic-bezier(0.22, 1.35, 0.36, 1) both;
   transform-origin: top center;
 }
 
@@ -100,7 +100,7 @@ body {
   background: linear-gradient(180deg, #2879b6, #7dc244);
   transform: scaleY(0);
   transform-origin: center;
-  transition: transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1);
+  transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1);
 }
 
 .side-nav-item.Mui-selected::before {
@@ -108,7 +108,7 @@ body {
 }
 
 .side-nav-item .MuiListItemIcon-root {
-  transition: transform 0.18s cubic-bezier(0.3, 1.5, 0.5, 1);
+  transition: transform 0.14s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
 
 .side-nav-item:hover .MuiListItemIcon-root {
@@ -149,7 +149,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   border-radius: 20px;
   overflow: hidden;
-  transition: transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.35s ease;
+  transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.22s ease;
 }
 
 .glass-card-strong {
@@ -168,7 +168,7 @@ body {
   background: linear-gradient(90deg, #2879b6, #7dc244);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   pointer-events: none;
 }
 
@@ -190,7 +190,7 @@ body {
 
 /* Hover Lift Effect */
 .hover-lift {
-  transition: transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.35s ease;
+  transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.22s ease;
 }
 
 .hover-lift:hover {
