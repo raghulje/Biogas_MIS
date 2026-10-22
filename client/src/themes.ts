@@ -1,5 +1,4 @@
 import { createTheme } from '@mui/material/styles';
-import Zoom from '@mui/material/Zoom';
 
 export const themePresets = {
   professional: {
@@ -66,23 +65,7 @@ export function createAppTheme(presetKey = 'professional') {
     typography: {
       fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     },
-    transitions: {
-      easing: {
-        easeOut: 'cubic-bezier(0.34, 1.45, 0.64, 1)',
-        easeInOut: 'cubic-bezier(0.34, 1.25, 0.64, 1)',
-      },
-      duration: {
-        enteringScreen: 420,
-        leavingScreen: 280,
-      },
-    },
     components: {
-      MuiDialog: {
-        defaultProps: {
-          TransitionComponent: Zoom,
-          transitionDuration: { enter: 420, exit: 260 },
-        },
-      },
       MuiButton: {
         styleOverrides: {
           contained: {

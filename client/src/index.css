@@ -19,59 +19,41 @@ body {
   overflow-x: hidden;
 }
 
-/* Short jelly settle. Content stays visible; it does not sit blank on a long delay. */
-@keyframes jelly-up {
-  0% { transform: translateY(16px) scale(0.97); }
-  62% { transform: translateY(-4px) scale(1.015); }
-  100% { transform: translateY(0) scale(1); }
+@keyframes fadeInUp {
+  from { transform: translateY(8px); }
+  to { transform: none; }
 }
 
-@keyframes jelly-down {
-  0% { transform: translateY(-14px) scale(0.97); }
-  62% { transform: translateY(3px) scale(1.015); }
-  100% { transform: translateY(0) scale(1); }
+@keyframes fadeInDown {
+  from { transform: translateY(-8px); }
+  to { transform: none; }
 }
 
-@keyframes jelly-left {
-  0% { transform: translateX(-16px) scale(0.98); }
-  62% { transform: translateX(3px) scale(1.012); }
-  100% { transform: translateX(0) scale(1); }
+@keyframes fadeInLeft {
+  from { transform: translateX(-8px); }
+  to { transform: none; }
 }
 
-@keyframes jelly-right {
-  0% { transform: translateX(16px) scale(0.98); }
-  62% { transform: translateX(-3px) scale(1.012); }
-  100% { transform: translateX(0) scale(1); }
+@keyframes fadeInRight {
+  from { transform: translateX(8px); }
+  to { transform: none; }
 }
 
-@keyframes jelly-scale {
-  0% { transform: scale(0.94); }
-  62% { transform: scale(1.03); }
-  100% { transform: scale(1); }
+@keyframes scaleIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes page-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.96);
-  }
-
-  58% {
-    opacity: 1;
-    transform: translateY(-5px) scale(1.018);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.aos-fade-up { animation: jelly-up 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-fade-down { animation: jelly-down 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-fade-left { animation: jelly-left 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-fade-right { animation: jelly-right 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
-.aos-scale-in { animation: jelly-scale 0.32s cubic-bezier(0.22, 1.4, 0.36, 1) backwards; }
+.aos-fade-up { animation: fadeInUp 0.28s ease-out both; }
+.aos-fade-down { animation: fadeInDown 0.28s ease-out both; }
+.aos-fade-left { animation: fadeInLeft 0.28s ease-out both; }
+.aos-fade-right { animation: fadeInRight 0.28s ease-out both; }
+.aos-scale-in { animation: scaleIn 0.28s ease-out both; }
 
 .aos-delay-100 { animation-delay: 0.03s; }
 .aos-delay-200 { animation-delay: 0.06s; }
@@ -81,8 +63,7 @@ body {
 .aos-delay-500 { animation-delay: 0.14s; }
 
 .page-stage {
-  animation: page-enter 0.32s cubic-bezier(0.22, 1.35, 0.36, 1) both;
-  transform-origin: top center;
+  animation: page-enter 0.22s ease-out both;
 }
 
 .side-nav-item {
@@ -100,27 +81,11 @@ body {
   background: linear-gradient(180deg, #2879b6, #7dc244);
   transform: scaleY(0);
   transform-origin: center;
-  transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1);
+  transition: transform 0.2s ease-out;
 }
 
 .side-nav-item.Mui-selected::before {
   transform: scaleY(1);
-}
-
-.side-nav-item .MuiListItemIcon-root {
-  transition: transform 0.14s cubic-bezier(0.3, 1.5, 0.5, 1);
-}
-
-.side-nav-item:hover .MuiListItemIcon-root {
-  transform: scale(1.08) rotate(-6deg);
-}
-
-.side-nav-item:active {
-  transform: scale(0.985);
-}
-
-.MuiButton-root:active {
-  transform: scale(0.98);
 }
 
 .MuiTableRow-hover:hover {
@@ -149,7 +114,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   border-radius: 20px;
   overflow: hidden;
-  transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.22s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease;
 }
 
 .glass-card-strong {
@@ -190,7 +155,7 @@ body {
 
 /* Hover Lift Effect */
 .hover-lift {
-  transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.22s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease;
 }
 
 .hover-lift:hover {
@@ -404,9 +369,5 @@ body {
   .glass-card::after,
   .glass-card-strong::after {
     transform: scaleX(0);
-  }
-
-  .side-nav-item:hover .MuiListItemIcon-root {
-    transform: none;
   }
 }
