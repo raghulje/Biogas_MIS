@@ -8,6 +8,13 @@ function buildFrom(config) {
 }
 
 // Port 465 = implicit SSL (secure: true). Port 587/25 = STARTTLS (secure: false); wrong version error if secure: true on 587.
+function smtpPassword(config) {
+    const raw = String(config.auth_pass || '');
+    const host = String(config.host || '').toLowerCase();
+    if (host.includes('gmail') || host.includes('google')) return raw.replace(/\s+/g, '');
+    return raw.trim();
+}
+
 function getTransportOptions(config) {
     const port = Number(config.port) || 587;
     const useSecure = port === 465 || (Boolean(config.secure) && port === 465);
@@ -16,8 +23,8 @@ function getTransportOptions(config) {
         port,
         secure: useSecure,
         auth: {
-            user: config.auth_user,
-            pass: config.auth_pass
+            user: String(config.auth_user || '').trim(),
+            pass: smtpPassword(config)
         }
     };
 }

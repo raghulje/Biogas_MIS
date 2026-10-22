@@ -126,6 +126,13 @@ exports.updateRolePermissions = async (req, res) => {
 
 const SMTP_REQUIRED = ['host', 'port', 'auth_user', 'auth_pass', 'from_email'];
 
+function normalizeSmtpPassword(host, password) {
+    const raw = String(password || '');
+    const h = String(host || '').toLowerCase();
+    if (h.includes('gmail') || h.includes('google')) return raw.replace(/\s+/g, '');
+    return raw.trim();
+}
+
 function sanitizeSMTPForResponse(config) {
     try {
         if (!config) return null;
@@ -186,7 +193,7 @@ exports.createSMTPConfig = async (req, res) => {
             port: port,
             secure: Boolean(body.secure),
             auth_user: String(body.auth_user).trim(),
-            auth_pass: String(body.auth_pass),
+            auth_pass: normalizeSmtpPassword(body.host, body.auth_pass),
             from_email: String(body.from_email).trim(),
             is_active: true
         });
@@ -219,7 +226,7 @@ exports.updateSMTPConfig = async (req, res) => {
             from_email: body.from_email != null ? String(body.from_email).trim() : config.from_email
         };
         if (body.auth_pass != null && String(body.auth_pass).trim() !== '') {
-            updates.auth_pass = String(body.auth_pass);
+            updates.auth_pass = normalizeSmtpPassword(updates.host, body.auth_pass);
         }
 
         await config.update(updates);
@@ -250,7 +257,7 @@ exports.testSMTPConfig = async (req, res) => {
                 port: Number(body.port) || 587,
                 secure: Boolean(body.secure),
                 auth_user: String(body.auth_user).trim(),
-                auth_pass: String(body.auth_pass),
+                auth_pass: normalizeSmtpPassword(body.host, body.auth_pass),
                 from_email: String(body.from_email).trim()
             };
             const result = await emailService.sendTestEmail(config, to);
