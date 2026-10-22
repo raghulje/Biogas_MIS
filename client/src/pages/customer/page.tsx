@@ -505,7 +505,27 @@ export default function CustomerPage() {
                         </Box>
                     </DialogContent>
                     <DialogActions sx={{ p: 3, pt: 1, borderTop: '1px solid rgba(0,0,0,0.08)', flexDirection: { xs: 'column', sm: 'row' } }}>
-                        <Button onClick={handleClose} color="inherit" fullWidth={isMobile} sx={{ borderRadius: '8px' }}>
+                        <Button
+                            onClick={handleClose}
+                            variant="outlined"
+                            fullWidth={isMobile}
+                            sx={{
+                                borderRadius: '10px',
+                                textTransform: 'none',
+                                fontWeight: 700,
+                                minHeight: 40,
+                                px: 2.25,
+                                color: '#334155',
+                                borderColor: '#94a3b8',
+                                borderWidth: 1.5,
+                                '&:hover': {
+                                    borderWidth: 1.5,
+                                    borderColor: '#2879b6',
+                                    color: '#2879b6',
+                                    bgcolor: 'rgba(40, 121, 182, 0.06)',
+                                },
+                            }}
+                        >
                             Cancel
                         </Button>
                         <Button

@@ -1511,8 +1511,8 @@ export default function DashboardPage() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Customer</TableCell>
-                    <TableCell align="right">Quantity (kg)</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#fff', bgcolor: '#2879b6', borderBottom: 'none' }}>Customer</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: '#fff', bgcolor: '#2879b6', borderBottom: 'none' }}>Quantity (kg)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1527,8 +1527,29 @@ export default function DashboardPage() {
             </TableContainer>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCBGBreakdownOpen(false)}>Close</Button>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => setCBGBreakdownOpen(false)}
+            variant="outlined"
+            sx={{
+              borderRadius: '10px',
+              textTransform: 'none',
+              fontWeight: 700,
+              minHeight: 40,
+              px: 2.25,
+              color: '#334155',
+              borderColor: '#94a3b8',
+              borderWidth: 1.5,
+              '&:hover': {
+                borderWidth: 1.5,
+                borderColor: '#2879b6',
+                color: '#2879b6',
+                bgcolor: 'rgba(40, 121, 182, 0.06)',
+              },
+            }}
+          >
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Layout>

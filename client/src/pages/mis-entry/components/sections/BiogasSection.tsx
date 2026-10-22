@@ -245,7 +245,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                   variant="h6"
                   sx={{
                     fontWeight: 700,
-                    color: '#2563EB',
+                    color: '#2879b6',
                     mb: 3,
                     fontSize: { xs: '1rem', sm: '1.125rem' },
                   }}
@@ -258,32 +258,33 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     .map((_, i) => i)
                     .filter((i) => (cbgSalesRows[i]?.customerType || '') === productType);
                   const customersForType = customers.filter((c: any) => (c.type || '') === productType);
-                  const productAccent = productType === 'CBG' ? '#2563EB' : productType === 'FOM' ? '#7dc244' : '#F59E21';
+                  const productAccent = productType === 'CBG' ? '#2879b6' : productType === 'FOM' ? '#7dc244' : '#F59E21';
 
                   return (
                     <Box
                       key={productType}
                       sx={{
                         mb: 3.5,
-                        pl: { xs: 2, sm: 3 },
-                        borderLeft: `4px solid ${productAccent}`,
-                        borderRadius: '0 12px 12px 0',
-                        bgcolor: 'rgba(0,0,0,0.02)',
-                        py: 2.5,
-                        px: 2.5,
+                        p: 2.5,
+                        borderRadius: '16px',
+                        border: `1px solid ${productAccent}33`,
+                        background: `linear-gradient(180deg, ${productAccent}12 0%, #fff 46%)`,
+                        boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
                       }}
                     >
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: 700,
-                          color: 'text.primary',
-                          mb: 2,
-                          fontSize: { xs: '0.95rem', sm: '1rem' },
-                        }}
-                      >
-                        {sectionIndex + 1}) {productType}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: productAccent, boxShadow: `0 0 0 4px ${productAccent}22` }} />
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: 700,
+                            color: 'text.primary',
+                            fontSize: { xs: '0.95rem', sm: '1rem' },
+                          }}
+                        >
+                          {sectionIndex + 1}) {productType}
+                        </Typography>
+                      </Box>
                       <Typography
                         variant="body2"
                         color="text.secondary"
@@ -465,7 +466,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                   variant="h6"
                   sx={{
                     fontWeight: 700,
-                    color: '#2563EB',
+                    color: '#2879b6',
                     mb: 3,
                     fontSize: { xs: '1rem', sm: '1.125rem' },
                   }}
@@ -478,32 +479,33 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     .map((_, i) => i)
                     .filter((i) => (fuelUtilizedRows[i]?.fuelType || '') === fuelType);
                   const customersForType = customers.filter((c: any) => (c.type || '') === fuelType);
-                  const fuelAccent = fuelType === 'Petrol' ? '#2563EB' : '#e65100';
+                  const fuelAccent = fuelType === 'Petrol' ? '#2879b6' : '#ee6a31';
 
                   return (
                     <Box
                       key={fuelType}
                       sx={{
                         mb: 3.5,
-                        pl: { xs: 2, sm: 3 },
-                        borderLeft: `4px solid ${fuelAccent}`,
-                        borderRadius: '0 12px 12px 0',
-                        bgcolor: 'rgba(0,0,0,0.02)',
-                        py: 2.5,
-                        px: 2.5,
+                        p: 2.5,
+                        borderRadius: '16px',
+                        border: `1px solid ${fuelAccent}33`,
+                        background: `linear-gradient(180deg, ${fuelAccent}12 0%, #fff 46%)`,
+                        boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
                       }}
                     >
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: 700,
-                          color: 'text.primary',
-                          mb: 2,
-                          fontSize: { xs: '0.95rem', sm: '1rem' },
-                        }}
-                      >
-                        {sectionIndex + 1}) {fuelType}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: fuelAccent, boxShadow: `0 0 0 4px ${fuelAccent}22` }} />
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: 700,
+                            color: 'text.primary',
+                            fontSize: { xs: '0.95rem', sm: '1rem' },
+                          }}
+                        >
+                          {sectionIndex + 1}) {fuelType}
+                        </Typography>
+                      </Box>
                       <Typography
                         variant="body2"
                         color="text.secondary"
@@ -685,7 +687,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                 component="div"
                 sx={{
                   fontWeight: 700,
-                  color: '#2563EB',
+                  color: '#2879b6',
                   pt: 3,
                   px: 3,
                   pb: 2,
@@ -752,7 +754,26 @@ export default function BiogasSection({ isReadOnly }: Props) {
                 </Box>
               </DialogContent>
               <DialogActions sx={{ px: 3, py: 2.5, gap: 2, flexWrap: 'wrap', borderTop: '1px solid', borderColor: 'divider' }}>
-                <Button onClick={() => setAddCustomerOpen(false)} sx={{ borderRadius: '10px' }}>
+                <Button
+                  onClick={() => setAddCustomerOpen(false)}
+                  variant="outlined"
+                  sx={{
+                    borderRadius: '10px',
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    minHeight: 40,
+                    px: 2.25,
+                    color: '#334155',
+                    borderColor: '#94a3b8',
+                    borderWidth: 1.5,
+                    '&:hover': {
+                      borderWidth: 1.5,
+                      borderColor: '#2879b6',
+                      color: '#2879b6',
+                      bgcolor: 'rgba(40, 121, 182, 0.06)',
+                    },
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button
