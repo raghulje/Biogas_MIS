@@ -114,6 +114,21 @@ function htmlError(res, message, status = 400, options = {}) {
 </body></html>`);
 }
 
+function emailFromSamlBody(body) {
+    try {
+        const raw = String((body && body.SAMLResponse) || '').replace(/\s+/g, '');
+        if (!raw) return '';
+        const xml = Buffer.from(raw, 'base64').toString('utf8');
+        const match = xml.match(/<(?:[\w.-]+:)?NameID\b[^>]*>([^<]+)<\/(?:[\w.-]+:)?NameID>/i);
+        const value = match
+            ? match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').trim().toLowerCase()
+            : '';
+        return value.includes('@') ? value : '';
+    } catch {
+        return '';
+    }
+}
+
 function callbackUrl(relay) {
     const base = `${publicBase()}/login/sso/callback`;
     const path = safeAppPath(relay);
@@ -239,7 +254,13 @@ router.post('/acs', async (req, res) => {
         return res.redirect(`${dest}${sep}token=${encodeURIComponent(tokens.accessToken)}`);
     } catch (error) {
         console.error('[saml/acs]', error);
-        return htmlError(res, 'The sign-in response from RefexOne could not be verified. Start again from the login page.', 400, { title: 'Sign-in could not be verified' });
+        const email = emailFromSamlBody(req.body);
+        return htmlError(
+            res,
+            email ? `No User Found for this '${email}'` : 'No User Found',
+            403,
+            { title: 'No User Found' },
+        );
     }
 });
 
