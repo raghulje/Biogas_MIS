@@ -21,7 +21,16 @@ import {
   CardContent,
   Stack,
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import {
+  ExpandMore as ExpandMoreIcon,
+  FilterList as FilterIcon,
+  FileDownload as ExcelIcon,
+  Search as SearchIcon,
+  Grass as FeedIcon,
+  LocalFireDepartment as RbgIcon,
+  LocalGasStation as CbgIcon,
+  Bolt as PowerIcon,
+} from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
 import type { MISEntry } from '../../mocks/misEntries';
 import { misService } from '../../services/misService';
@@ -1315,10 +1324,7 @@ const FinalMISPage = () => {
                   },
                 }}
               >
-                <i
-                  className="ri-file-excel-2-line"
-                  style={{ marginRight: 8, fontSize: '18px' }}
-                />
+                <ExcelIcon sx={{ mr: 1, fontSize: 18 }} />
                 Export Excel
               </Button>
               {/* Print Button Hidden */}
@@ -1759,10 +1765,7 @@ const FinalMISPage = () => {
                 justifyContent: 'center',
               }}
             >
-              <i
-                className="ri-filter-3-line"
-                style={{ color: '#fff', fontSize: '16px' }}
-              />
+              <FilterIcon sx={{ color: '#fff', fontSize: 18 }} />
             </Box>
             <Typography
               sx={{ fontWeight: 600, color: '#334155', fontSize: '16px' }}
@@ -1958,10 +1961,7 @@ const FinalMISPage = () => {
                 mb: 3,
               }}
             >
-              <i
-                className="ri-file-search-line"
-                style={{ fontSize: '36px', color: '#94a3b8' }}
-              />
+              <SearchIcon sx={{ fontSize: 36, color: '#1E88E5' }} />
             </Box>
             <Typography
               sx={{
@@ -3925,88 +3925,112 @@ const FinalMISPage = () => {
             {[
               {
                 label: 'Total Feed Input',
-                value: `${(aggregatedData.feeding.totalFeedAmountTons ?? 0).toFixed(2)} tons`,
-                icon: 'ri-drop-line',
-                color: '#2879b6',
+                value: (aggregatedData.feeding.totalFeedAmountTons ?? 0).toFixed(2),
+                unit: 'tons',
+                icon: <FeedIcon />,
+                color: '#1E88E5',
+                wash: '#f0f7ff',
               },
               {
                 label: 'RBG Produced',
-                value: `${aggregatedData.biogasProduction.rbgProduced.toFixed(
-                  0
-                )} Nm³`,
-                icon: 'ri-fire-line',
-                color: '#7dc244',
+                value: aggregatedData.biogasProduction.rbgProduced.toFixed(0),
+                unit: 'Nm³',
+                icon: <RbgIcon />,
+                color: '#43A047',
+                wash: '#f1faf2',
               },
               {
                 label: 'CBG Production',
-                value: `${aggregatedData.cbgProduction.production.toFixed(
-                  0
-                )} Kg`,
-                icon: 'ri-gas-station-line',
-                color: '#ee6a31',
+                value: aggregatedData.cbgProduction.production.toFixed(0),
+                unit: 'Kg',
+                icon: <CbgIcon />,
+                color: '#FB8C00',
+                wash: '#fff8ef',
               },
               {
                 label: 'Power Consumption',
-                value: `${aggregatedData.powerConsumption.toFixed(
-                  0
-                )} kWh`,
-                icon: 'ri-flashlight-line',
-                color: '#F59E21',
+                value: aggregatedData.powerConsumption.toFixed(0),
+                unit: 'kWh',
+                icon: <PowerIcon />,
+                color: '#7C3AED',
+                wash: '#faf5ff',
               },
-            ].map((card, idx) => (
+            ].map((card) => (
               <Box
-                key={idx}
+                key={card.label}
                 sx={{
-                  background: '#fff',
-                  borderRadius: '12px',
-                  p: 2.5,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  border: '1px solid #e2e8f0',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: '18px',
+                  p: 2,
+                  minHeight: 108,
+                  border: `1px solid ${card.color}33`,
+                  background: `radial-gradient(ellipse 90% 85% at 0% 0%, ${card.wash} 0%, transparent 58%), radial-gradient(ellipse 70% 60% at 100% 100%, ${card.wash} 0%, transparent 52%), #fff`,
+                  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04), 0 12px 28px -18px rgba(15, 23, 42, 0.22)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 2,
-                  transition: 'all 0.2s ease',
+                  gap: 1.75,
+                  transition: 'transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 18,
+                    width: 46,
+                    height: 3,
+                    borderRadius: '0 0 5px 5px',
+                    background: `linear-gradient(90deg, ${card.color}, ${card.color}66)`,
+                  },
                   '&:hover': {
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                    transform: 'translateY(-2px)',
+                    transform: 'translateY(-3px)',
+                    borderColor: `${card.color}66`,
+                    boxShadow: `0 16px 32px -18px ${card.color}55`,
                   },
                 }}
               >
                 <Box
                   sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '12px',
-                    background: `${card.color}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: 52,
+                    height: 52,
+                    flexShrink: 0,
+                    borderRadius: '16px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: '#fff',
+                    background: `linear-gradient(145deg, ${card.color}, ${card.color}C7)`,
+                    boxShadow: `0 8px 16px ${card.color}38`,
+                    '& .MuiSvgIcon-root': { fontSize: 26 },
                   }}
                 >
-                  <i
-                    className={card.icon}
-                    style={{ fontSize: '22px', color: card.color }}
-                  />
+                  {card.icon}
                 </Box>
-                <Box>
+                <Box sx={{ minWidth: 0 }}>
                   <Typography
                     sx={{
                       fontSize: '12px',
-                      color: '#64748b',
-                      fontWeight: 500,
+                      color: '#5f6b7a',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
                     }}
                   >
                     {card.label}
                   </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: '#334155',
-                    }}
-                  >
-                    {card.value}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.6, mt: 0.4, flexWrap: 'wrap' }}>
+                    <Typography
+                      sx={{
+                        fontSize: '22px',
+                        fontWeight: 800,
+                        color: '#25364d',
+                        letterSpacing: '-0.03em',
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {card.value}
+                    </Typography>
+                    <Typography sx={{ fontSize: '12px', fontWeight: 700, color: card.color }}>
+                      {card.unit}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             ))}
