@@ -164,15 +164,15 @@ export const Layout = ({ children }: LayoutProps) => {
       </Box>
       <Divider />
       <List sx={{ px: isCollapsed ? 0.5 : 1.5, pt: 2, flex: 1 }}>
-        {menuItems.map((item, index) => (
+        {menuItems.map((item) => (
           <ListItem
             key={item.text}
             disablePadding
             sx={{ mb: 1 }}
-            className={`aos-fade-right aos-delay-${(index + 1) * 100}`}
           >
             <Tooltip title={isCollapsed ? item.text : ''} placement="right" arrow>
               <ListItemButton
+                className="side-nav-item"
                 selected={location.pathname === item.path}
                 onClick={() => {
                   navigate(item.path);
@@ -183,7 +183,7 @@ export const Layout = ({ children }: LayoutProps) => {
                   py: 1.5,
                   px: isCollapsed ? 1.5 : 2,
                   justifyContent: isCollapsed ? 'center' : 'flex-start',
-                  transition: 'all 0.3s ease',
+                  transition: 'background-color 0.16s ease, color 0.16s ease',
                   '&.Mui-selected': {
                     background:
                       'linear-gradient(135deg, rgba(40, 121, 182, 0.15) 0%, rgba(125, 194, 68, 0.15) 100%)',
@@ -198,7 +198,6 @@ export const Layout = ({ children }: LayoutProps) => {
                   },
                   '&:hover': {
                     backgroundColor: 'rgba(40, 121, 182, 0.08)',
-                    transform: isCollapsed ? 'scale(1.05)' : 'translateX(4px)',
                   },
                 }}
               >
@@ -231,11 +230,10 @@ export const Layout = ({ children }: LayoutProps) => {
                   py: 1.5,
                   px: isCollapsed ? 1.5 : 2,
                   justifyContent: isCollapsed ? 'center' : 'flex-start',
-                  transition: 'all 0.3s ease',
+                  transition: 'background-color 0.16s ease, color 0.16s ease',
                   '&:hover': {
                     backgroundColor: 'rgba(238, 106, 49, 0.1)',
                     color: '#ee6a31',
-                    transform: isCollapsed ? 'scale(1.05)' : 'translateX(4px)',
                     '& .MuiListItemIcon-root': {
                       color: '#ee6a31',
                     },
@@ -456,7 +454,9 @@ export const Layout = ({ children }: LayoutProps) => {
           transition: 'all 0.3s ease',
         }}
       >
-        {children}
+        <Box key={location.pathname} className="page-stage" sx={{ minWidth: 0 }}>
+          {children}
+        </Box>
         {/* Global footer */}
         <Box component="footer" sx={{ mt: 4, py: 2, textAlign: 'center', color: 'text.secondary' }}>
           <Typography variant="caption">

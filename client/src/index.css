@@ -19,114 +19,97 @@ body {
   overflow-x: hidden;
 }
 
-/* AOS Animation Styles */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.aos-fade-up {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.aos-fade-down {
-  animation: fadeInDown 0.6s ease-out forwards;
-}
-
-.aos-fade-left {
-  animation: fadeInLeft 0.6s ease-out forwards;
-}
-
-.aos-fade-right {
-  animation: fadeInRight 0.6s ease-out forwards;
-}
-
-.aos-scale-in {
-  animation: scaleIn 0.5s ease-out forwards;
-}
-
-.aos-delay-100 {
-  animation-delay: 0.1s;
-  opacity: 0;
-}
-
-.aos-delay-200 {
-  animation-delay: 0.2s;
-  opacity: 0;
-}
-
-.aos-delay-300 {
-  animation-delay: 0.3s;
-  opacity: 0;
-}
-
-.aos-delay-400 {
-  animation-delay: 0.4s;
-  opacity: 0;
-}
-
+/* Old staggered fades held each page invisible for up to a second.
+   Keep the class names so existing markup stays put, without the wait. */
+.aos-fade-up,
+.aos-fade-down,
+.aos-fade-left,
+.aos-fade-right,
+.aos-scale-in,
+.aos-delay-100,
+.aos-delay-200,
+.aos-delay-300,
+.aos-delay-400,
+.aos-delay-450,
 .aos-delay-500 {
-  animation-delay: 0.5s;
-  opacity: 0;
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-stage {
+  animation: page-enter 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.side-nav-item {
+  position: relative;
+}
+
+.side-nav-item::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #2879b6, #7dc244);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 0.18s ease;
+}
+
+.side-nav-item.Mui-selected::before {
+  transform: scaleY(1);
+}
+
+.side-nav-item .MuiListItemIcon-root {
+  transition: transform 0.18s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.side-nav-item:hover .MuiListItemIcon-root {
+  transform: scale(1.08) rotate(-6deg);
+}
+
+.side-nav-item:active {
+  transform: scale(0.985);
+}
+
+.MuiButton-root:active {
+  transform: scale(0.98);
+}
+
+.MuiTableRow-hover:hover {
+  background-color: rgba(40, 121, 182, 0.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-stage,
+  .side-nav-item,
+  .side-nav-item .MuiListItemIcon-root,
+  .glass-card,
+  .glass-card::after,
+  .hover-lift {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* Glassmorphism Styles */
 .glass-card {
+  position: relative;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -134,7 +117,32 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   border-radius: 20px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card-strong {
+  position: relative;
+}
+
+.glass-card::after,
+.glass-card-strong::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, #2879b6, #7dc244);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.glass-card:hover::after,
+.glass-card-strong:hover::after {
+  transform: scaleX(1);
 }
 
 .glass-card:hover {
@@ -358,6 +366,15 @@ body {
   .glass-card:hover,
   .glass-card-strong:hover,
   .hover-lift:hover {
+    transform: none;
+  }
+
+  .glass-card::after,
+  .glass-card-strong::after {
+    transform: scaleX(0);
+  }
+
+  .side-nav-item:hover .MuiListItemIcon-root {
     transform: none;
   }
 }

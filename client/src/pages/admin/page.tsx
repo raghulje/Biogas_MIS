@@ -2769,7 +2769,7 @@ export default function AdminPage() {
                 </Box>
 
                 <Grid container spacing={3} sx={{ display: { xs: 'none', lg: 'flex' } }}>
-                  {emailTemplates.map((template, index) => (
+                  {emailTemplates.map((template) => (
                     <Grid item xs={12} md={6} key={template.id}>
                       <Card
                         className="glass-card hover-lift"
@@ -2779,8 +2779,6 @@ export default function AdminPage() {
                           transition: 'all 0.3s ease',
                           borderLeft: `4px solid ${getTemplateTypeColor(template.type)}`,
                         }}
-                        data-aos="fade-up"
-                        data-aos-delay={index * 100}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                           <Box sx={{ flex: 1 }}>
@@ -3252,7 +3250,7 @@ export default function AdminPage() {
 
               {/* Notification Configurations */}
               <Grid container spacing={3}>
-                {(schedulerConfigs || []).map((config, index) => {
+                {(schedulerConfigs || []).map((config) => {
                   const template = emailTemplates.find(t => t.id === config.templateId);
                   return (
                     <Grid item xs={12} md={6} key={config.id}>
@@ -3264,8 +3262,6 @@ export default function AdminPage() {
                           transition: 'all 0.3s ease',
                           borderLeft: `4px solid ${getNotificationTypeColor(config.notificationType)}`,
                         }}
-                        data-aos="fade-up"
-                        data-aos-delay={index * 100}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                           <Box sx={{ flex: 1 }}>
