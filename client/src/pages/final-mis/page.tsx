@@ -1185,18 +1185,18 @@ const FinalMISPage = () => {
     XLSX.writeFile(wb, fileName);
   };
 
-  // Professional subtle color palette
+  // Soft washes in the app palette: blue, sage, warm ivory, blush
   const colors = {
     headerPrimary: '#2879b6',
-    headerSecondary: '#3d8cc4',
-    sectionHeader: '#f8fafc',
-    rowHeader: '#f1f5f9',
-    accent1: '#e0f2fe',
-    accent2: '#ecfdf5',
-    accent3: '#fef3c7',
-    accent4: '#fce7f3',
-    border: '#e2e8f0',
-    text: '#334155',
+    headerSecondary: '#2f86c0',
+    sectionHeader: '#f6f8fb',
+    rowHeader: '#f3f6f9',
+    accent1: '#eef5fb',
+    accent2: '#f2f7f3',
+    accent3: '#fbf6ea',
+    accent4: '#fbf3f2',
+    border: '#e6edf3',
+    text: '#3d4a5c',
     textLight: '#64748b',
   };
 
@@ -1987,7 +1987,7 @@ const FinalMISPage = () => {
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #e6edf3',
               opacity: isAnimated ? 1 : 0,
               transform: isAnimated ? 'translateY(0)' : 'translateY(-20px)',
               transition: 'all 0.5s ease-out 0.2s',
@@ -3264,7 +3264,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={7}
                       style={{
-                        background: '#fef3c7',
+                        background: colors.accent3,
                         padding: '12px 16px',
                         textAlign: 'center',
                         fontWeight: 700,
@@ -3335,7 +3335,7 @@ const FinalMISPage = () => {
                     </td>
                     <td
                       style={{
-                        background: '#fef3c7',
+                        background: colors.accent3,
                         padding: '10px 16px',
                         textAlign: 'center',
                         fontWeight: 600,
@@ -3348,7 +3348,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: '#fef3c7',
+                        background: colors.accent3,
                         padding: '10px 16px',
                         textAlign: 'center',
                         fontWeight: 600,
@@ -3705,7 +3705,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: '#fef3c7',
+                        background: colors.accent3,
                         padding: '10px 12px',
                         textAlign: 'center',
                         fontWeight: 600,
@@ -3719,7 +3719,7 @@ const FinalMISPage = () => {
                     <td
                       colSpan={2}
                       style={{
-                        background: '#fef3c7',
+                        background: colors.accent3,
                         padding: '10px 12px',
                         textAlign: 'center',
                         fontWeight: 600,
