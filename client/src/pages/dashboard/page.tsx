@@ -34,17 +34,18 @@ import { useSnackbar } from 'notistack';
 import {
   Close as CloseIcon,
   FilterList as FilterIcon,
-  LocalFireDepartment as BiogasIcon,
-  LocalGasStation as GasIcon,
-  Sell as SellIcon,
-  Grass as FomIcon,
   Speed as AvgIcon,
-  Storefront as StoreIcon,
-  Bolt as BoltIcon,
-  HealthAndSafety as SafetyIcon,
   ShowChart as TrendIcon,
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
+import feedIcon from '../../assets/mis-feed-icon.jpg';
+import biogasIcon from '../../assets/mis-biogas-icon.jpg';
+import cbgIcon from '../../assets/mis-cbg-icon.jpg';
+import soldIcon from '../../assets/mis-sold-icon.jpg';
+import fomIcon from '../../assets/mis-fom-icon.jpg';
+import fomSoldIcon from '../../assets/mis-fom-sold-icon.jpg';
+import powerIcon from '../../assets/mis-power-icon.jpg';
+import safetyIcon from '../../assets/mis-safety-icon.jpg';
 import { PageBanner } from '../../components/PageBanner';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -95,6 +96,7 @@ const DashboardMetricCard = memo(function DashboardMetricCard({
 }) {
   return (
     <Box
+      className="metric-card"
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -179,17 +181,17 @@ const DashboardMetricCard = memo(function DashboardMetricCard({
           </Box>
         </Box>
         <Box
+          className="icon-ring"
           sx={{
-            width: 42,
-            height: 42,
+            width: 58,
+            height: 58,
             flexShrink: 0,
-            display: 'grid',
-            placeItems: 'center',
-            borderRadius: '13px',
-            color: '#fff',
-            background: `linear-gradient(145deg, ${color}, ${color}CC)`,
-            boxShadow: `0 7px 16px ${color}32`,
-            '& .MuiSvgIcon-root': { fontSize: 21 },
+            borderRadius: '16px',
+            overflow: 'hidden',
+            bgcolor: '#fff',
+            boxShadow: `0 8px 16px ${color}32`,
+            '--ring': color,
+            '& img': { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
           }}
         >
           {icon}
@@ -1218,7 +1220,7 @@ export default function DashboardPage() {
                       unit="tons"
                       subtitle={`Avg / day ${formatNumber(summary.avgFeed ?? 0)} tons · ${summary.totalEntries ?? 0} days`}
                       color="#8B5CF6"
-                      icon={<AvgIcon />}
+                      icon={<Box component="img" src={feedIcon} alt="" />}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6} lg={3}>
@@ -1228,7 +1230,7 @@ export default function DashboardPage() {
                       unit="m³"
                       subtitle={`Avg / day ${formatNumber(summary.avgRawBiogas ?? 0)} m³ · ${summary.totalEntries ?? 0} days`}
                       color="#2879B6"
-                      icon={<BiogasIcon />}
+                      icon={<Box component="img" src={biogasIcon} alt="" />}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6} lg={3}>
@@ -1238,7 +1240,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgCBGProduced ?? 0)} kg · ${summary.totalEntries ?? 0} days`}
                       color="#62A93B"
-                      icon={<GasIcon />}
+                      icon={<Box component="img" src={cbgIcon} alt="" />}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6} lg={3}>
@@ -1248,7 +1250,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgCBGSold ?? 0)} kg · ${summary.totalEntries ?? 0} days`}
                       color="#EE6A31"
-                      icon={<SellIcon />}
+                      icon={<Box component="img" src={soldIcon} alt="" />}
                       onClick={handleCBGSoldClick}
                     />
                   </Grid>
@@ -1315,7 +1317,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgFOMProduced ?? 0)} kg`}
                       color="#2879B6"
-                      icon={<FomIcon />}
+                      icon={<Box component="img" src={fomIcon} alt="" />}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -1325,7 +1327,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgFOMSold ?? 0)} kg`}
                       color="#EE6A31"
-                      icon={<StoreIcon />}
+                      icon={<Box component="img" src={fomSoldIcon} alt="" />}
                     />
                   </Grid>
                 </Grid>
@@ -1471,7 +1473,7 @@ export default function DashboardPage() {
                       unit="kWh"
                       subtitle="Total usage for selected period"
                       color="#2879B6"
-                      icon={<BoltIcon />}
+                      icon={<Box component="img" src={powerIcon} alt="" />}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -1480,7 +1482,7 @@ export default function DashboardPage() {
                       value={formatNumber(summary.totalHSEIncidents ?? 0)}
                       subtitle={Number(summary.totalHSEIncidents ?? 0) === 0 ? 'All systems safe' : 'Review incident records'}
                       color={Number(summary.totalHSEIncidents ?? 0) === 0 ? '#62A93B' : '#EE6A31'}
-                      icon={<SafetyIcon />}
+                      icon={<Box component="img" src={safetyIcon} alt="" />}
                     />
                   </Grid>
                 </Grid>

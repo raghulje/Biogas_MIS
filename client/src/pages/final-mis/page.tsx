@@ -3957,6 +3957,7 @@ const FinalMISPage = () => {
             ].map((card) => (
               <Box
                 key={card.label}
+                className="metric-card"
                 sx={{
                   position: 'relative',
                   overflow: 'hidden',
@@ -3988,19 +3989,25 @@ const FinalMISPage = () => {
                 }}
               >
                 <Box
-                  component="img"
-                  src={card.icon}
-                  alt=""
+                  className="icon-ring"
                   sx={{
                     width: 64,
                     height: 64,
                     flexShrink: 0,
                     borderRadius: '18px',
-                    objectFit: 'cover',
+                    overflow: 'hidden',
                     bgcolor: '#fff',
                     boxShadow: `0 8px 18px ${card.color}2E`,
+                    '--ring': card.color,
                   }}
-                />
+                >
+                  <Box
+                    component="img"
+                    src={card.icon}
+                    alt=""
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </Box>
                 <Box sx={{ minWidth: 0 }}>
                   <Typography
                     sx={{
