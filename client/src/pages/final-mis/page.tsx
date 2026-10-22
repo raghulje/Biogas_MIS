@@ -26,11 +26,11 @@ import {
   FilterList as FilterIcon,
   FileDownload as ExcelIcon,
   Search as SearchIcon,
-  Grass as FeedIcon,
-  LocalFireDepartment as RbgIcon,
-  LocalGasStation as CbgIcon,
-  Bolt as PowerIcon,
 } from '@mui/icons-material';
+import feedIcon from '../../assets/mis-feed-icon.jpg';
+import biogasIcon from '../../assets/mis-biogas-icon.jpg';
+import cbgIcon from '../../assets/mis-cbg-icon.jpg';
+import powerIcon from '../../assets/mis-power-icon.jpg';
 import { Layout } from '../../components/Layout';
 import type { MISEntry } from '../../mocks/misEntries';
 import { misService } from '../../services/misService';
@@ -3927,7 +3927,7 @@ const FinalMISPage = () => {
                 label: 'Total Feed Input',
                 value: (aggregatedData.feeding.totalFeedAmountTons ?? 0).toFixed(2),
                 unit: 'tons',
-                icon: <FeedIcon />,
+                icon: feedIcon,
                 color: '#1E88E5',
                 wash: '#f0f7ff',
               },
@@ -3935,7 +3935,7 @@ const FinalMISPage = () => {
                 label: 'RBG Produced',
                 value: aggregatedData.biogasProduction.rbgProduced.toFixed(0),
                 unit: 'Nm³',
-                icon: <RbgIcon />,
+                icon: biogasIcon,
                 color: '#43A047',
                 wash: '#f1faf2',
               },
@@ -3943,7 +3943,7 @@ const FinalMISPage = () => {
                 label: 'CBG Production',
                 value: aggregatedData.cbgProduction.production.toFixed(0),
                 unit: 'Kg',
-                icon: <CbgIcon />,
+                icon: cbgIcon,
                 color: '#FB8C00',
                 wash: '#fff8ef',
               },
@@ -3951,7 +3951,7 @@ const FinalMISPage = () => {
                 label: 'Power Consumption',
                 value: aggregatedData.powerConsumption.toFixed(0),
                 unit: 'kWh',
-                icon: <PowerIcon />,
+                icon: powerIcon,
                 color: '#7C3AED',
                 wash: '#faf5ff',
               },
@@ -3989,21 +3989,19 @@ const FinalMISPage = () => {
                 }}
               >
                 <Box
+                  component="img"
+                  src={card.icon}
+                  alt=""
                   sx={{
-                    width: 52,
-                    height: 52,
+                    width: 64,
+                    height: 64,
                     flexShrink: 0,
-                    borderRadius: '16px',
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: '#fff',
-                    background: `linear-gradient(145deg, ${card.color}, ${card.color}C7)`,
-                    boxShadow: `0 8px 16px ${card.color}38`,
-                    '& .MuiSvgIcon-root': { fontSize: 26 },
+                    borderRadius: '18px',
+                    objectFit: 'cover',
+                    bgcolor: '#fff',
+                    boxShadow: `0 8px 18px ${card.color}2E`,
                   }}
-                >
-                  {card.icon}
-                </Box>
+                />
                 <Box sx={{ minWidth: 0 }}>
                   <Typography
                     sx={{
