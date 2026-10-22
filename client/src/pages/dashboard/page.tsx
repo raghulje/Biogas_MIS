@@ -45,6 +45,7 @@ import {
   ShowChart as TrendIcon,
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
+import { PageBanner } from '../../components/PageBanner';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -683,25 +684,7 @@ export default function DashboardPage() {
           background: 'radial-gradient(circle at 0% 0%, rgba(40,121,182,0.05), transparent 28%), radial-gradient(circle at 100% 12%, rgba(125,194,68,0.05), transparent 24%)',
         }}
       >
-        <Box
-          sx={{
-            mb: 2.5,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 2,
-          }}
-          className="aos-fade-down"
-        >
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#25313C', letterSpacing: '-0.03em' }}>
-              Operations Dashboard
-            </Typography>
-            <Typography sx={{ mt: 0.45, color: '#6B7785', fontSize: { xs: 13, sm: 14 } }}>
-              Plant performance overview · {periodLabel}
-            </Typography>
-          </Box>
+        <PageBanner title="Operations Dashboard" subtitle={`Plant performance overview · ${periodLabel}`}>
           <Chip
             label="Live data"
             size="small"
@@ -711,12 +694,12 @@ export default function DashboardPage() {
               px: 0.5,
               fontWeight: 700,
               color: '#16783A',
-              bgcolor: 'rgba(46,164,79,0.09)',
-              border: '1px solid rgba(46,164,79,0.2)',
+              bgcolor: '#fff',
+              border: '1px solid rgba(255,255,255,0.7)',
               '& .MuiChip-icon': { ml: 0.75 },
             }}
           />
-        </Box>
+        </PageBanner>
 
         <Card
           className="aos-fade-up aos-delay-100"

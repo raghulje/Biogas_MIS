@@ -35,6 +35,7 @@ import {
     Business as BusinessIcon
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
+import { PageBanner } from '../../components/PageBanner';
 import { useSnackbar } from 'notistack';
 import MESSAGES from '../../utils/messages';
 import { customerService } from '../../services/customerService';
@@ -198,13 +199,7 @@ export default function CustomerPage() {
     return (
         <Layout>
             <Box>
-                <Box
-                    sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}
-                    className="aos-fade-down"
-                >
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
-                        Customer Master
-                    </Typography>
+                <PageBanner title="Customer Master" subtitle="Customers who buy CBG from the plant">
                     {canCreate && (
                         <Button
                             variant="contained"
@@ -213,20 +208,18 @@ export default function CustomerPage() {
                             fullWidth={isMobile}
                             sx={{
                                 borderRadius: '12px',
-                                background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
-                                color: '#fff',
+                                background: '#fff',
+                                color: '#2879b6',
                                 textTransform: 'none',
-                                fontWeight: 600,
-                                boxShadow: '0 4px 12px rgba(40, 121, 182, 0.2)',
-                                '&:hover': {
-                                    background: 'linear-gradient(135deg, #235EAC 0%, #1889BE 100%)',
-                                },
+                                fontWeight: 700,
+                                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
+                                '&:hover': { background: '#f3f8fc' },
                             }}
                         >
                             Add Customer
                         </Button>
                     )}
-                </Box>
+                </PageBanner>
 
                 {/* Filters */}
                 <Card className="glass-card mb-4 aos-fade-up aos-delay-100" sx={{ p: 2, mb: 3, borderRadius: '12px' }}>

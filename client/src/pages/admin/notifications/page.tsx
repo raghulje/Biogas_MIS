@@ -6,6 +6,7 @@ import {
     List, ListItem, ListItemText, ListItemIcon, Divider, Card, CardHeader, CardContent
 } from '@mui/material';
 import { Layout } from '../../../components/Layout';
+import { PageBanner } from '../../../components/PageBanner';
 import { adminService } from '../../../services/adminService';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -269,24 +270,7 @@ export default function NotificationConfigPage() {
     return (
         <Layout>
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
-                <Box
-                    className="aos-fade-down"
-                    sx={{
-                        mb: 2.5,
-                        px: { xs: 2, sm: 2.75 },
-                        py: { xs: 2, sm: 2.25 },
-                        borderRadius: '18px',
-                        background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)',
-                        boxShadow: '0 12px 28px rgba(40, 121, 182, 0.22)',
-                    }}
-                >
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', fontSize: { xs: '1.45rem', sm: '1.85rem' }, letterSpacing: '-0.02em' }}>
-                        In-App Notifications
-                    </Typography>
-                    <Typography sx={{ mt: 0.45, color: 'rgba(255,255,255,0.9)', fontSize: 14, fontWeight: 500 }}>
-                        Schedule reminders and choose who receives them
-                    </Typography>
-                </Box>
+                <PageBanner title="In-App Notifications" subtitle="Schedule reminders and choose who receives them" />
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 

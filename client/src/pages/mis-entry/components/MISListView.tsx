@@ -56,6 +56,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import MESSAGES from '../../../utils/messages';
 
 import { useAuth } from '../../../context/AuthContext';
+import { PageBanner } from '../../../components/PageBanner';
 
 
 
@@ -297,20 +298,18 @@ export default function MISListView({
 
   return (
     <Box className="aos-fade-up">
+      <PageBanner title="MIS Entry" subtitle="Create, review, and export daily plant entries" />
       <Box
         className="aos-fade-down aos-delay-100"
         sx={{
           mb: 3,
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 2,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6' }}>
-          MIS Entry Records
-        </Typography>
         <Box className="page-actions" sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' }, flexDirection: { xs: 'column', md: 'row' }, '& .MuiButton-root, & > label': { width: { xs: '100%', md: 'auto' } } }}>
           {canExport && (
             <Button

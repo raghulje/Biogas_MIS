@@ -1239,8 +1239,7 @@ const FinalMISPage = () => {
         {/* Header Section */}
         <Box
           sx={{
-            background:
-              'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
+            background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)',
             borderRadius: '16px',
             p: { xs: 2, sm: 3 },
             mb: 3,

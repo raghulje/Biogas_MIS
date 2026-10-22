@@ -275,25 +275,30 @@ export default function MISFormView({
         <Box
           sx={{
             mb: 3,
+            px: { xs: 1.5, sm: 2.25 },
+            py: { xs: 1.5, sm: 2 },
+            borderRadius: '18px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 2,
+            background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)',
+            boxShadow: '0 12px 28px rgba(40, 121, 182, 0.22)',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flexWrap: 'wrap' }}>
             <IconButton
               onClick={onBackToList}
               sx={{
-                backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                backgroundColor: 'rgba(255,255,255,0.18)',
                 borderRadius: '12px',
-                '&:hover': { backgroundColor: 'rgba(40, 121, 182, 0.2)' },
+                '&:hover': { backgroundColor: 'rgba(255,255,255,0.28)' },
               }}
             >
-              <ArrowBackIcon sx={{ color: '#2879b6' }} />
+              <ArrowBackIcon sx={{ color: '#fff' }} />
             </IconButton>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2879b6', fontSize: { xs: '1.25rem', sm: '1.75rem' }, lineHeight: 1.25 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', fontSize: { xs: '1.25rem', sm: '1.75rem' }, lineHeight: 1.25 }}>
               {viewMode === 'create'
                 ? 'Create New MIS Entry'
                 : viewMode === 'edit'

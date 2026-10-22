@@ -13,6 +13,12 @@ import {
   Typography,
   CircularProgress
 } from '@mui/material';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 // use public asset - put refex-logo.png into client/public/assets/
 import refexLogo from '../../assets/refex-logo.png';
 import { useSnackbar } from 'notistack';
@@ -244,7 +250,7 @@ export default function LoginPage() {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i className="ri-mail-line text-gray-400 text-lg"></i>
+                  <MailOutlineIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
                 </div>
                 <input
                   id="email"
@@ -267,7 +273,7 @@ export default function LoginPage() {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i className="ri-lock-line text-gray-400 text-lg"></i>
+                  <LockOutlinedIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
                 </div>
                 <input
                   id="password"
@@ -287,7 +293,7 @@ export default function LoginPage() {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   tabIndex={-1}
                 >
-                  <i className={`text-lg ${showPassword ? 'ri-eye-line' : 'ri-eye-off-line'}`}></i>
+                  {showPassword ? <VisibilityOffOutlinedIcon sx={{ fontSize: 20 }} /> : <VisibilityOutlinedIcon sx={{ fontSize: 20 }} />}
                 </button>
               </div>
             </div>
@@ -296,7 +302,7 @@ export default function LoginPage() {
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <i className="ri-error-warning-line text-red-600 text-lg mt-0.5"></i>
+                  <ErrorOutlineIcon sx={{ color: '#dc2626', fontSize: 20, mt: 0.25 }} />
                   <p className="text-sm text-red-700 font-medium">{error}</p>
                 </div>
               </div>
@@ -310,13 +316,13 @@ export default function LoginPage() {
             >
               {isSubmitting ? (
                 <>
-                  <i className="ri-loader-4-line animate-spin text-lg"></i>
+                  <CircularProgress size={18} sx={{ color: '#fff' }} />
                   <span>Signing in...</span>
                 </>
               ) : (
                 <>
                   <span>Sign In</span>
-                  <i className="ri-arrow-right-line text-lg"></i>
+                  <ArrowForwardIcon sx={{ fontSize: 18 }} />
                 </>
               )}
             </button>

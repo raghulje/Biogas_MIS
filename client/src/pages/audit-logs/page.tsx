@@ -18,6 +18,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { Layout } from '../../components/Layout';
+import { PageBanner } from '../../components/PageBanner';
 
 export default function AuditLogsPage() {
   const theme = useTheme();
@@ -68,9 +69,7 @@ export default function AuditLogsPage() {
   return (
     <Layout>
       <Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#2563EB', mb: 3 }}>
-          Audit Logs
-        </Typography>
+        <PageBanner title="Audit Logs" subtitle="Who signed in and what changed" />
 
         <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <CardContent>
@@ -127,11 +126,11 @@ export default function AuditLogsPage() {
               <Table>
                 <TableHead sx={{ backgroundColor: 'rgba(40, 121, 182, 0.05)' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Timestamp</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>User</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Action</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2563EB' }}>Details</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Timestamp</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>User</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Action</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Details</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

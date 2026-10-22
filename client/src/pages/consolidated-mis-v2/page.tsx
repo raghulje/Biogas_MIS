@@ -13,6 +13,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Layout } from '../../components/Layout';
+import { PageBanner } from '../../components/PageBanner';
 import { Download as DownloadIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { misService } from '../../services/misService';
 
@@ -86,10 +87,8 @@ export default function ConsolidatedMISV2Page() {
   return (
     <Layout>
       <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#333842' }}>
-            Consolidated MIS v2
-          </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2, gap: 2 }}>
+          <PageBanner title="Consolidated MIS" subtitle="Period totals across the plant" />
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: { xs: 'stretch', md: 'center' }, flexWrap: 'wrap', flexDirection: { xs: 'column', md: 'row' }, width: { xs: '100%', md: 'auto' }, '& .MuiFormControl-root, & .MuiTextField-root, & .MuiButton-root': { width: { xs: '100%', md: 'auto' } } }}>
             <FormControl size="small" sx={{ minWidth: 160 }}>
               <InputLabel>Filter by</InputLabel>

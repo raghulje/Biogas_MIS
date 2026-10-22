@@ -47,6 +47,7 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { Layout } from '../../components/Layout';
+import { PageBanner } from '../../components/PageBanner';
 import { adminService } from '../../services/adminService';
 import SamlSettingsPanel from './SamlSettingsPanel';
 import MESSAGES from '../../utils/messages';
@@ -2021,9 +2022,7 @@ export default function AdminPage() {
   return (
     <Layout>
       <Box className="aos-fade-up">
-        <Typography variant="h4" className="aos-fade-down aos-delay-100" sx={{ fontWeight: 700, color: '#2879b6', mb: 3 }}>
-          Admin Panel
-        </Typography>
+        <PageBanner title="Admin Panel" subtitle="Users, permissions, templates, and activity" />
 
         <Card className="glass-card-strong aos-fade-up aos-delay-200" sx={{ borderRadius: '20px', overflow: 'hidden' }}>
           <Box

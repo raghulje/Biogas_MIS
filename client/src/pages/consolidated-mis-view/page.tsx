@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import {
   Box,
   Typography,
@@ -10,6 +10,21 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Layout } from '../../components/Layout';
+import {
+  Grass as FeedIcon,
+  Science as QualityIcon,
+  Speed as DigesterIcon,
+  BubbleChart as GasQualityIcon,
+  LocalFireDepartment as FlameIcon,
+  Opacity as CbgQualityIcon,
+  Scale as ScaleIcon,
+  FilterAlt as FilterIcon,
+  Recycling as RecycleIcon,
+  WaterDrop as SlurryIcon,
+  Bolt as PowerIcon,
+  WarningAmber as WarningIcon,
+  FileDownload as DownloadIcon,
+} from '@mui/icons-material';
 
 // Mock data for demonstration
 const mockMISData = {
@@ -141,7 +156,7 @@ const ConsolidatedMISView = () => {
         {/* Header Section */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 50%, #7dc244 100%)',
+            background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)',
             borderRadius: '20px',
             p: { xs: 2, sm: 3 },
             mb: 4,
@@ -200,7 +215,7 @@ const ConsolidatedMISView = () => {
                     },
                   }}
                 >
-                  <i className="ri-download-2-line" style={{ marginRight: 8 }} />
+                  <DownloadIcon sx={{ mr: 1, fontSize: 18 }} />
                   Export Report
                 </Button>
               </Box>
@@ -219,7 +234,7 @@ const ConsolidatedMISView = () => {
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             {/* Feeding Data */}
-            <GlassCard title="Feeding Data" color="#7dc244" icon="ri-plant-line">
+            <GlassCard title="Feeding Data" color="#43A047" icon={<FeedIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
                   <thead>
@@ -249,7 +264,7 @@ const ConsolidatedMISView = () => {
             </GlassCard>
 
             {/* Raw Material Quality Data */}
-            <GlassCard title="Raw Material Quality Data" color="#ee6a31" icon="ri-test-tube-line">
+            <GlassCard title="Raw Material Quality Data" color="#FB8C00" icon={<QualityIcon />}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <MetricCard label="TS%" value={mockMISData.rawMaterialQuality.ts} unit="%" color="#2879b6" />
                 <MetricCard label="VS%" value={mockMISData.rawMaterialQuality.vs} unit="%" color="#7dc244" />
@@ -265,7 +280,7 @@ const ConsolidatedMISView = () => {
           data-index="1"
           sx={{ mb: 4, ...getAnimationStyle(1, 100) }}
         >
-          <GlassCard title="Digester Performance Report" color="#F59E21" icon="ri-dashboard-3-line" fullWidth>
+          <GlassCard title="Digester Performance Report" color="#1E88E5" icon={<DigesterIcon />} fullWidth>
             <Box sx={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
                 <thead>
@@ -309,7 +324,7 @@ const ConsolidatedMISView = () => {
         >
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3 }}>
             {/* Biogas Quality Report */}
-            <GlassCard title="Biogas Quality Report" color="#1D9AD4" icon="ri-bubble-chart-line">
+            <GlassCard title="Biogas Quality Report" color="#1E88E5" icon={<GasQualityIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -335,7 +350,7 @@ const ConsolidatedMISView = () => {
             </GlassCard>
 
             {/* Biogas Production */}
-            <GlassCard title="Biogas Production (Nm3)" color="#139B49" icon="ri-gas-station-line">
+            <GlassCard title="Biogas Production (Nm3)" color="#43A047" icon={<FlameIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -368,7 +383,7 @@ const ConsolidatedMISView = () => {
         >
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3 }}>
             {/* CBG Quality Report */}
-            <GlassCard title="CBG Quality Report" color="#ee6a31" icon="ri-fire-line">
+            <GlassCard title="CBG Quality Report" color="#FB8C00" icon={<CbgQualityIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -394,7 +409,7 @@ const ConsolidatedMISView = () => {
             </GlassCard>
 
             {/* CBG Production */}
-            <GlassCard title="CBG (Kg)" color="#235EAC" icon="ri-scales-3-line">
+            <GlassCard title="CBG (Kg)" color="#1E88E5" icon={<ScaleIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -427,7 +442,7 @@ const ConsolidatedMISView = () => {
         >
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3 }}>
             {/* Solid Liquid Separator Operating Data */}
-            <GlassCard title="Solid Liquid Separator Operating Data" color="#7dc244" icon="ri-filter-3-line">
+            <GlassCard title="Solid Liquid Separator Operating Data" color="#43A047" icon={<FilterIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
                   <thead>
@@ -460,7 +475,7 @@ const ConsolidatedMISView = () => {
             </GlassCard>
 
             {/* FOM & LFOM Production */}
-            <GlassCard title="FOM & LFOM Production" color="#F59E21" icon="ri-recycle-line">
+            <GlassCard title="FOM & LFOM Production" color="#FB8C00" icon={<RecycleIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -491,7 +506,7 @@ const ConsolidatedMISView = () => {
           data-index="5"
           sx={{ mb: 4, ...getAnimationStyle(5, 500) }}
         >
-          <GlassCard title="Slurry Management Data" color="#2879b6" icon="ri-water-flash-line" fullWidth>
+          <GlassCard title="Slurry Management Data" color="#1E88E5" icon={<SlurryIcon />} fullWidth>
             <Box sx={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead>
@@ -531,7 +546,7 @@ const ConsolidatedMISView = () => {
         >
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' }, gap: 3 }}>
             {/* Total Power Consumption */}
-            <GlassCard title="Total Power Consumption" color="#ee6a31" icon="ri-flashlight-line">
+            <GlassCard title="Total Power Consumption" color="#7C3AED" icon={<PowerIcon />}>
               <Box
                 sx={{
                   display: 'flex',
@@ -566,7 +581,7 @@ const ConsolidatedMISView = () => {
             </GlassCard>
 
             {/* Major Breakdown Reasons */}
-            <GlassCard title="Major Breakdown Reasons" color="#333842" icon="ri-error-warning-line">
+            <GlassCard title="Major Breakdown Reasons" color="#E53935" icon={<WarningIcon />}>
               <Box
                 sx={{
                   p: 3,
@@ -607,7 +622,7 @@ const ConsolidatedMISView = () => {
 interface GlassCardProps {
   title: string;
   color: string;
-  icon: string;
+  icon: ReactNode;
   children: React.ReactNode;
   fullWidth?: boolean;
 }
@@ -650,9 +665,10 @@ const GlassCard = ({ title, color, icon, children }: GlassCardProps) => (
           justifyContent: 'center',
           color: '#fff',
           boxShadow: `0 4px 12px ${color}40`,
+          '& .MuiSvgIcon-root': { fontSize: 20 },
         }}
       >
-        <i className={icon} />
+        {icon}
       </Box>
       <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842', fontSize: { xs: '1rem', md: '1.25rem' } }}>
         {title}
