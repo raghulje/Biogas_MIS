@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Layout } from '../../components/Layout';
+import reportScene from '../../assets/biogas-scene-report.jpg';
 import {
   Grass as FeedIcon,
   Science as QualityIcon,
@@ -155,14 +156,11 @@ const ConsolidatedMISView = () => {
       <Box sx={{ pb: 4 }}>
         {/* Header Section */}
         <Box
+          className="scene-header"
+          style={{ ['--scene' as string]: `url("${reportScene}")` }}
           sx={{
-            background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)',
-            borderRadius: '20px',
             p: { xs: 2, sm: 3 },
             mb: 4,
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 10px 40px rgba(40, 121, 182, 0.3)',
           }}
         >
           <Box
@@ -178,10 +176,10 @@ const ConsolidatedMISView = () => {
           <Box sx={{ position: 'relative', zIndex: 1 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
               <Box>
-                <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700, mb: 0.5 }}>
+                <Typography variant="h4" sx={{ color: '#07111f', fontWeight: 800, mb: 0.5, letterSpacing: '-0.03em' }}>
                   Daily Report
                 </Typography>
-                <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 500 }}>
                   {mockMISData.plantName}
                 </Typography>
               </Box>
@@ -202,16 +200,14 @@ const ConsolidatedMISView = () => {
                 <Button
                   variant="contained"
                   sx={{
-                    background: 'rgba(255,255,255,0.2)',
-                    backdropFilter: 'blur(10px)',
+                    background: '#17a2b4',
                     borderRadius: '12px',
                     px: 3,
                     py: 1,
                     textTransform: 'none',
                     fontWeight: 600,
-                    border: '1px solid rgba(255,255,255,0.3)',
                     '&:hover': {
-                      background: 'rgba(255,255,255,0.3)',
+                      background: '#0f6b7a',
                     },
                   }}
                 >

@@ -208,12 +208,12 @@ export default function CustomerPage() {
                             fullWidth={isMobile}
                             sx={{
                                 borderRadius: '12px',
-                                background: '#fff',
-                                color: '#2879b6',
+                                background: '#17a2b4',
+                                color: '#fff',
                                 textTransform: 'none',
                                 fontWeight: 700,
-                                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
-                                '&:hover': { background: '#f3f8fc' },
+                                boxShadow: '0 8px 16px rgba(15, 107, 122, 0.25)',
+                                '&:hover': { background: '#0f6b7a' },
                             }}
                         >
                             Add Customer
@@ -535,7 +535,7 @@ export default function CustomerPage() {
                             fullWidth={isMobile}
                             sx={{
                                 borderRadius: '8px',
-                                background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                                background: 'linear-gradient(135deg, #0f6b7a 0%, #17a2b4 100%)',
                                 textTransform: 'none'
                             }}
                         >

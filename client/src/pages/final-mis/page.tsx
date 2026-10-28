@@ -32,6 +32,7 @@ import biogasIcon from '../../assets/mis-biogas-icon.jpg';
 import cbgIcon from '../../assets/mis-cbg-icon.jpg';
 import powerIcon from '../../assets/mis-power-icon.jpg';
 import { Layout } from '../../components/Layout';
+import reportScene from '../../assets/biogas-scene-report.jpg';
 import type { MISEntry } from '../../mocks/misEntries';
 import { misService } from '../../services/misService';
 import * as XLSX from 'xlsx';
@@ -1263,15 +1264,14 @@ const FinalMISPage = () => {
         )}
         {/* Header Section */}
         <Box
+          className="scene-header"
+          style={{ ['--scene' as string]: `url("${reportScene}")` }}
           sx={{
-            background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)',
-            borderRadius: '16px',
             p: { xs: 2, sm: 3 },
             mb: 3,
-            boxShadow: '0 4px 20px rgba(40, 121, 182, 0.2)',
             opacity: isAnimated ? 1 : 0,
             transform: isAnimated ? 'translateY(0)' : 'translateY(-20px)',
-            transition: 'all 0.5s ease-out',
+            transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
           }}
         >
           <Box
@@ -1286,11 +1286,11 @@ const FinalMISPage = () => {
             <Box>
               <Typography
                 variant="h4"
-                sx={{ fontWeight: 700, color: '#fff', mb: 0.5 }}
+                sx={{ fontWeight: 800, color: '#07111f', mb: 0.5, letterSpacing: '-0.03em' }}
               >
                 Final MIS Report
               </Typography>
-              <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px' }}>
+              <Typography sx={{ color: '#64748b', fontSize: '14px' }}>
                 4 TPD - SREL PLANT | Consolidated Data View
               </Typography>
             </Box>
@@ -1302,8 +1302,8 @@ const FinalMISPage = () => {
                 fullWidth={isPhone}
                 size={isPhone ? 'large' : 'medium'}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.9)',
-                  color: '#fff',
+                  borderColor: '#17a2b4',
+                  color: '#0f6b7a',
                   borderRadius: '12px',
                   textTransform: 'none',
                   fontWeight: 600,
@@ -1314,7 +1314,7 @@ const FinalMISPage = () => {
               >
                 {loading ? (
                   <>
-                    <CircularProgress size={22} sx={{ color: '#fff', mr: 1 }} />
+                    <CircularProgress size={22} sx={{ color: '#0f6b7a', mr: 1 }} />
                     Loading…
                   </>
                 ) : (
@@ -1328,8 +1328,8 @@ const FinalMISPage = () => {
                 fullWidth={isPhone}
                 size={isPhone ? 'large' : 'medium'}
                 sx={{
-                  background: 'rgba(255,255,255,0.95)',
-                  color: '#2879b6',
+                  background: '#17a2b4',
+                  color: '#fff',
                   borderRadius: '12px',
                   textTransform: 'none',
                   fontWeight: 600,
@@ -1339,7 +1339,7 @@ const FinalMISPage = () => {
                   whiteSpace: 'nowrap',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   '&:hover': {
-                    background: '#fff',
+                    background: '#0f6b7a',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   },
                   '&:disabled': {
@@ -1373,7 +1373,7 @@ const FinalMISPage = () => {
                 expandIcon={<ExpandMoreIcon />}
                 sx={{
                   minHeight: 56,
-                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  background: 'linear-gradient(135deg, #0f6b7a 0%, #17a2b4 100%)',
                   color: '#fff',
                   borderRadius: '12px 12px 0 0',
                   '& .MuiAccordionSummary-content': { my: 1.5 }
@@ -1783,7 +1783,7 @@ const FinalMISPage = () => {
                 height: 32,
                 borderRadius: '8px',
                 background:
-                  'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  'linear-gradient(135deg, #0f6b7a 0%, #17a2b4 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

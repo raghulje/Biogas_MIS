@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { Box, Typography } from '@mui/material';
+import { useLocation } from 'react-router-dom';
+import { sceneForPath } from '../scenes';
 
-export const pageBannerBackground =
-  'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)';
+export const pageBannerBackground = '#ffffff';
 
 export function PageBanner({
   title,
@@ -13,43 +14,48 @@ export function PageBanner({
   subtitle?: string;
   children?: ReactNode;
 }) {
+  const location = useLocation();
+  const scene = sceneForPath(location.pathname);
+
   return (
     <Box
-      className="aos-fade-down"
+      className="aos-fade-down scene-header"
+      style={{ ['--scene' as string]: `url("${scene}")` }}
       sx={{
         mb: 2.5,
         px: { xs: 2, sm: 2.75 },
-        py: { xs: 2, sm: 2.25 },
-        borderRadius: '18px',
+        py: { xs: 2, sm: 2.35 },
+        minHeight: { sm: 108 },
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: 2,
-        background: pageBannerBackground,
-        boxShadow: '0 12px 28px rgba(40, 121, 182, 0.22)',
       }}
     >
-      <Box sx={{ minWidth: 0 }}>
+      <Box className="p2p-banner-bubbles" aria-hidden="true">
+        <i /><i /><i /><i /><i />
+      </Box>
+      <Box sx={{ minWidth: 0, position: 'relative', zIndex: 1, maxWidth: { md: '62%' } }}>
         <Typography
           variant="h4"
           sx={{
             fontWeight: 800,
-            color: '#fff',
-            fontSize: { xs: '1.35rem', sm: '1.75rem' },
-            letterSpacing: '-0.02em',
+            color: '#07111f',
+            fontSize: { xs: '1.35rem', sm: '1.7rem' },
+            letterSpacing: '-0.03em',
             lineHeight: 1.2,
           }}
         >
           {title}
         </Typography>
         {subtitle && (
-          <Typography sx={{ mt: 0.45, color: 'rgba(255,255,255,0.9)', fontSize: 14, fontWeight: 500 }}>
+          <Typography sx={{ mt: 0.5, color: '#64748b', fontSize: 14, fontWeight: 550 }}>
             {subtitle}
           </Typography>
         )}
       </Box>
-      {children}
+      {children && <Box sx={{ position: 'relative', zIndex: 1 }}>{children}</Box>}
     </Box>
   );
 }

@@ -23,6 +23,7 @@ import SLSMachineSection from './sections/SLSMachineSection';
 import BiogasSection from './sections/BiogasSection';
 import OtherSections from './sections/OtherSections';
 import { misService } from '../../../services/misService';
+import feedScene from '../../../assets/biogas-scene-feed.jpg';
 import { useAuth } from '../../../context/AuthContext';
 
 interface Digester {
@@ -273,32 +274,31 @@ export default function MISFormView({
           </Box>
         )}
         <Box
+          className="scene-header"
+          style={{ ['--scene' as string]: `url("${feedScene}")` }}
           sx={{
             mb: 3,
             px: { xs: 1.5, sm: 2.25 },
             py: { xs: 1.5, sm: 2 },
-            borderRadius: '18px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 2,
-            background: 'radial-gradient(circle at 78% 0%, rgba(255,255,255,0.22), transparent 32%), linear-gradient(105deg, #2879b6 0%, #3a9ad4 58%, #7dbfe4 100%)',
-            boxShadow: '0 12px 28px rgba(40, 121, 182, 0.22)',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flexWrap: 'wrap' }}>
             <IconButton
               onClick={onBackToList}
               sx={{
-                backgroundColor: 'rgba(255,255,255,0.18)',
+                backgroundColor: '#e6f6f8',
                 borderRadius: '12px',
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.28)' },
+                '&:hover': { backgroundColor: '#d3eef2' },
               }}
             >
-              <ArrowBackIcon sx={{ color: '#fff' }} />
+              <ArrowBackIcon sx={{ color: '#0f6b7a' }} />
             </IconButton>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#fff', fontSize: { xs: '1.25rem', sm: '1.75rem' }, lineHeight: 1.25 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#07111f', fontSize: { xs: '1.25rem', sm: '1.75rem' }, lineHeight: 1.25, letterSpacing: '-0.03em' }}>
               {viewMode === 'create'
                 ? 'Create New MIS Entry'
                 : viewMode === 'edit'

@@ -21,6 +21,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 // use public asset - put refex-logo.png into client/public/assets/
 import refexLogo from '../../assets/refex-logo.png';
+import plantScene from '../../assets/biogas-scene-plant.jpg';
 import { useSnackbar } from 'notistack';
 import MESSAGES from '../../utils/messages';
 const SREL_LOGO = refexLogo;
@@ -90,7 +91,7 @@ export default function LoginPage() {
 
   if (!preferLocal && ssoPhase !== 'form') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: `linear-gradient(180deg, rgba(232,246,249,0.92), rgba(243,248,251,0.94)), url(${plantScene}) center / cover no-repeat` }}>
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-10 text-center max-w-md w-full">
           <img src={SREL_LOGO} alt="Refex Logo" className="h-16 w-auto object-contain mx-auto mb-6" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Signing you in</h1>
@@ -132,7 +133,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: `linear-gradient(180deg, rgba(232,246,249,0.92), rgba(243,248,251,0.94)), url(${plantScene}) center / cover no-repeat` }}>
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-[0.02]">
         <div className="absolute inset-0" style={{

@@ -108,102 +108,121 @@ const DashboardMetricCard = memo(function DashboardMetricCard({
       } : undefined}
       sx={{
         height: '100%',
-        minHeight: 142,
-        p: { xs: 2, md: 2.25 },
+        minHeight: 168,
+        p: '14px 14px 22px',
         position: 'relative',
+        isolation: 'isolate',
         overflow: 'hidden',
-        borderRadius: '16px',
-        border: `1px solid ${color}26`,
-        background: `
-          radial-gradient(circle at 100% 0%, ${color}1F 0%, transparent 42%),
-          linear-gradient(145deg, #FFFFFF 0%, ${color}09 100%)
-        `,
-        boxShadow: '0 7px 20px rgba(30, 75, 110, 0.07)',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '18px',
+        border: `1.5px solid ${color}8C`,
+        background: `linear-gradient(165deg, ${color}22 0%, #fff 46%)`,
+        boxShadow: `0 0 0 3px ${color}14, 0 14px 30px -18px ${color}73`,
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 22,
-          width: 58,
-          height: 3,
-          background: `linear-gradient(90deg, ${color}, ${color}66)`,
-          borderRadius: '0 0 5px 5px',
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          width: 88,
-          height: 88,
-          right: -36,
-          bottom: -44,
-          borderRadius: '50%',
-          border: `16px solid ${color}0D`,
-          pointerEvents: 'none',
-        },
+        transition: 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s, border-color 0.3s',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 14px 30px ${color}20`,
-          borderColor: `${color}4A`,
+          transform: 'translateY(-6px)',
+          borderColor: color,
+          boxShadow: `0 0 0 4px ${color}24, 0 22px 40px -14px ${color}80`,
+        },
+        '&:hover .kpi-badge': {
+          transform: 'rotate(-8deg) scale(1.08)',
         },
         '&:focus-visible': {
-          outline: `3px solid ${color}40`,
+          outline: `3px solid ${color}55`,
           outlineOffset: 2,
         },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5 }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Box sx={{ width: 6, height: 6, flexShrink: 0, borderRadius: '50%', bgcolor: color, boxShadow: `0 0 0 3px ${color}14` }} />
-            <Typography
-              sx={{
-                color: '#687582',
-                fontSize: 11.5,
-                fontWeight: 700,
-                letterSpacing: '0.035em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {title}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 0.65, mt: 1.15 }}>
-            <Typography sx={{ color: '#24313C', fontSize: { xs: '1.55rem', md: '1.72rem' }, lineHeight: 1, fontWeight: 800, letterSpacing: '-0.035em' }}>
-              {value}
-            </Typography>
-            {unit && (
-              <Typography component="span" sx={{ color, fontSize: 12, fontWeight: 700 }}>
-                {unit}
-              </Typography>
-            )}
-          </Box>
-        </Box>
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          zIndex: 0,
+          width: 150,
+          height: 150,
+          right: -48,
+          top: -62,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${color}33 0%, transparent 70%)`,
+          pointerEvents: 'none',
+        }}
+      />
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25, position: 'relative', zIndex: 1 }}>
         <Box
-          className="icon-ring"
+          className="kpi-badge"
           sx={{
-            width: 58,
-            height: 58,
+            width: 48,
+            height: 48,
             flexShrink: 0,
-            borderRadius: '16px',
-            overflow: 'hidden',
-            bgcolor: '#fff',
-            boxShadow: `0 8px 16px ${color}32`,
-            '--ring': color,
-            '& img': { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+            borderRadius: '14px',
+            overflow: 'visible',
+            display: 'grid',
+            placeItems: 'center',
+            background: `linear-gradient(135deg, ${color}, ${color}cc)`,
+            boxShadow: `0 10px 20px -8px ${color}aa, inset 0 1px 0 rgba(255,255,255,0.35)`,
+            position: 'relative',
+            transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: -5,
+              borderRadius: '18px',
+              border: `2px solid ${color}`,
+              animation: 'kpi-badge-ring 2.8s ease-out infinite',
+              pointerEvents: 'none',
+            },
+            '& img': { width: 48, height: 48, objectFit: 'cover', display: 'block', borderRadius: '14px' },
           }}
         >
           {icon}
         </Box>
-      </Box>
-      {subtitle && (
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', mt: 1.5, px: 1, py: 0.45, borderRadius: '7px', bgcolor: `${color}0E`, border: `1px solid ${color}16` }}>
-          <Typography sx={{ color: '#6D7883', fontSize: 11.5, fontWeight: 600 }}>
-            {subtitle}
+        <Box sx={{ minWidth: 0, flex: 1, pt: 0.25 }}>
+          <Typography sx={{ color: '#111a28', fontSize: 13.5, fontWeight: 700, lineHeight: 1.25 }}>
+            {title}
           </Typography>
+          {subtitle && (
+            <Typography
+              sx={{
+                mt: 0.35,
+                color: '#3a4656',
+                fontSize: 12,
+                fontWeight: 550,
+                lineHeight: 1.3,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
         </Box>
-      )}
+      </Box>
+      <Box sx={{ position: 'relative', zIndex: 1, mt: 'auto', pt: 1.5, display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
+        <Typography sx={{ color: '#0e1726', fontSize: 32, lineHeight: 1, fontWeight: 800, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>
+          {value}
+        </Typography>
+        {unit && (
+          <Typography component="span" sx={{ color, fontSize: 13, fontWeight: 700 }}>
+            {unit}
+          </Typography>
+        )}
+      </Box>
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          zIndex: 1,
+          left: 14,
+          right: 14,
+          bottom: 10,
+          height: 4,
+          borderRadius: 4,
+          background: `linear-gradient(90deg, ${color}, ${color}99)`,
+        }}
+      />
     </Box>
   );
 });
@@ -695,9 +714,9 @@ export default function DashboardPage() {
               height: 32,
               px: 0.5,
               fontWeight: 700,
-              color: '#16783A',
-              bgcolor: '#fff',
-              border: '1px solid rgba(255,255,255,0.7)',
+              color: '#0f6b7a',
+              bgcolor: '#e6f6f8',
+              border: '1px solid #b7e4ea',
               '& .MuiChip-icon': { ml: 0.75 },
             }}
           />
@@ -1354,7 +1373,7 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(135deg, #2879b6 0%, #1D9AD4 100%)',
+                  background: 'linear-gradient(135deg, #0f6b7a 0%, #17a2b4 100%)',
                   color: '#ffffff',
                   borderRadius: '12px 12px 0 0',
                   minHeight: '56px',

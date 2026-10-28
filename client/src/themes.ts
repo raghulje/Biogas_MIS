@@ -3,11 +3,11 @@ import { createTheme } from '@mui/material/styles';
 export const themePresets = {
   professional: {
     key: 'professional',
-    name: 'Professional (Blue-Green)',
+    name: 'Professional (Cyan)',
     palette: {
-      primary: { main: '#1f6e8c', light: '#57a3c6', dark: '#164d63' },
-      secondary: { main: '#588f45', light: '#7fb56a', dark: '#3f6b33' },
-      background: { default: '#f6f7f9', paper: '#ffffff' },
+      primary: { main: '#17a2b4', light: '#5fe0e6', dark: '#0f6b7a' },
+      secondary: { main: '#0c9f68', light: '#34d9a0', dark: '#087a4e' },
+      background: { default: '#f3f8fb', paper: '#ffffff' },
       text: { primary: '#28323a', secondary: '#5b6570' },
     },
   },
