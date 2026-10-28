@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Box,
   Card,
@@ -54,6 +54,7 @@ import { misService } from '../../services/misService';
 import MESSAGES from '../../utils/messages';
 import { getCalendarWeek, getWeeksInYear, formatWeekRangeLabel } from '../../utils/calendarUtils';
 import { buildPeriodSeries, type FilterPeriod, type TrendPoint } from './periodSeries';
+import { playPlantCardFx, type PlantCardFx } from '../../lib/plantCardFx';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -84,6 +85,7 @@ const DashboardMetricCard = memo(function DashboardMetricCard({
   subtitle,
   color,
   icon,
+  fx,
   onClick,
 }: {
   title: string;
@@ -92,20 +94,27 @@ const DashboardMetricCard = memo(function DashboardMetricCard({
   subtitle?: string;
   color: string;
   icon: ReactNode;
+  fx: PlantCardFx;
   onClick?: () => void;
 }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const activate = () => {
+    playPlantCardFx(fx, cardRef.current, color);
+    onClick?.();
+  };
   return (
     <Box
+      ref={cardRef}
       className="metric-card"
-      onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (event) => {
+      onClick={activate}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          onClick();
+          activate();
         }
-      } : undefined}
+      }}
       sx={{
         height: '100%',
         minHeight: 168,
@@ -119,7 +128,7 @@ const DashboardMetricCard = memo(function DashboardMetricCard({
         border: `1.5px solid ${color}8C`,
         background: `linear-gradient(165deg, ${color}22 0%, #fff 46%)`,
         boxShadow: `0 0 0 3px ${color}14, 0 14px 30px -18px ${color}73`,
-        cursor: onClick ? 'pointer' : 'default',
+        cursor: 'pointer',
         transition: 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s, border-color 0.3s',
         '&:hover': {
           transform: 'translateY(-6px)',
@@ -1243,6 +1252,7 @@ export default function DashboardPage() {
                       unit="tons"
                       subtitle={`Avg / day ${formatNumber(summary.avgFeed ?? 0)} tons · ${summary.totalEntries ?? 0} days`}
                       color="#8B5CF6"
+                      fx="feed"
                       icon={<Box component="img" src={feedIcon} alt="" />}
                     />
                   </Grid>
@@ -1253,6 +1263,7 @@ export default function DashboardPage() {
                       unit="m³"
                       subtitle={`Avg / day ${formatNumber(summary.avgRawBiogas ?? 0)} m³ · ${summary.totalEntries ?? 0} days`}
                       color="#17a2b4"
+                      fx="gas"
                       icon={<Box component="img" src={biogasIcon} alt="" />}
                     />
                   </Grid>
@@ -1263,6 +1274,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgCBGProduced ?? 0)} kg · ${summary.totalEntries ?? 0} days`}
                       color="#62A93B"
+                      fx="compress"
                       icon={<Box component="img" src={cbgIcon} alt="" />}
                     />
                   </Grid>
@@ -1273,6 +1285,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgCBGSold ?? 0)} kg · ${summary.totalEntries ?? 0} days`}
                       color="#EE6A31"
+                      fx="dispatch"
                       icon={<Box component="img" src={soldIcon} alt="" />}
                       onClick={handleCBGSoldClick}
                     />
@@ -1340,6 +1353,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgFOMProduced ?? 0)} kg`}
                       color="#17a2b4"
+                      fx="fertilizer"
                       icon={<Box component="img" src={fomIcon} alt="" />}
                     />
                   </Grid>
@@ -1350,6 +1364,7 @@ export default function DashboardPage() {
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgFOMSold ?? 0)} kg`}
                       color="#EE6A31"
+                      fx="offtake"
                       icon={<Box component="img" src={fomSoldIcon} alt="" />}
                     />
                   </Grid>
@@ -1496,6 +1511,7 @@ export default function DashboardPage() {
                       unit="kWh"
                       subtitle="Total usage for selected period"
                       color="#17a2b4"
+                      fx="power"
                       icon={<Box component="img" src={powerIcon} alt="" />}
                     />
                   </Grid>
@@ -1505,6 +1521,7 @@ export default function DashboardPage() {
                       value={formatNumber(summary.totalHSEIncidents ?? 0)}
                       subtitle={Number(summary.totalHSEIncidents ?? 0) === 0 ? 'All systems safe' : 'Review incident records'}
                       color={Number(summary.totalHSEIncidents ?? 0) === 0 ? '#62A93B' : '#EE6A31'}
+                      fx={Number(summary.totalHSEIncidents ?? 0) === 0 ? 'safe' : 'alert'}
                       icon={<Box component="img" src={safetyIcon} alt="" />}
                     />
                   </Grid>
