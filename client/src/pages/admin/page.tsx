@@ -2592,7 +2592,7 @@ export default function AdminPage() {
                                     log.action.toLowerCase().includes('update') ? '#e3f2fd' : '#f5f5f5',
                                 color: log.action.toLowerCase().includes('delete') ? '#d32f2f' :
                                   log.action.toLowerCase().includes('create') ? '#2e7d32' :
-                                    log.action.toLowerCase().includes('update') ? '#1976d2' : '#616161'
+                                    log.action.toLowerCase().includes('update') ? '#17a2b4' : '#616161'
                               }}
                             />
                           </Box>
@@ -2649,7 +2649,7 @@ export default function AdminPage() {
                                       log.action.toLowerCase().includes('update') ? '#e3f2fd' : '#f5f5f5',
                                   color: log.action.toLowerCase().includes('delete') ? '#d32f2f' :
                                     log.action.toLowerCase().includes('create') ? '#2e7d32' :
-                                      log.action.toLowerCase().includes('update') ? '#1976d2' : '#616161'
+                                      log.action.toLowerCase().includes('update') ? '#17a2b4' : '#616161'
                                 }}
                               />
                             </TableCell>

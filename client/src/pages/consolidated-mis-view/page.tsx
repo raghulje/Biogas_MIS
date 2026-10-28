@@ -276,7 +276,7 @@ const ConsolidatedMISView = () => {
           data-index="1"
           sx={{ mb: 4, ...getAnimationStyle(1, 100) }}
         >
-          <GlassCard title="Digester Performance Report" color="#1E88E5" icon={<DigesterIcon />} fullWidth>
+          <GlassCard title="Digester Performance Report" color="#17a2b4" icon={<DigesterIcon />} fullWidth>
             <Box sx={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
                 <thead>
@@ -320,7 +320,7 @@ const ConsolidatedMISView = () => {
         >
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3 }}>
             {/* Biogas Quality Report */}
-            <GlassCard title="Biogas Quality Report" color="#1E88E5" icon={<GasQualityIcon />}>
+            <GlassCard title="Biogas Quality Report" color="#17a2b4" icon={<GasQualityIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -405,7 +405,7 @@ const ConsolidatedMISView = () => {
             </GlassCard>
 
             {/* CBG Production */}
-            <GlassCard title="CBG (Kg)" color="#1E88E5" icon={<ScaleIcon />}>
+            <GlassCard title="CBG (Kg)" color="#17a2b4" icon={<ScaleIcon />}>
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -502,7 +502,7 @@ const ConsolidatedMISView = () => {
           data-index="5"
           sx={{ mb: 4, ...getAnimationStyle(5, 500) }}
         >
-          <GlassCard title="Slurry Management Data" color="#1E88E5" icon={<SlurryIcon />} fullWidth>
+          <GlassCard title="Slurry Management Data" color="#17a2b4" icon={<SlurryIcon />} fullWidth>
             <Box sx={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead>

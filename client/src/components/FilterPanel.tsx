@@ -128,7 +128,7 @@ export default function FilterPanel({
     <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <FilterListIcon sx={{ mr: 1, color: '#2563EB' }} />
+          <FilterListIcon sx={{ mr: 1, color: '#17a2b4' }} />
           <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>Filters</Typography>
         </Box>
 
@@ -287,7 +287,7 @@ export default function FilterPanel({
                   onClick={handleApply}
                   sx={{
                     whiteSpace: 'nowrap',
-                    backgroundColor: '#2563EB',
+                    backgroundColor: '#17a2b4',
                     '&:hover': { backgroundColor: '#0f6b7a' },
                   }}
                 >

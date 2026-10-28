@@ -1823,9 +1823,18 @@ const FinalMISPage = () => {
                     textTransform: 'none',
                     flex: { xs: '1 1 calc(33% - 8px)', sm: '0 0 auto' },
                     minWidth: { xs: 0, sm: 90 },
-                    backgroundColor: filterType === btn.value ? '#17a2b4' : 'transparent',
+                    backgroundColor: filterType === btn.value ? '#17a2b4' : '#fff',
                     borderColor: '#17a2b4',
-                    color: filterType === btn.value ? '#fff' : '#17a2b4',
+                    color: filterType === btn.value ? '#fff' : '#0f6b7a',
+                    '&&': {
+                      backgroundColor: filterType === btn.value ? '#17a2b4' : '#fff',
+                      color: filterType === btn.value ? '#fff' : '#0f6b7a',
+                      borderColor: '#17a2b4',
+                    },
+                    '&:hover': {
+                      backgroundColor: filterType === btn.value ? '#0f6b7a' : 'rgba(23, 162, 180, 0.1)',
+                      borderColor: '#0f6b7a',
+                    },
                     borderRadius: '10px',
                     fontWeight: 600,
                   }}
@@ -1985,7 +1994,7 @@ const FinalMISPage = () => {
                 mb: 3,
               }}
             >
-              <SearchIcon sx={{ fontSize: 36, color: '#1E88E5' }} />
+              <SearchIcon sx={{ fontSize: 36, color: '#17a2b4' }} />
             </Box>
             <Typography
               sx={{
@@ -3649,8 +3658,8 @@ const FinalMISPage = () => {
                 value: (aggregatedData.feeding.totalFeedAmountTons ?? 0).toFixed(2),
                 unit: 'tons',
                 icon: feedIcon,
-                color: '#1E88E5',
-                wash: '#f0f7ff',
+                color: '#17a2b4',
+                wash: '#e6f6f8',
               },
               {
                 label: 'RBG Produced',

@@ -808,7 +808,11 @@ export default function DashboardPage() {
                       px: { xs: 1, sm: 2 },
                       backgroundColor: filterType === btn.value ? '#17a2b4' : 'transparent',
                       borderColor: filterType === btn.value ? '#17a2b4' : 'transparent',
-                      color: filterType === btn.value ? '#ffffff' : '#17a2b4',
+                      color: filterType === btn.value ? '#ffffff' : '#0f6b7a',
+                      '&&': {
+                        backgroundColor: filterType === btn.value ? '#17a2b4' : 'transparent',
+                        color: filterType === btn.value ? '#ffffff' : '#0f6b7a',
+                      },
                       borderRadius: '10px !important',
                       fontWeight: 600,
                       boxShadow: filterType === btn.value ? '0 5px 12px rgba(23, 162, 180,0.2)' : 'none',
@@ -1218,7 +1222,7 @@ export default function DashboardPage() {
               <Box
                 className="gradient-header"
                 sx={{
-                  background: 'linear-gradient(120deg, #0f6b7a 0%, #2cc4d4 72%, #5fe0e6 100%)',
+                  background: 'linear-gradient(105deg, #0f6b7a 0%, #17a2b4 100%)',
                   color: '#ffffff',
                   borderRadius: '16px 16px 0 0',
                   minHeight: '48px',
@@ -1302,7 +1306,7 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(120deg, #0f6b7a 0%, #2cc4d4 72%, #5fe0e6 100%)',
+                  background: 'linear-gradient(105deg, #0f6b7a 0%, #17a2b4 100%)',
                   color: '#ffffff',
                   borderRadius: '16px 16px 0 0',
                   minHeight: '48px',
@@ -1471,7 +1475,7 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(120deg, #0f6b7a 0%, #2cc4d4 72%, #5fe0e6 100%)',
+                  background: 'linear-gradient(105deg, #0f6b7a 0%, #17a2b4 100%)',
                   color: '#ffffff',
                   borderRadius: '16px 16px 0 0',
                   minHeight: '48px',
