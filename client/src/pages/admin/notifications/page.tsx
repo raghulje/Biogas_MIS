@@ -480,10 +480,10 @@ export default function NotificationConfigPage() {
                                             width: { xs: 6, md: 8 }
                                         },
                                         '&::-webkit-scrollbar-thumb': {
-                                            backgroundColor: 'rgba(40, 121, 182, 0.3)',
+                                            backgroundColor: 'rgba(23, 162, 180, 0.3)',
                                             borderRadius: 4,
                                             '&:hover': {
-                                                backgroundColor: 'rgba(40, 121, 182, 0.5)'
+                                                backgroundColor: 'rgba(23, 162, 180, 0.5)'
                                             }
                                         }
                                     }}
@@ -499,7 +499,7 @@ export default function NotificationConfigPage() {
                                                     px: isPhone ? 2 : 1,
                                                     py: isPhone ? 1.5 : undefined,
                                                     '&:active': isPhone ? {
-                                                        backgroundColor: 'rgba(40, 121, 182, 0.08)'
+                                                        backgroundColor: 'rgba(23, 162, 180, 0.08)'
                                                     } : undefined
                                                 }}
                                             >
@@ -510,8 +510,8 @@ export default function NotificationConfigPage() {
                                                         disableRipple
                                                         size={isPhone ? 'medium' : 'small'}
                                                         sx={{
-                                                            color: '#2879b6',
-                                                            '&.Mui-checked': { color: '#2879b6' }
+                                                            color: '#17a2b4',
+                                                            '&.Mui-checked': { color: '#17a2b4' }
                                                         }}
                                                     />
                                                 </ListItemIcon>
@@ -590,7 +590,7 @@ export default function NotificationConfigPage() {
                                         {users.map(user => (
                                             <ListItem key={user.id} button onClick={() => handleToggleApprovedEditor(user.email)}>
                                                 <ListItemIcon>
-                                                    <Checkbox edge="start" checked={approvedEditors.includes(user.email)} disableRipple size={isPhone ? 'medium' : 'small'} sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }} />
+                                                    <Checkbox edge="start" checked={approvedEditors.includes(user.email)} disableRipple size={isPhone ? 'medium' : 'small'} sx={{ color: '#17a2b4', '&.Mui-checked': { color: '#17a2b4' } }} />
                                                 </ListItemIcon>
                                                 <ListItemText primary={user.name} secondary={`${user.email} (${user.role?.name})`} />
                                             </ListItem>
@@ -627,7 +627,7 @@ export default function NotificationConfigPage() {
                                                         checked={submitEmails.includes(user.email)}
                                                         disableRipple
                                                         size={isPhone ? 'medium' : 'small'}
-                                                        sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
+                                                        sx={{ color: '#17a2b4', '&.Mui-checked': { color: '#17a2b4' } }}
                                                     />
                                                 </ListItemIcon>
                                                 <ListItemText

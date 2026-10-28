@@ -16,7 +16,7 @@ export default function LogoutPage() {
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
       <Box sx={{ textAlign: 'center' }}>
-        <CircularProgress sx={{ color: '#2879b6' }} />
+        <CircularProgress sx={{ color: '#17a2b4' }} />
         <Typography sx={{ mt: 2, fontWeight: 700 }}>Signing out…</Typography>
         <Typography sx={{ color: 'text.secondary' }}>Redirecting to RefexOne</Typography>
       </Box>

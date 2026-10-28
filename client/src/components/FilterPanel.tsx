@@ -288,7 +288,7 @@ export default function FilterPanel({
                   sx={{
                     whiteSpace: 'nowrap',
                     backgroundColor: '#2563EB',
-                    '&:hover': { backgroundColor: '#235EAC' },
+                    '&:hover': { backgroundColor: '#0f6b7a' },
                   }}
                 >
                   Apply Filters

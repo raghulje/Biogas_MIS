@@ -263,7 +263,7 @@ export default function MISFormView({
                 gap: 2,
               }}
             >
-              <CircularProgress size={44} sx={{ color: '#2879b6' }} />
+              <CircularProgress size={44} sx={{ color: '#17a2b4' }} />
               <Typography variant="body1" fontWeight={600} color="text.primary">
                 Saving…
               </Typography>

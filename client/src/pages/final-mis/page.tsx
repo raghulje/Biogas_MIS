@@ -1187,8 +1187,8 @@ const FinalMISPage = () => {
   };
 
   const colors = {
-    headerPrimary: '#2879b6',
-    headerSecondary: '#2879b6',
+    headerPrimary: '#17a2b4',
+    headerSecondary: '#17a2b4',
     sectionHeader: '#f4f7fb',
     rowHeader: '#f4f7fb',
     accent1: '#d7ebf8',
@@ -1344,7 +1344,7 @@ const FinalMISPage = () => {
                   },
                   '&:disabled': {
                     background: 'rgba(255,255,255,0.5)',
-                    color: 'rgba(40,121,182,0.5)',
+                    color: 'rgba(23, 162, 180,0.5)',
                   },
                 }}
               >
@@ -1395,7 +1395,7 @@ const FinalMISPage = () => {
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
                     <Typography variant="body2" color="textSecondary">Total Raw Biogas</Typography>
-                    <Typography variant="body2" fontWeight={600} color="#2879b6">{aggregatedData.biogasProduction.rbgProduced.toFixed(0)} m³</Typography>
+                    <Typography variant="body2" fontWeight={600} color="#17a2b4">{aggregatedData.biogasProduction.rbgProduced.toFixed(0)} m³</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
                     <Typography variant="body2" color="textSecondary">CBG Produced</Typography>
@@ -1418,7 +1418,7 @@ const FinalMISPage = () => {
                 <Stack spacing={2}>
                   <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>Press Mud (tpd)</Typography>
+                      <Typography variant="subtitle2" fontWeight={600} color="#17a2b4" mb={1.5}>Press Mud (tpd)</Typography>
                       <Stack spacing={1}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                           <Typography variant="caption" color="textSecondary">D-01</Typography>
@@ -1432,9 +1432,9 @@ const FinalMISPage = () => {
                           <Typography variant="caption" color="textSecondary">D-03</Typography>
                           <Typography variant="body2" fontWeight={600}>{aggregatedData.feeding.pressMud.d03.toFixed(2)}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '2px solid #2879b6' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '2px solid #17a2b4' }}>
                           <Typography variant="body2" fontWeight={700}>Total</Typography>
-                          <Typography variant="body2" fontWeight={700} color="#2879b6">{aggregatedData.feeding.pressMud.total.toFixed(2)}</Typography>
+                          <Typography variant="body2" fontWeight={700} color="#17a2b4">{aggregatedData.feeding.pressMud.total.toFixed(2)}</Typography>
                         </Box>
                       </Stack>
                     </CardContent>
@@ -1501,9 +1501,9 @@ const FinalMISPage = () => {
                   {['d01', 'd02', 'd03'].map((d, i) => {
                     const perf = aggregatedData.digesterPerformance[d];
                     return (
-                      <Card key={d} sx={{ borderRadius: '12px', boxShadow: 1, border: '2px solid #2879b6' }}>
+                      <Card key={d} sx={{ borderRadius: '12px', boxShadow: 1, border: '2px solid #17a2b4' }}>
                         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                          <Typography variant="subtitle2" fontWeight={700} color="#2879b6" mb={1.5}>
+                          <Typography variant="subtitle2" fontWeight={700} color="#17a2b4" mb={1.5}>
                             Digester {i + 1}
                           </Typography>
                           <Stack spacing={1}>
@@ -1553,7 +1553,7 @@ const FinalMISPage = () => {
                 <Stack spacing={2}>
                   <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>Raw Biogas Quality</Typography>
+                      <Typography variant="subtitle2" fontWeight={600} color="#17a2b4" mb={1.5}>Raw Biogas Quality</Typography>
                       <Stack spacing={1}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                           <Typography variant="caption" color="textSecondary">CH₄ (%)</Typography>
@@ -1611,7 +1611,7 @@ const FinalMISPage = () => {
                 <Stack spacing={2}>
                   <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>CBG Quality</Typography>
+                      <Typography variant="subtitle2" fontWeight={600} color="#17a2b4" mb={1.5}>CBG Quality</Typography>
                       <Stack spacing={1}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                           <Typography variant="caption" color="textSecondary">CH₄ (%)</Typography>
@@ -1665,7 +1665,7 @@ const FinalMISPage = () => {
                 <Stack spacing={2}>
                   <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                      <Typography variant="subtitle2" fontWeight={600} color="#2879b6" mb={1.5}>Decanter</Typography>
+                      <Typography variant="subtitle2" fontWeight={600} color="#17a2b4" mb={1.5}>Decanter</Typography>
                       <Stack spacing={1}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                           <Typography variant="caption" color="textSecondary">Run Hours</Typography>
@@ -1744,10 +1744,10 @@ const FinalMISPage = () => {
               </AccordionSummary>
               <AccordionDetails sx={{ pt: 0, pb: 2 }}>
                 <Stack spacing={2}>
-                  <Card sx={{ borderRadius: '12px', boxShadow: 1, background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.08) 0%, rgba(40, 121, 182, 0.03) 100%)' }}>
+                  <Card sx={{ borderRadius: '12px', boxShadow: 1, background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.08) 0%, rgba(23, 162, 180, 0.03) 100%)' }}>
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                       <Typography variant="caption" color="textSecondary" mb={0.5}>Total Power Consumption</Typography>
-                      <Typography variant="h5" fontWeight={700} color="#2879b6">{aggregatedData.powerConsumption.toFixed(0)} kWh</Typography>
+                      <Typography variant="h5" fontWeight={700} color="#17a2b4">{aggregatedData.powerConsumption.toFixed(0)} kWh</Typography>
                     </CardContent>
                   </Card>
                   <Card sx={{ borderRadius: '12px', boxShadow: 1 }}>
@@ -1823,9 +1823,9 @@ const FinalMISPage = () => {
                     textTransform: 'none',
                     flex: { xs: '1 1 calc(33% - 8px)', sm: '0 0 auto' },
                     minWidth: { xs: 0, sm: 90 },
-                    backgroundColor: filterType === btn.value ? '#2879b6' : 'transparent',
-                    borderColor: '#2879b6',
-                    color: filterType === btn.value ? '#fff' : '#2879b6',
+                    backgroundColor: filterType === btn.value ? '#17a2b4' : 'transparent',
+                    borderColor: '#17a2b4',
+                    color: filterType === btn.value ? '#fff' : '#17a2b4',
                     borderRadius: '10px',
                     fontWeight: 600,
                   }}
@@ -2011,7 +2011,7 @@ const FinalMISPage = () => {
               background: '#fff',
               borderRadius: '18px',
               overflow: 'hidden',
-              boxShadow: '0 16px 40px rgba(40, 121, 182, 0.10)',
+              boxShadow: '0 16px 40px rgba(23, 162, 180, 0.10)',
               border: '1px solid #d5e2ec',
               opacity: isAnimated ? 1 : 0,
               transform: isAnimated ? 'translateY(0)' : 'translateY(-20px)',

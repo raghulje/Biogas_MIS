@@ -31,7 +31,7 @@ export default function SsoCallbackPage() {
         </Box>
       ) : (
         <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress sx={{ color: '#2879b6' }} />
+          <CircularProgress sx={{ color: '#17a2b4' }} />
           <Typography sx={{ mt: 2 }}>Signing you in…</Typography>
         </Box>
       )}

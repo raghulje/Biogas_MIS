@@ -276,13 +276,13 @@ export default function CustomerPage() {
                                             color={customer.status === 'active' ? 'success' : 'default'}
                                         />
                                     </Box>
-                                    <Typography variant="body2" sx={{ color: '#2879b6', fontWeight: 600 }}>{customer.type || 'N/A'}</Typography>
+                                    <Typography variant="body2" sx={{ color: '#17a2b4', fontWeight: 600 }}>{customer.type || 'N/A'}</Typography>
                                     <Typography variant="body2">{customer.email || 'No email'}</Typography>
                                     <Typography variant="body2" color="text.secondary">{customer.phone || 'No phone'}</Typography>
                                     <Typography variant="caption" color="text.secondary">GST {customer.gst_number || '-'} · PAN {customer.pan_number || '-'}</Typography>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         {canUpdate && (
-                                            <IconButton onClick={() => handleOpen(customer)} sx={{ color: '#2879b6', border: '1px solid rgba(40,121,182,0.3)', borderRadius: '10px' }} aria-label="Edit customer">
+                                            <IconButton onClick={() => handleOpen(customer)} sx={{ color: '#17a2b4', border: '1px solid rgba(23, 162, 180,0.3)', borderRadius: '10px' }} aria-label="Edit customer">
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
                                         )}
@@ -334,9 +334,9 @@ export default function CustomerPage() {
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                                 <Box sx={{
                                                     width: 36, height: 36, borderRadius: '50%',
-                                                    backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                                                    backgroundColor: 'rgba(23, 162, 180, 0.1)',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    color: '#2879b6'
+                                                    color: '#17a2b4'
                                                 }}>
                                                     <BusinessIcon fontSize="small" />
                                                 </Box>
@@ -355,8 +355,8 @@ export default function CustomerPage() {
                                                 label={customer.type || 'N/A'}
                                                 size="small"
                                                 sx={{
-                                                    backgroundColor: 'rgba(40, 121, 182, 0.08)',
-                                                    color: '#2879b6',
+                                                    backgroundColor: 'rgba(23, 162, 180, 0.08)',
+                                                    color: '#17a2b4',
                                                     fontWeight: 500
                                                 }}
                                             />
@@ -383,7 +383,7 @@ export default function CustomerPage() {
                                         </TableCell>
                                         <TableCell align="right">
                                             {canUpdate && (
-                                                <IconButton size="small" onClick={() => handleOpen(customer)} sx={{ color: '#2879b6' }}>
+                                                <IconButton size="small" onClick={() => handleOpen(customer)} sx={{ color: '#17a2b4' }}>
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
                                             )}
@@ -520,9 +520,9 @@ export default function CustomerPage() {
                                 borderWidth: 1.5,
                                 '&:hover': {
                                     borderWidth: 1.5,
-                                    borderColor: '#2879b6',
-                                    color: '#2879b6',
-                                    bgcolor: 'rgba(40, 121, 182, 0.06)',
+                                    borderColor: '#17a2b4',
+                                    color: '#17a2b4',
+                                    bgcolor: 'rgba(23, 162, 180, 0.06)',
                                 },
                             }}
                         >

@@ -242,7 +242,7 @@ function MISEntryEmailPanel({
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               When an MIS entry is submitted – send to:
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -278,7 +278,7 @@ function MISEntryEmailPanel({
                 The SMTP settings are available in the SMTP tab (responsive there). */}
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               If no entry created for the day (at scheduled time) – send to:
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -312,7 +312,7 @@ function MISEntryEmailPanel({
         </Grid>
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               Pending submission (scheduled reminders) – send to:
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -346,7 +346,7 @@ function MISEntryEmailPanel({
         </Grid>
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               Escalation (entry missing at EOD) – send to:
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -542,7 +542,7 @@ function FinalMISReportEmailPanel({
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               Recipients (report will be sent to these emails)
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -576,7 +576,7 @@ function FinalMISReportEmailPanel({
         </Grid>
         <Grid item xs={12} md={6}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               Email content
             </Typography>
             <TextField
@@ -602,7 +602,7 @@ function FinalMISReportEmailPanel({
         </Grid>
         <Grid item xs={12}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               Schedule – when to send the report
             </Typography>
             <Grid container spacing={2} alignItems="center">
@@ -652,7 +652,7 @@ function FinalMISReportEmailPanel({
         </Grid>
         <Grid item xs={12}>
           <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
               Send test report now
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
@@ -810,7 +810,7 @@ function EmailDeliveryLogsPanel() {
       <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxWidth: '100%' }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ backgroundColor: 'rgba(40, 121, 182, 0.06)' }}>
+            <TableRow sx={{ backgroundColor: 'rgba(23, 162, 180, 0.06)' }}>
               <TableCell sx={{ fontWeight: 600 }}>Time (server)</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Recipients</TableCell>
@@ -1654,7 +1654,7 @@ export default function AdminPage() {
       case 'create':
         return '#7dc244';
       case 'update':
-        return '#2879b6';
+        return '#17a2b4';
       case 'delete':
         return '#ee6a31';
       case 'login':
@@ -1722,7 +1722,7 @@ export default function AdminPage() {
       case 'entry_not_submitted':
         return '#F59E21';
       case 'submission_to_manager':
-        return '#2879b6';
+        return '#17a2b4';
       case 'review_request':
         return '#7dc244';
       default:
@@ -1856,8 +1856,8 @@ export default function AdminPage() {
     });
 
     return (
-      <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(40, 121, 182, 0.05)', borderRadius: '12px' }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#2879b6', mb: 1 }}>
+      <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(23, 162, 180, 0.05)', borderRadius: '12px' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#17a2b4', mb: 1 }}>
           Preview
         </Typography>
         <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
@@ -1905,7 +1905,7 @@ export default function AdminPage() {
       case 'entry_not_submitted':
         return '#F59E21';
       case 'submission_to_manager':
-        return '#2879b6';
+        return '#17a2b4';
       case 'review_request':
         return '#7dc244';
       default:
@@ -2029,7 +2029,7 @@ export default function AdminPage() {
             sx={{
               borderBottom: 1,
               borderColor: 'divider',
-              background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
+              background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
             }}
           >
             <Tabs
@@ -2047,10 +2047,10 @@ export default function AdminPage() {
                   px: isPhone ? 1.5 : 2,
                 },
                 '& .Mui-selected': {
-                  color: '#2879b6',
+                  color: '#17a2b4',
                 },
                 '& .MuiTabs-indicator': {
-                  backgroundColor: '#2879b6',
+                  backgroundColor: '#17a2b4',
                   height: 3,
                   borderRadius: '3px 3px 0 0',
                 },
@@ -2121,12 +2121,12 @@ export default function AdminPage() {
 
               <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', lg: 'block' } }}>
                 <Table>
-                  <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
+                  <TableHead sx={{ background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Email</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Role</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#2879b6' }} align="right">
+                      <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Email</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Role</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }} align="right">
                         Actions
                       </TableCell>
                     </TableRow>
@@ -2182,8 +2182,8 @@ export default function AdminPage() {
                             label={typeof user.role === 'string' ? user.role : user.role?.name}
                             size="small"
                             sx={{
-                              backgroundColor: 'rgba(40, 121, 182, 0.1)',
-                              color: '#2879b6',
+                              backgroundColor: 'rgba(23, 162, 180, 0.1)',
+                              color: '#17a2b4',
                               fontWeight: 600,
                               borderRadius: '8px',
                               height: '24px'
@@ -2194,9 +2194,9 @@ export default function AdminPage() {
                           size="medium"
                           onClick={() => handleOpenEditUser(user)}
                           sx={{
-                            color: '#2879b6',
-                            bgcolor: 'rgba(40,121,182,0.1)',
-                            '&:hover': { bgcolor: 'rgba(40,121,182,0.2)' }
+                            color: '#17a2b4',
+                            bgcolor: 'rgba(23, 162, 180,0.1)',
+                            '&:hover': { bgcolor: 'rgba(23, 162, 180,0.2)' }
                           }}
                         >
                           <EditIcon fontSize="small" />
@@ -2235,12 +2235,12 @@ export default function AdminPage() {
                     sx={{
                       textTransform: 'none',
                       borderRadius: '12px',
-                      borderColor: '#2879b6',
-                      color: '#2879b6',
+                      borderColor: '#17a2b4',
+                      color: '#17a2b4',
                       whiteSpace: 'nowrap',
                       '&:hover': {
-                        borderColor: '#2879b6',
-                        backgroundColor: 'rgba(40, 121, 182, 0.05)',
+                        borderColor: '#17a2b4',
+                        backgroundColor: 'rgba(23, 162, 180, 0.05)',
                       },
                     }}
                     fullWidth={isPhone}
@@ -2500,8 +2500,8 @@ export default function AdminPage() {
                               sx={{
                                 height: 24,
                                 fontSize: '0.75rem',
-                                bgcolor: 'rgba(40, 121, 182, 0.1)',
-                                color: '#2879b6',
+                                bgcolor: 'rgba(23, 162, 180, 0.1)',
+                                color: '#17a2b4',
                                 fontWeight: 600
                               }}
                             />
@@ -2533,15 +2533,15 @@ export default function AdminPage() {
                 ) : (
                   <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', mb: 3, overflowX: 'auto' }}>
                     <Table size="small" sx={{ minWidth: 650 }}>
-                      <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
+                      <TableHead sx={{ background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Last Login</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Login Time</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Logout Time</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Session Duration</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Device</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>IP</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>User</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Last Login</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Login Time</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Logout Time</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Session Duration</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Device</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>IP</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -2623,13 +2623,13 @@ export default function AdminPage() {
               ) : (
                 <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', overflowX: 'auto' }}>
                   <Table sx={{ minWidth: 800 }}>
-                    <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
+                    <TableHead sx={{ background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>User</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Action</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Entity</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Description</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Timestamp</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>User</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Action</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Entity</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Timestamp</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -2687,7 +2687,7 @@ export default function AdminPage() {
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
                     sx={{
-                      borderTop: '1px solid rgba(40, 121, 182, 0.1)',
+                      borderTop: '1px solid rgba(23, 162, 180, 0.1)',
                       '& .MuiTablePagination-toolbar': {
                         paddingLeft: 2,
                         paddingRight: 2,
@@ -2742,7 +2742,7 @@ export default function AdminPage() {
                 {/* Mobile SMTP card (phone only) */}
                 <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 2 }}>
                   <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+                    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
                       SMTP Settings
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -2754,7 +2754,7 @@ export default function AdminPage() {
                     <TextField fullWidth label="Password" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} sx={{ mb: 1 }} />
                     <TextField fullWidth label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} sx={{ mb: 1 }} />
                     <TextField fullWidth label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} sx={{ mb: 1 }} />
-                    <FormControlLabel control={<Checkbox checked={smtpSecure} onChange={(e) => setSmtpSecure(e.target.checked)} sx={{ color: '#2879b6' }} />} label="Use TLS/SSL (secure)" />
+                    <FormControlLabel control={<Checkbox checked={smtpSecure} onChange={(e) => setSmtpSecure(e.target.checked)} sx={{ color: '#17a2b4' }} />} label="Use TLS/SSL (secure)" />
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
                       <Button variant="contained" onClick={handleSaveSMTP} disabled={saving} fullWidth size="large" sx={{ borderRadius: '12px' }}>
                         {saving ? 'Saving…' : 'Save SMTP Settings'}
@@ -2831,8 +2831,8 @@ export default function AdminPage() {
                                 label={placeholder}
                                 size="small"
                                 sx={{
-                                  backgroundColor: 'rgba(40, 121, 182, 0.1)',
-                                  color: '#2879b6',
+                                  backgroundColor: 'rgba(23, 162, 180, 0.1)',
+                                  color: '#17a2b4',
                                   fontSize: '0.75rem',
                                   height: '24px',
                                 }}
@@ -2852,10 +2852,10 @@ export default function AdminPage() {
                               size="small"
                               onClick={() => handleOpenEditTemplate(template)}
                               sx={{
-                                color: '#2879b6',
-                                backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                                color: '#17a2b4',
+                                backgroundColor: 'rgba(23, 162, 180, 0.1)',
                                 borderRadius: '10px',
-                                '&:hover': { backgroundColor: 'rgba(40, 121, 182, 0.2)' },
+                                '&:hover': { backgroundColor: 'rgba(23, 162, 180, 0.2)' },
                               }}
                             >
                               <EditIcon fontSize="small" />
@@ -2905,10 +2905,10 @@ export default function AdminPage() {
                               size="medium"
                               onClick={() => handleOpenEditTemplate(template)}
                               sx={{
-                                bgcolor: 'rgba(40,121,182,0.1)',
-                                color: '#2879b6',
+                                bgcolor: 'rgba(23, 162, 180,0.1)',
+                                color: '#17a2b4',
                                 borderRadius: '8px',
-                                '&:hover': { bgcolor: 'rgba(40,121,182,0.2)' }
+                                '&:hover': { bgcolor: 'rgba(23, 162, 180,0.2)' }
                               }}
                             >
                               <EditIcon fontSize="small" />
@@ -3063,7 +3063,7 @@ export default function AdminPage() {
                         <Checkbox
                           checked={smtpSecure}
                           onChange={(e) => setSmtpSecure(e.target.checked)}
-                          sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
+                          sx={{ color: '#17a2b4', '&.Mui-checked': { color: '#17a2b4' } }}
                         />
                       }
                       label="Use TLS/SSL (secure)"
@@ -3101,8 +3101,8 @@ export default function AdminPage() {
                         sx={{
                           textTransform: 'none',
                           borderRadius: '12px',
-                          borderColor: '#2879b6',
-                          color: '#2879b6',
+                          borderColor: '#17a2b4',
+                          color: '#17a2b4',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -3190,7 +3190,7 @@ export default function AdminPage() {
                   borderRadius: '16px',
                   p: 3,
                   mb: 3,
-                  borderLeft: '4px solid #2879b6',
+                  borderLeft: '4px solid #17a2b4',
                 }}
               >
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333842', mb: 2 }}>
@@ -3200,8 +3200,8 @@ export default function AdminPage() {
                   <Chip
                     label="1. Entry Created"
                     sx={{
-                      backgroundColor: 'rgba(40, 121, 182, 0.1)',
-                      color: '#2879b6',
+                      backgroundColor: 'rgba(23, 162, 180, 0.1)',
+                      color: '#17a2b4',
                       fontWeight: 600,
                     }}
                   />
@@ -3326,8 +3326,8 @@ export default function AdminPage() {
                                 label={role}
                                 size="small"
                                 sx={{
-                                  backgroundColor: 'rgba(40, 121, 182, 0.1)',
-                                  color: '#2879b6',
+                                  backgroundColor: 'rgba(23, 162, 180, 0.1)',
+                                  color: '#17a2b4',
                                   fontSize: '0.75rem',
                                   height: '24px',
                                 }}
@@ -3355,13 +3355,13 @@ export default function AdminPage() {
                             sx={{
                               textTransform: 'none',
                               borderRadius: '10px',
-                              borderColor: '#2879b6',
-                              color: '#2879b6',
+                              borderColor: '#17a2b4',
+                              color: '#17a2b4',
                               flex: 1,
                               whiteSpace: 'nowrap',
                               '&:hover': {
-                                borderColor: '#2879b6',
-                                backgroundColor: 'rgba(40, 121, 182, 0.05)',
+                                borderColor: '#17a2b4',
+                                backgroundColor: 'rgba(23, 162, 180, 0.05)',
                               },
                             }}
                           >
@@ -3443,8 +3443,8 @@ export default function AdminPage() {
         <DialogTitle
           sx={{
             fontWeight: 600,
-            color: '#2879b6',
-            background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
+            color: '#17a2b4',
+            background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
           }}
         >
           {editingUser ? 'Edit User' : 'Create New User'}
@@ -3528,10 +3528,10 @@ export default function AdminPage() {
 
             <TableContainer component={Paper} className="glass-card" sx={{ borderRadius: '16px', boxShadow: 'none', display: { xs: 'none', lg: 'block' } }}>
               <Table size="small">
-                <TableHead sx={{ background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
+                <TableHead sx={{ background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, color: '#2879b6' }}>Page</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700, color: '#2879b6' }}>
+                    <TableCell sx={{ fontWeight: 700, color: '#17a2b4' }}>Page</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, color: '#17a2b4' }}>
                       Read
                     </TableCell>
                     <TableCell align="center" sx={{ fontWeight: 700, color: '#7dc244' }}>
@@ -3557,7 +3557,7 @@ export default function AdminPage() {
                           checked={perm.read}
                           onChange={() => handlePermissionChange(index, 'read')}
                           size="small"
-                          sx={{ color: '#2879b6', '&.Mui-checked': { color: '#2879b6' } }}
+                          sx={{ color: '#17a2b4', '&.Mui-checked': { color: '#17a2b4' } }}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -3606,7 +3606,7 @@ export default function AdminPage() {
             <Box sx={{ display: { xs: 'flex', lg: 'none' }, flexDirection: 'column', gap: 2 }}>
               {userPermissions.map((perm, index) => (
                 <Card key={perm.page} variant="outlined" sx={{ borderRadius: '12px', p: 2 }}>
-                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#2879b6' }}>
+                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#17a2b4' }}>
                     {perm.page}
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -3619,7 +3619,7 @@ export default function AdminPage() {
                               checked={(perm as any)[action]}
                               onChange={() => handlePermissionChange(index, action as any)}
                               size="medium"
-                              sx={{ p: 0.5, color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : action === 'approve' ? '#7dc244' : '#ee6a31', '&.Mui-checked': { color: action === 'read' ? '#2879b6' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : action === 'approve' ? '#7dc244' : '#ee6a31' } }}
+                              sx={{ p: 0.5, color: action === 'read' ? '#17a2b4' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : action === 'approve' ? '#7dc244' : '#ee6a31', '&.Mui-checked': { color: action === 'read' ? '#17a2b4' : action === 'create' ? '#7dc244' : action === 'update' ? '#F59E21' : action === 'approve' ? '#7dc244' : '#ee6a31' } }}
                             />
                           }
                           label=""
@@ -3669,8 +3669,8 @@ export default function AdminPage() {
         <DialogTitle
           sx={{
             fontWeight: 600,
-            color: '#2879b6',
-            background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
+            color: '#17a2b4',
+            background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
           }}
         >
           {editingTemplate ? 'Edit Email Template' : 'Create Email Template'}
@@ -3728,11 +3728,11 @@ export default function AdminPage() {
                       size="small"
                       onClick={() => insertPlaceholder(placeholder)}
                       sx={{
-                        backgroundColor: 'rgba(40, 121, 182, 0.1)',
-                        color: '#2879b6',
+                        backgroundColor: 'rgba(23, 162, 180, 0.1)',
+                        color: '#17a2b4',
                         cursor: 'pointer',
                         '&:hover': {
-                          backgroundColor: 'rgba(40, 121, 182, 0.2)',
+                          backgroundColor: 'rgba(23, 162, 180, 0.2)',
                         },
                       }}
                     />
@@ -3757,12 +3757,12 @@ export default function AdminPage() {
                   sx={{
                     textTransform: 'none',
                     borderRadius: '12px',
-                    borderColor: '#2879b6',
-                    color: '#2879b6',
+                    borderColor: '#17a2b4',
+                    color: '#17a2b4',
                     whiteSpace: 'nowrap',
                     '&:hover': {
-                      borderColor: '#2879b6',
-                      backgroundColor: 'rgba(40, 121, 182, 0.05)',
+                      borderColor: '#17a2b4',
+                      backgroundColor: 'rgba(23, 162, 180, 0.05)',
                     },
                   }}
                 >
@@ -3814,8 +3814,8 @@ export default function AdminPage() {
         <DialogTitle
           sx={{
             fontWeight: 600,
-            color: '#2879b6',
-            background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
+            color: '#17a2b4',
+            background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.05) 0%, rgba(125, 194, 68, 0.05) 100%)',
           }}
         >
           Configure Notification Scheduler
@@ -3888,8 +3888,8 @@ export default function AdminPage() {
                           checked={(schedulerRecipientRoles || []).includes(role)}
                           onChange={() => handleRoleToggle(role)}
                           sx={{
-                            color: '#2879b6',
-                            '&.Mui-checked': { color: '#2879b6' },
+                            color: '#17a2b4',
+                            '&.Mui-checked': { color: '#17a2b4' },
                           }}
                         />
                       }

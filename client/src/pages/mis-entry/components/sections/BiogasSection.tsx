@@ -245,7 +245,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                   variant="h6"
                   sx={{
                     fontWeight: 700,
-                    color: '#2879b6',
+                    color: '#17a2b4',
                     mb: 3,
                     fontSize: { xs: '1rem', sm: '1.125rem' },
                   }}
@@ -258,7 +258,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     .map((_, i) => i)
                     .filter((i) => (cbgSalesRows[i]?.customerType || '') === productType);
                   const customersForType = customers.filter((c: any) => (c.type || '') === productType);
-                  const productAccent = productType === 'CBG' ? '#2879b6' : productType === 'FOM' ? '#7dc244' : '#F59E21';
+                  const productAccent = productType === 'CBG' ? '#17a2b4' : productType === 'FOM' ? '#7dc244' : '#F59E21';
 
                   return (
                     <Box
@@ -401,7 +401,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                               fontWeight: 600,
                               px: 2.5,
                               py: 1.25,
-                              boxShadow: '0 2px 6px rgba(40, 121, 182, 0.35)',
+                              boxShadow: '0 2px 6px rgba(23, 162, 180, 0.35)',
                             }}
                           >
                             Add Sale
@@ -470,7 +470,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                   variant="h6"
                   sx={{
                     fontWeight: 700,
-                    color: '#2879b6',
+                    color: '#17a2b4',
                     mb: 3,
                     fontSize: { xs: '1rem', sm: '1.125rem' },
                   }}
@@ -483,7 +483,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     .map((_, i) => i)
                     .filter((i) => (fuelUtilizedRows[i]?.fuelType || '') === fuelType);
                   const customersForType = customers.filter((c: any) => (c.type || '') === fuelType);
-                  const fuelAccent = fuelType === 'Petrol' ? '#2879b6' : '#ee6a31';
+                  const fuelAccent = fuelType === 'Petrol' ? '#17a2b4' : '#ee6a31';
 
                   return (
                     <Box
@@ -626,7 +626,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                               fontWeight: 600,
                               px: 2.5,
                               py: 1.25,
-                              boxShadow: '0 2px 6px rgba(40, 121, 182, 0.35)',
+                              boxShadow: '0 2px 6px rgba(23, 162, 180, 0.35)',
                             }}
                           >
                             Add Sale
@@ -695,7 +695,7 @@ export default function BiogasSection({ isReadOnly }: Props) {
                 component="div"
                 sx={{
                   fontWeight: 700,
-                  color: '#2879b6',
+                  color: '#17a2b4',
                   pt: 3,
                   px: 3,
                   pb: 2,
@@ -776,9 +776,9 @@ export default function BiogasSection({ isReadOnly }: Props) {
                     borderWidth: 1.5,
                     '&:hover': {
                       borderWidth: 1.5,
-                      borderColor: '#2879b6',
-                      color: '#2879b6',
-                      bgcolor: 'rgba(40, 121, 182, 0.06)',
+                      borderColor: '#17a2b4',
+                      color: '#17a2b4',
+                      bgcolor: 'rgba(23, 162, 180, 0.06)',
                     },
                   }}
                 >

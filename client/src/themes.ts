@@ -13,9 +13,9 @@ export const themePresets = {
   },
   classic: {
     key: 'classic',
-    name: 'Classic (Blue)',
+    name: 'Classic (Cyan)',
     palette: {
-      primary: { main: '#2879b6', light: '#1D9AD4', dark: '#235EAC' },
+      primary: { main: '#17a2b4', light: '#2cc4d4', dark: '#0f6b7a' },
       secondary: { main: '#7dc244', light: '#139B49', dark: '#139B49' },
       background: { default: '#f8f9fa', paper: '#ffffff' },
       text: { primary: '#333842', secondary: '#58595B' },

@@ -21,7 +21,7 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 
 const PageLoader = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-    <CircularProgress sx={{ color: '#2879b6' }} />
+    <CircularProgress sx={{ color: '#17a2b4' }} />
   </Box>
 );
 

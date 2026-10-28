@@ -42,10 +42,10 @@ export default function SamlSettingsPanel() {
       </Box>
       <Box sx={{ display: 'grid', gap: 1.5 }}>
         {Object.entries(config.portal_fields || {}).map(([label, value]) => (
-          <Box key={label} sx={{ p: 1.5, borderRadius: '12px', border: '1px solid rgba(40,121,182,0.16)', bgcolor: '#f8fbfd' }}>
+          <Box key={label} sx={{ p: 1.5, borderRadius: '12px', border: '1px solid rgba(23, 162, 180,0.16)', bgcolor: '#f8fbfd' }}>
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#25313c', mb: 0.75 }}>{label}</Typography>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <Typography component="code" sx={{ flex: 1, fontSize: 13, wordBreak: 'break-all', color: '#2879b6' }}>{value}</Typography>
+              <Typography component="code" sx={{ flex: 1, fontSize: 13, wordBreak: 'break-all', color: '#17a2b4' }}>{value}</Typography>
               <Button
                 size="small"
                 variant="outlined"

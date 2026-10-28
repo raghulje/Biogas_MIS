@@ -124,13 +124,13 @@ export default function AuditLogsPage() {
           <CardContent>
             <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #e0e0e0' }}>
               <Table>
-                <TableHead sx={{ backgroundColor: 'rgba(40, 121, 182, 0.05)' }}>
+                <TableHead sx={{ backgroundColor: 'rgba(23, 162, 180, 0.05)' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Timestamp</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>User</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Action</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#2879b6' }}>Details</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#17a2b4' }}>Timestamp</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#17a2b4' }}>User</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#17a2b4' }}>Action</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#17a2b4' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#17a2b4' }}>Details</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

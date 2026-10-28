@@ -67,7 +67,7 @@ const SHOW_DAILY_AVERAGES = false;
 
 const CHART_COLORS = {
   feed: '#8B5CF6',
-  raw: '#2879B6',
+  raw: '#17a2b4',
   produced: '#10B981',
   sold: '#F97316',
 };
@@ -340,11 +340,11 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
     <Card
       sx={{
         mb: 1.5,
-        border: '1px solid rgba(40, 121, 182, 0.16)',
+        border: '1px solid rgba(23, 162, 180, 0.16)',
         borderRadius: '16px',
         boxShadow: '0 10px 32px rgba(30, 75, 110, 0.08)',
         overflow: 'hidden',
-        background: 'radial-gradient(ellipse 85% 70% at 8% 0%, rgba(40,121,182,0.12) 0%, transparent 55%), radial-gradient(ellipse 55% 65% at 100% 100%, rgba(16,185,129,0.08) 0%, transparent 58%), #fff',
+        background: 'radial-gradient(ellipse 85% 70% at 8% 0%, rgba(23, 162, 180,0.12) 0%, transparent 55%), radial-gradient(ellipse 55% 65% at 100% 100%, rgba(16,185,129,0.08) 0%, transparent 58%), #fff',
         transition: 'box-shadow 220ms ease, transform 220ms ease',
         '&:hover': {
           boxShadow: '0 16px 42px rgba(30, 75, 110, 0.12)',
@@ -355,7 +355,7 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
       <CardContent sx={{ p: { xs: 1.5, md: 2.25 }, '&:last-child': { pb: { xs: 1.5, md: 2.25 } } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, mb: 1.5, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Box sx={{ width: 34, height: 34, display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'rgba(40,121,182,0.1)', color: CHART_COLORS.raw }}>
+            <Box sx={{ width: 34, height: 34, display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'rgba(23, 162, 180,0.1)', color: CHART_COLORS.raw }}>
               <TrendIcon sx={{ fontSize: 19 }} />
             </Box>
             <Box>
@@ -379,7 +379,7 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
         </Box>
 
         {periodSeries.empty ? (
-          <Box sx={{ height: 240, display: 'grid', placeItems: 'center', borderRadius: '12px', border: '1px dashed rgba(40,121,182,0.3)', bgcolor: 'rgba(40,121,182,0.03)' }}>
+          <Box sx={{ height: 240, display: 'grid', placeItems: 'center', borderRadius: '12px', border: '1px dashed rgba(23, 162, 180,0.3)', bgcolor: 'rgba(23, 162, 180,0.03)' }}>
             <Box sx={{ textAlign: 'center', px: 2 }}>
               <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#333842' }}>No trend data for this period</Typography>
               <Typography sx={{ mt: 0.5, fontSize: 12.5, color: '#666' }}>Try another filter range or create MIS entries.</Typography>
@@ -394,7 +394,7 @@ const ProductionTrendChart = memo(function ProductionTrendChart({
               overflowY: 'hidden',
               animation: `${chartFadeIn} 320ms ease-out`,
               '&::-webkit-scrollbar': { height: 5 },
-              '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(40,121,182,0.22)', borderRadius: 4 },
+              '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(23, 162, 180,0.22)', borderRadius: 4 },
             }}
             onMouseLeave={() => setHoveredIndex(null)}
           >
@@ -702,7 +702,7 @@ export default function DashboardPage() {
           mx: 'auto',
           p: { xs: 0.25, sm: 0.75 },
           borderRadius: '24px',
-          background: 'radial-gradient(circle at 0% 0%, rgba(40,121,182,0.05), transparent 28%), radial-gradient(circle at 100% 12%, rgba(125,194,68,0.05), transparent 24%)',
+          background: 'radial-gradient(circle at 0% 0%, rgba(23, 162, 180,0.05), transparent 28%), radial-gradient(circle at 100% 12%, rgba(125,194,68,0.05), transparent 24%)',
         }}
       >
         <PageBanner title="Operations Dashboard" subtitle={`Plant performance overview · ${periodLabel}`}>
@@ -727,7 +727,7 @@ export default function DashboardPage() {
           sx={{
             mb: 2.5,
             borderRadius: '16px',
-            border: '1px solid rgba(40,121,182,0.14)',
+            border: '1px solid rgba(23, 162, 180,0.14)',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(246,251,255,0.96))',
             boxShadow: '0 8px 28px rgba(30,75,110,0.07)',
             overflow: 'visible',
@@ -735,8 +735,8 @@ export default function DashboardPage() {
         >
           <CardContent sx={{ p: { xs: 2, md: 2.5 }, '&:last-child': { pb: { xs: 2, md: 2.5 } } }}>
             <Box sx={{ display: isPhone ? 'none' : 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(40,121,182,0.1)' }}>
-                <FilterIcon sx={{ color: '#2879b6', fontSize: 19 }} />
+              <Box sx={{ width: 34, height: 34, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(23, 162, 180,0.1)' }}>
+                <FilterIcon sx={{ color: '#17a2b4', fontSize: 19 }} />
               </Box>
               <Box>
                 <Typography sx={{ fontWeight: 700, color: '#25313C', lineHeight: 1.2 }}>
@@ -761,10 +761,10 @@ export default function DashboardPage() {
                   justifyContent: 'center',
                   whiteSpace: 'normal',
                   lineHeight: 1.3,
-                  color: '#2879b6',
-                  borderColor: 'rgba(40,121,182,0.35)',
-                  backgroundColor: 'rgba(40,121,182,0.06)',
-                  '&:hover': { borderColor: '#2879b6', backgroundColor: 'rgba(40,121,182,0.1)' },
+                  color: '#17a2b4',
+                  borderColor: 'rgba(23, 162, 180,0.35)',
+                  backgroundColor: 'rgba(23, 162, 180,0.06)',
+                  '&:hover': { borderColor: '#17a2b4', backgroundColor: 'rgba(23, 162, 180,0.1)' },
                 }}
               >
                 All filters · {filterType === 'day' && selectedDate
@@ -788,10 +788,10 @@ export default function DashboardPage() {
                 sx={{
                   flexWrap: 'nowrap',
                   p: 0.5,
-                  bgcolor: 'rgba(40,121,182,0.05)',
+                  bgcolor: 'rgba(23, 162, 180,0.05)',
                   borderRadius: '13px',
                   gap: 0.5,
-                  '& .MuiButtonGroup-grouped:not(:last-of-type)': { borderRightColor: 'rgba(40,121,182,0.16)' },
+                  '& .MuiButtonGroup-grouped:not(:last-of-type)': { borderRightColor: 'rgba(23, 162, 180,0.16)' },
                 }}
               >
                 {filterButtons.map((btn) => (
@@ -806,15 +806,15 @@ export default function DashboardPage() {
                       minHeight: isPhone ? 48 : undefined,
                       fontSize: { xs: '0.8rem', sm: '0.875rem' },
                       px: { xs: 1, sm: 2 },
-                      backgroundColor: filterType === btn.value ? '#2879b6' : 'transparent',
-                      borderColor: filterType === btn.value ? '#2879b6' : 'transparent',
-                      color: filterType === btn.value ? '#ffffff' : '#2879b6',
+                      backgroundColor: filterType === btn.value ? '#17a2b4' : 'transparent',
+                      borderColor: filterType === btn.value ? '#17a2b4' : 'transparent',
+                      color: filterType === btn.value ? '#ffffff' : '#17a2b4',
                       borderRadius: '10px !important',
                       fontWeight: 600,
-                      boxShadow: filterType === btn.value ? '0 5px 12px rgba(40,121,182,0.2)' : 'none',
+                      boxShadow: filterType === btn.value ? '0 5px 12px rgba(23, 162, 180,0.2)' : 'none',
                       '&:hover': {
-                        backgroundColor: filterType === btn.value ? '#235EAC' : 'rgba(40, 121, 182, 0.08)',
-                        borderColor: filterType === btn.value ? '#2879b6' : 'transparent',
+                        backgroundColor: filterType === btn.value ? '#0f6b7a' : 'rgba(23, 162, 180, 0.08)',
+                        borderColor: filterType === btn.value ? '#17a2b4' : 'transparent',
                       },
                       transition: 'all 0.2s ease',
                     }}
@@ -1028,9 +1028,9 @@ export default function DashboardPage() {
                     minHeight: 44,
                     borderRadius: '10px',
                     fontWeight: 700,
-                    backgroundColor: draftType === btn.value ? '#2879b6' : 'transparent',
-                    borderColor: '#2879b6',
-                    color: draftType === btn.value ? '#fff' : '#2879b6',
+                    backgroundColor: draftType === btn.value ? '#17a2b4' : 'transparent',
+                    borderColor: '#17a2b4',
+                    color: draftType === btn.value ? '#fff' : '#17a2b4',
                   }}
                 >
                   {btn.label}
@@ -1151,7 +1151,7 @@ export default function DashboardPage() {
               variant="contained"
               disabled={draftType === 'custom' && (!draftStart || !draftEnd || draftStart > draftEnd)}
               onClick={() => applyMobileFilters()}
-              sx={{ minHeight: 48, borderRadius: '12px', textTransform: 'none', fontWeight: 700, backgroundColor: '#2879b6' }}
+              sx={{ minHeight: 48, borderRadius: '12px', textTransform: 'none', fontWeight: 700, backgroundColor: '#17a2b4' }}
             >
               Apply
             </Button>
@@ -1162,7 +1162,7 @@ export default function DashboardPage() {
           className="aos-fade-up aos-delay-200"
           sx={{
             borderRadius: '18px',
-            border: '1px solid rgba(40,121,182,0.12)',
+            border: '1px solid rgba(23, 162, 180,0.12)',
             boxShadow: '0 12px 38px rgba(30,75,110,0.08)',
             background: 'rgba(255,255,255,0.92)',
             overflow: 'hidden',
@@ -1204,13 +1204,13 @@ export default function DashboardPage() {
               sx={{
                 mb: 1.5,
                 boxShadow: 'none',
-                border: '1px solid rgba(40, 121, 182, 0.2)',
+                border: '1px solid rgba(23, 162, 180, 0.2)',
                 borderRadius: '16px !important',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 backgroundColor: '#fff',
                 '&:hover': {
-                  boxShadow: '0 4px 20px rgba(40, 121, 182, 0.15)',
+                  boxShadow: '0 4px 20px rgba(23, 162, 180, 0.15)',
                   transform: 'translateY(-2px)',
                 },
               }}
@@ -1218,7 +1218,7 @@ export default function DashboardPage() {
               <Box
                 className="gradient-header"
                 sx={{
-                  background: 'linear-gradient(120deg, #236FA8 0%, #1D9AD4 72%, #40B6DF 100%)',
+                  background: 'linear-gradient(120deg, #0f6b7a 0%, #2cc4d4 72%, #5fe0e6 100%)',
                   color: '#ffffff',
                   borderRadius: '16px 16px 0 0',
                   minHeight: '48px',
@@ -1248,7 +1248,7 @@ export default function DashboardPage() {
                       value={formatNumber(summary.totalRawBiogas ?? 0)}
                       unit="m³"
                       subtitle={`Avg / day ${formatNumber(summary.avgRawBiogas ?? 0)} m³ · ${summary.totalEntries ?? 0} days`}
-                      color="#2879B6"
+                      color="#17a2b4"
                       icon={<Box component="img" src={biogasIcon} alt="" />}
                     />
                   </Grid>
@@ -1302,7 +1302,7 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(120deg, #236FA8 0%, #1D9AD4 72%, #40B6DF 100%)',
+                  background: 'linear-gradient(120deg, #0f6b7a 0%, #2cc4d4 72%, #5fe0e6 100%)',
                   color: '#ffffff',
                   borderRadius: '16px 16px 0 0',
                   minHeight: '48px',
@@ -1335,7 +1335,7 @@ export default function DashboardPage() {
                       value={formatNumber(summary.totalFOMProduced ?? 0)}
                       unit="kg"
                       subtitle={`Avg / day ${formatNumber(summary.avgFOMProduced ?? 0)} kg`}
-                      color="#2879B6"
+                      color="#17a2b4"
                       icon={<Box component="img" src={fomIcon} alt="" />}
                     />
                   </Grid>
@@ -1389,9 +1389,9 @@ export default function DashboardPage() {
                 <Typography variant="subtitle2" sx={{ color: '#555', fontWeight: 600, mb: 1.5 }}>Input & Output produced per day (CBG, FOM, LFOM)</Typography>
                 <Grid container spacing={2} sx={{ mb: 2 }}>
                   <Grid item xs={12} sm={6} md={2}>
-                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(40, 121, 182, 0.06)', borderLeft: '3px solid #2879b6' }}>
+                    <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: 'rgba(23, 162, 180, 0.06)', borderLeft: '3px solid #17a2b4' }}>
                       <Typography variant="caption" sx={{ color: '#58595B' }}>Feed (Input) per day</Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#2879b6' }}>{formatNumber(summary.feedPerEntry ?? 0)} tons</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#17a2b4' }}>{formatNumber(summary.feedPerEntry ?? 0)} tons</Typography>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={6} md={2}>
@@ -1471,7 +1471,7 @@ export default function DashboardPage() {
             >
               <Box
                 sx={{
-                  background: 'linear-gradient(120deg, #236FA8 0%, #1D9AD4 72%, #40B6DF 100%)',
+                  background: 'linear-gradient(120deg, #0f6b7a 0%, #2cc4d4 72%, #5fe0e6 100%)',
                   color: '#ffffff',
                   borderRadius: '16px 16px 0 0',
                   minHeight: '48px',
@@ -1491,7 +1491,7 @@ export default function DashboardPage() {
                       value={formatNumber(summary.totalElectricityConsumption ?? 0)}
                       unit="kWh"
                       subtitle="Total usage for selected period"
-                      color="#2879B6"
+                      color="#17a2b4"
                       icon={<Box component="img" src={powerIcon} alt="" />}
                     />
                   </Grid>
@@ -1530,8 +1530,8 @@ export default function DashboardPage() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, color: '#fff', bgcolor: '#2879b6', borderBottom: 'none' }}>Customer</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: '#fff', bgcolor: '#2879b6', borderBottom: 'none' }}>Quantity (kg)</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#fff', bgcolor: '#17a2b4', borderBottom: 'none' }}>Customer</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: '#fff', bgcolor: '#17a2b4', borderBottom: 'none' }}>Quantity (kg)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1561,9 +1561,9 @@ export default function DashboardPage() {
               borderWidth: 1.5,
               '&:hover': {
                 borderWidth: 1.5,
-                borderColor: '#2879b6',
-                color: '#2879b6',
-                bgcolor: 'rgba(40, 121, 182, 0.06)',
+                borderColor: '#17a2b4',
+                color: '#17a2b4',
+                bgcolor: 'rgba(23, 162, 180, 0.06)',
               },
             }}
           >

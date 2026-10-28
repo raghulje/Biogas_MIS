@@ -288,7 +288,7 @@ export default function MISListView({
 
   const getStatusColor = (status: string) => {
     const s = (status || '').toLowerCase();
-    if (s === 'submitted' || s === 'under_review') return { bg: 'rgba(40, 121, 182, 0.1)', color: '#2879b6' };
+    if (s === 'submitted' || s === 'under_review') return { bg: 'rgba(23, 162, 180, 0.1)', color: '#17a2b4' };
     if (s === 'approved') return { bg: 'rgba(125, 194, 68, 0.1)', color: '#7dc244' };
     if (s === 'draft') return { bg: 'rgba(245, 158, 33, 0.1)', color: '#F59E21' };
     if (s === 'rejected') return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
@@ -319,8 +319,8 @@ export default function MISListView({
               sx={{
                 textTransform: 'none',
                 borderRadius: '12px',
-                borderColor: '#2879b6',
-                color: '#2879b6',
+                borderColor: '#17a2b4',
+                color: '#17a2b4',
                 fontWeight: 600,
                 px: 3,
                 py: 1.2,
@@ -350,7 +350,7 @@ export default function MISListView({
                     borderRadius: '12px',
                     px: 3,
                     py: 1.2,
-                    borderColor: '#2879b6',
+                    borderColor: '#17a2b4',
                     fontWeight: 600,
                   }}
                 >
@@ -409,13 +409,13 @@ export default function MISListView({
           sx={{
             mb: 2,
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, rgba(40, 121, 182, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)',
-            border: '2px solid #2879b6',
+            background: 'linear-gradient(135deg, rgba(23, 162, 180, 0.1) 0%, rgba(125, 194, 68, 0.1) 100%)',
+            border: '2px solid #17a2b4',
           }}
         >
           <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#2879b6' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#17a2b4' }}>
                 {selectedIds.size} {selectedIds.size === 1 ? 'entry' : 'entries'} selected
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -461,7 +461,7 @@ export default function MISListView({
       >
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-            <FilterIcon sx={{ color: '#2879b6' }} />
+            <FilterIcon sx={{ color: '#17a2b4' }} />
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#333842' }}>
               Filter Records
             </Typography>
@@ -597,35 +597,35 @@ export default function MISListView({
                     checked={filteredEntries.length > 0 && selectedIds.size === filteredEntries.length}
                     onChange={handleSelectAll}
                     sx={{
-                      color: '#2879b6',
-                      '&.Mui-checked': { color: '#2879b6' },
-                      '&.MuiCheckbox-indeterminate': { color: '#2879b6' },
+                      color: '#17a2b4',
+                      '&.Mui-checked': { color: '#17a2b4' },
+                      '&.MuiCheckbox-indeterminate': { color: '#17a2b4' },
                     }}
                   />
                 </TableCell> */}
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Entry ID
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Date
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Created By
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   CBG Produced
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   CBG Sold
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}>
                   Total Biogas
                 </TableCell>
                 <TableCell
-                  sx={{ fontWeight: 700, color: '#2879b6', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}
+                  sx={{ fontWeight: 700, color: '#17a2b4', fontSize: '0.95rem', bgcolor: '#f8f9fa' }}
                   align="center"
                 >
                   Actions
@@ -641,9 +641,9 @@ export default function MISListView({
                     className="hover-lift"
                     sx={{
                       transition: 'all 0.3s ease',
-                      backgroundColor: selectedIds.has(entry.id) ? 'rgba(40, 121, 182, 0.05)' : 'transparent',
+                      backgroundColor: selectedIds.has(entry.id) ? 'rgba(23, 162, 180, 0.05)' : 'transparent',
                       '&:hover': {
-                        backgroundColor: selectedIds.has(entry.id) ? 'rgba(40, 121, 182, 0.1)' : 'rgba(40, 121, 182, 0.03)',
+                        backgroundColor: selectedIds.has(entry.id) ? 'rgba(23, 162, 180, 0.1)' : 'rgba(23, 162, 180, 0.03)',
                       },
                     }}
                   >
@@ -653,8 +653,8 @@ export default function MISListView({
                         checked={selectedIds.has(entry.id)}
                         onChange={() => handleSelectOne(entry.id)}
                         sx={{
-                          color: '#2879b6',
-                          '&.Mui-checked': { color: '#2879b6' },
+                          color: '#17a2b4',
+                          '&.Mui-checked': { color: '#17a2b4' },
                         }}
                       />
                     </TableCell> */}
@@ -689,10 +689,10 @@ export default function MISListView({
                             size="small"
                             onClick={() => onView(entry)}
                             sx={{
-                              color: '#2879b6',
-                              backgroundColor: 'rgba(40, 121, 182, 0.1)',
+                              color: '#17a2b4',
+                              backgroundColor: 'rgba(23, 162, 180, 0.1)',
                               borderRadius: '10px',
-                              '&:hover': { backgroundColor: 'rgba(40, 121, 182, 0.2)' },
+                              '&:hover': { backgroundColor: 'rgba(23, 162, 180, 0.2)' },
                             }}
                           >
                             <ViewIcon fontSize="small" />
@@ -704,7 +704,7 @@ export default function MISListView({
                             onClick={() => handleDownloadFinalMisReport(entry)}
                             disabled={reportDownloadingId === entry.id}
                             sx={{
-                              color: '#1D9AD4',
+                              color: '#2cc4d4',
                               backgroundColor: 'rgba(29, 154, 212, 0.1)',
                               borderRadius: '10px',
                               '&:hover': { backgroundColor: 'rgba(29, 154, 212, 0.2)' },
@@ -804,7 +804,7 @@ export default function MISListView({
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#2879b6' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#17a2b4' }}>
                       #{entry.id}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -848,7 +848,7 @@ export default function MISListView({
                     fullWidth
                     startIcon={<ViewIcon />}
                     onClick={() => onView(entry)}
-                    sx={{ borderRadius: '10px', borderColor: '#2879b6', color: '#2879b6' }}
+                    sx={{ borderRadius: '10px', borderColor: '#17a2b4', color: '#17a2b4' }}
                   >
                     View
                   </Button>
@@ -858,7 +858,7 @@ export default function MISListView({
                     startIcon={reportDownloadingId === entry.id ? <CircularProgress size={16} /> : <PrintIcon />}
                     onClick={() => handleDownloadFinalMisReport(entry)}
                     disabled={reportDownloadingId === entry.id}
-                    sx={{ borderRadius: '10px', borderColor: '#1D9AD4', color: '#1D9AD4' }}
+                    sx={{ borderRadius: '10px', borderColor: '#2cc4d4', color: '#2cc4d4' }}
                   >
                     Report
                   </Button>

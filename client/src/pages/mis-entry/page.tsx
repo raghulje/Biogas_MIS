@@ -255,7 +255,7 @@ export default function MISEntryPage() {
         p: 4,
       }}
     >
-      <CircularProgress size={48} sx={{ color: '#2879b6' }} />
+      <CircularProgress size={48} sx={{ color: '#17a2b4' }} />
       <Typography variant="body1" sx={{ color: '#58595B', fontWeight: 500 }}>
         Loading form…
       </Typography>

@@ -96,7 +96,7 @@ export default function LoginPage() {
           <img src={SREL_LOGO} alt="Refex Logo" className="h-16 w-auto object-contain mx-auto mb-6" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Signing you in</h1>
           <p className="text-sm text-gray-600">Continuing to RefexOne…</p>
-          <a href="/login?local=1" className="inline-block mt-6 text-sm text-[#2879b6] hover:underline">
+          <a href="/login?local=1" className="inline-block mt-6 text-sm text-[#17a2b4] hover:underline">
             Sign in with email instead
           </a>
         </div>
@@ -330,7 +330,7 @@ export default function LoginPage() {
             {ssoHref ? (
               <a
                 href={ssoHref}
-                className="w-full mt-3 border border-[#2879b6] text-[#2879b6] py-3.5 rounded-lg font-semibold hover:bg-[#2879b6] hover:text-white transition-all duration-200 flex items-center justify-center text-sm"
+                className="w-full mt-3 border border-[#17a2b4] text-[#17a2b4] py-3.5 rounded-lg font-semibold hover:bg-[#17a2b4] hover:text-white transition-all duration-200 flex items-center justify-center text-sm"
               >
                 {ssoLabel}
               </a>

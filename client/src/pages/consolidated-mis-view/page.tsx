@@ -145,7 +145,7 @@ const ConsolidatedMISView = () => {
     return (
       <Layout>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress sx={{ color: '#2879b6' }} />
+          <CircularProgress sx={{ color: '#17a2b4' }} />
         </Box>
       </Layout>
     );
@@ -239,7 +239,7 @@ const ConsolidatedMISView = () => {
                       <TableHeader align="center" bg="#7dc244">D-01</TableHeader>
                       <TableHeader align="center" bg="#7dc244">D-02</TableHeader>
                       <TableHeader align="center" bg="#7dc244">D-03</TableHeader>
-                      <TableHeader align="center" bg="#2879b6">Total</TableHeader>
+                      <TableHeader align="center" bg="#17a2b4">Total</TableHeader>
                     </tr>
                   </thead>
                   <tbody>
@@ -262,7 +262,7 @@ const ConsolidatedMISView = () => {
             {/* Raw Material Quality Data */}
             <GlassCard title="Raw Material Quality Data" color="#FB8C00" icon={<QualityIcon />}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <MetricCard label="TS%" value={mockMISData.rawMaterialQuality.ts} unit="%" color="#2879b6" />
+                <MetricCard label="TS%" value={mockMISData.rawMaterialQuality.ts} unit="%" color="#17a2b4" />
                 <MetricCard label="VS%" value={mockMISData.rawMaterialQuality.vs} unit="%" color="#7dc244" />
                 <MetricCard label="pH" value={mockMISData.rawMaterialQuality.ph} unit="" color="#ee6a31" />
               </Box>
@@ -354,7 +354,7 @@ const ConsolidatedMISView = () => {
                       <TableHeader align="center" bg="#F59E21">RBG Produced</TableHeader>
                       <TableHeader align="center" bg="#ee6a31">RBG Flared</TableHeader>
                       <TableHeader align="center" bg="#7dc244">Used in Kitchen</TableHeader>
-                      <TableHeader align="center" bg="#2879b6">Sent to Purification</TableHeader>
+                      <TableHeader align="center" bg="#17a2b4">Sent to Purification</TableHeader>
                     </tr>
                   </thead>
                   <tbody>
@@ -413,7 +413,7 @@ const ConsolidatedMISView = () => {
                       <TableHeader align="center" bg="#F59E21">Production</TableHeader>
                       <TableHeader align="center" bg="#F59E21">Dispatch</TableHeader>
                       <TableHeader align="center" bg="#7dc244">Gas Yield (m3/ton PM)</TableHeader>
-                      <TableHeader align="center" bg="#2879b6">CF</TableHeader>
+                      <TableHeader align="center" bg="#17a2b4">CF</TableHeader>
                     </tr>
                   </thead>
                   <tbody>
@@ -444,10 +444,10 @@ const ConsolidatedMISView = () => {
                   <thead>
                     <tr>
                       <TableHeader></TableHeader>
-                      <TableHeader align="center" bg="#1D9AD4">Run. Hrs</TableHeader>
-                      <TableHeader align="center" bg="#1D9AD4">Slurry feed (m3/hr)</TableHeader>
-                      <TableHeader align="center" bg="#1D9AD4">Inlet TS%</TableHeader>
-                      <TableHeader align="center" bg="#2879b6">Total Slurry feed (m3/day)</TableHeader>
+                      <TableHeader align="center" bg="#2cc4d4">Run. Hrs</TableHeader>
+                      <TableHeader align="center" bg="#2cc4d4">Slurry feed (m3/hr)</TableHeader>
+                      <TableHeader align="center" bg="#2cc4d4">Inlet TS%</TableHeader>
+                      <TableHeader align="center" bg="#17a2b4">Total Slurry feed (m3/day)</TableHeader>
                     </tr>
                   </thead>
                   <tbody>
@@ -507,10 +507,10 @@ const ConsolidatedMISView = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead>
                   <tr>
-                    <TableHeader align="center" bg="#1D9AD4">Direct Purge Out to Farmers (m3)</TableHeader>
-                    <TableHeader align="center" bg="#1D9AD4">SLS inlet (m3)</TableHeader>
-                    <TableHeader align="center" bg="#1D9AD4">Direct Purge to Lagoon (m3)</TableHeader>
-                    <TableHeader align="center" bg="#2879b6">Total Slurry out (m3)</TableHeader>
+                    <TableHeader align="center" bg="#2cc4d4">Direct Purge Out to Farmers (m3)</TableHeader>
+                    <TableHeader align="center" bg="#2cc4d4">SLS inlet (m3)</TableHeader>
+                    <TableHeader align="center" bg="#2cc4d4">Direct Purge to Lagoon (m3)</TableHeader>
+                    <TableHeader align="center" bg="#17a2b4">Total Slurry out (m3)</TableHeader>
                     <TableHeader align="center" bg="#7dc244">Total permeate to Mixing Tank (m3)</TableHeader>
                     <TableHeader align="center" bg="#7dc244">Total LFOM to Lagoon (m3)</TableHeader>
                     <TableHeader align="center" bg="#F59E21">FOM Cake Dispatch (tons)</TableHeader>
@@ -716,9 +716,9 @@ const TableCell = ({ children, align = 'left', highlight }: TableCellProps) => (
       padding: '12px 16px',
       textAlign: align,
       fontSize: '14px',
-      color: highlight ? '#2879b6' : '#333842',
+      color: highlight ? '#17a2b4' : '#333842',
       fontWeight: highlight ? 600 : 400,
-      background: highlight ? 'rgba(40, 121, 182, 0.05)' : 'transparent',
+      background: highlight ? 'rgba(23, 162, 180, 0.05)' : 'transparent',
       borderBottom: '1px solid rgba(0,0,0,0.05)',
       whiteSpace: 'nowrap',
     }}
